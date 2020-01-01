@@ -69,6 +69,9 @@ body {
 #chat #messages li.red {
   color: #e1423e;
 }
+#chat #messages li.console {
+  color: #44cee8;
+}
 #chat form {
   display: flex;
   width: 100%;

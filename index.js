@@ -1,3 +1,4 @@
+const log = console.log;
 const express = require('express');
 const app = express();
 const http = require('http').createServer(app);
@@ -5,7 +6,10 @@ const io = require('socket.io')(http, {pingInterval: 5000});
 const MongoClient = require('mongodb').MongoClient;
 const database = "mongodb://localhost:27017/";
 
+log('Načítám moduly..');
+
 require(__dirname + '/antispam.js')(io);
+require(__dirname + '/commands.js')(io);
 
 let players = [];
 
@@ -29,7 +33,7 @@ app.get('/', (req, res) => {
     res.sendFile(__dirname + '/client/index.html');
 });
 
-http.listen(3000, () => console.log('Listening on http://localhost:3000'));
+http.listen(3005, () => console.log('Server spuštěn na portu 3005'));
 
 io.on('connection', function(socket){
     let remoteIp = socket.request.connection.remoteAddress;

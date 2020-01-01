@@ -11,10 +11,12 @@ module.exports = function(io) {
 
     socketAntiSpam.event.on('kick', (socket, data) => {
         socket.emit('chat', 'Byl jsi vyhozen za spam!', 'red');
+        console.log('[KICK] Spam: ' + socket.ip);
     });
 
     socketAntiSpam.event.on('ban', (socket, data) => {
         socket.emit('chat', 'Byl jsi zabanován za spam!', 'red');
+        console.log('[BAN] Spam: ' + socket.ip);
     });
 
     return socketAntiSpam;
