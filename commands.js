@@ -17,7 +17,7 @@ module.exports = function(io) {
                 rl.close();
                 break;
             default:
-                console.log('Neznámý příkaz: `' + line.trim() + '`');
+                console.log('');
                 break;
         }
         rl.prompt();

@@ -5,13 +5,24 @@
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <div id="version">Verze 0.1</div>
-    <div id="ping">Navazuji spojení se serverem..</div>
-    <div id="chat">
-        <ul id="messages"></ul>
-        <form action="">
-            <input id="msg" maxlength="255" autocomplete="off"/><button>Odeslat</button>
-        </form>
+    <div id="wrapper">
+        <div id="login">
+            <form action="">
+                <p class="title">Přihlaš se účtem LeoSight.cz</p>
+                <input id="username" type="text"/>
+                <input id="password" type="password"/>
+                <button>Přihlásit se</button>
+                <p><a href="https://leosight.cz/registrace" target="_blank">Ještě nemám účet LeoSight</a></p>
+            </form>
+        </div>
+        <div id="version">Verze 0.1</div>
+        <div id="ping">Navazuji spojení se serverem..</div>
+        <div id="chat">
+            <ul id="messages"></ul>
+            <form action="">
+                <input id="msg" type="text" maxlength="255" autocomplete="off"/><button>Odeslat</button>
+            </form>
+        </div>
     </div>
     <script src="/socket.io/socket.io.js"></script>
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>

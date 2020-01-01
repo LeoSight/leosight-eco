@@ -8,9 +8,30 @@ $(function () {
         $('#ping').html('Ping: ' + latency + ' ms');
     });
 
+    socket.on('connect', function() {
+        $('#ping').html('Připojení navázáno!');
+        AddChatMessage('Navázáno připojení k serveru!', 'green');
+    });
+
     socket.on('disconnect', function() {
         $('#ping').html('Spojení ztraceno!');
         AddChatMessage('Spojení se serverem bylo ztraceno!', 'red');
+    });
+
+    // LOGIN
+
+    $('#login form').submit(function(e){
+        e.preventDefault();
+        socket.emit('login', $('#username').val(), $('#password').val());
+    });
+
+    socket.on('login', function(success, response){
+        if(success) {
+            $('#login').remove();
+            console.log('Přihlášení úspěšné (' + response + ')');
+        }else{
+            $('#login .title').fadeOut(100).html(response).fadeIn(100);
+        }
     });
 
     // CHAT

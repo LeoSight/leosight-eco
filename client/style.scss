@@ -23,8 +23,61 @@ img {
     height: auto;
 }
 
+a{
+    color: #68e8ed;
+}
+
 body{
     background: #222;
+    color: #fff;
+}
+
+#wrapper{
+    width: 100%;
+    height: 100%;
+}
+
+#login{
+    position: absolute;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(29, 17, 15, 0.65);
+    z-index: 9999;
+
+    form{
+        padding: 1rem;
+        background: #111;
+        color: #fff;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+
+        input,button{
+            border: 1px solid #333;
+            background: #222;
+            color: #fff;
+            outline: 0;
+            width: 270px;
+            padding: .2rem .4rem;
+            font-size: 1.1rem;
+            margin: .2rem 0;
+        }
+
+        button{
+            border: 1px solid #712819;
+            margin-bottom: .5rem;
+        }
+
+        .title{
+            font-size: 1.25rem;
+            margin-bottom: .5rem;
+        }
+    }
 }
 
 #chat{
@@ -70,6 +123,9 @@ body{
 
             &.red{
                 color: #e1423e;
+            }
+            &.green{
+                color: #45b70a;
             }
             &.console{
                 color: #44cee8;

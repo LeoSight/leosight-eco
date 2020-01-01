@@ -16,6 +16,7 @@ console.log('Načítám moduly..');
 require(__dirname + '/antispam.js')(io);
 require(__dirname + '/commands.js')(io);
 const security = require(__dirname + '/security.js');
+const account = require(__dirname + '/account.js')(security);
 
 let players = [];
 
@@ -42,18 +43,34 @@ http.listen(3005, () => console.log('Server spuštěn na portu 3005'));
 io.on('connection', function(socket){
     let remoteIp = socket.request.connection.remoteAddress;
     let remotePort = socket.request.connection.remotePort;
-    let index = players.push( { "ip": remoteIp } ) - 1;
-    console.log('User [' + index + '] connected from ' + remoteIp);
+    let index = players.push( { "username": 'Humorníček', "logged": false, "ip": remoteIp } ) - 1;
+    console.log('[CONNECT] Uživatel [' + index + '] se připojil z IP ' + remoteIp);
 
     socket.on('disconnect', function(){
         players.splice(index);
-        console.log('User [' + index + '] disconnected');
+        console.log('[DISCONNECT] Uživatel [' + index + '] se odpojil');
+    });
+
+    socket.on('login', function(username, password){
+        password = security.hash(password);
+        console.log('[LOGIN] #' + index + ' se pokouší přihlásit jako "' + username + '"');
+        account.login(username, password, function(success, response){
+            console.log('[LOGIN] #' + index + ' - ' + response);
+
+            if(success){
+                players[index]['username'] = username;
+                players[index]['logged'] = true;
+                players[index]['security'] = response;
+            }
+
+            socket.emit('login', success, response);
+        });
     });
 
     socket.on('chat', function(msg) {
         if (msg.length <= 255){
-            io.emit('chat', '#' + index + ': ' + msg);
-            console.log('[CHAT] #' + index + ': ' + msg);
+            io.emit('chat', `${players[index].username} [#${index}]: ${msg}`);
+            console.log(`[CHAT] ${players[index].username} [#${index}]: ${msg}`);
         }
     });
 });
