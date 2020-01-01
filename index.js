@@ -15,6 +15,8 @@ console.log('Načítám moduly..');
 
 require(__dirname + '/antispam.js')(io);
 require(__dirname + '/commands.js')(io);
+const security = require(__dirname + '/security.js');
+console.log( security.hash('***REMOVED***') );
 
 let players = [];
 
