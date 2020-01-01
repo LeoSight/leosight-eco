@@ -9,21 +9,26 @@ $(function () {
     });
 
     socket.on('disconnect', function() {
-        $('#ping').html('Spojení se serverem ztraceno!');
+        $('#ping').html('Spojení ztraceno!');
+        AddChatMessage('Spojení se serverem bylo ztraceno!', 'red');
     });
 
     // CHAT
 
-    $('#chat form').submit(function(e){
-        e.preventDefault();
-        socket.emit('chat', $('#msg').val());
-        $('#msg').val('');
-        return false;
-    });
-
-    socket.on('chat', function(msg, classes){
+    function AddChatMessage(msg, classes){
         classes = classes || '';
         messages.append($('<li>').text(msg).addClass(classes));
         messages.animate({ scrollTop: messages.prop("scrollHeight")}, 500);
+    }
+
+    $('#chat form').submit(function(e){
+        e.preventDefault();
+        if($('#msg').val().length > 0) {
+            socket.emit('chat', $('#msg').val());
+            $('#msg').val('');
+            return false;
+        }
     });
+
+    socket.on('chat', AddChatMessage);
 });

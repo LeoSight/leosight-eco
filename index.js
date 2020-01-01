@@ -46,8 +46,10 @@ io.on('connection', function(socket){
         console.log('User [' + index + '] disconnected');
     });
 
-    socket.on('chat', function(msg){
-        io.emit('chat', '#' + index + ': ' + msg);
-        console.log('[CHAT] #' + index + ': ' + msg);
+    socket.on('chat', function(msg) {
+        if (msg.length <= 255){
+            io.emit('chat', '#' + index + ': ' + msg);
+            console.log('[CHAT] #' + index + ': ' + msg);
+        }
     });
 });

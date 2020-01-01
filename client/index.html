@@ -5,11 +5,12 @@
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
+    <div id="version">Verze 0.1</div>
     <div id="ping">Navazuji spojení se serverem..</div>
     <div id="chat">
         <ul id="messages"></ul>
         <form action="">
-            <input id="msg" autocomplete="off"/><button>Odeslat</button>
+            <input id="msg" maxlength="255" autocomplete="off"/><button>Odeslat</button>
         </form>
     </div>
     <script src="/socket.io/socket.io.js"></script>
