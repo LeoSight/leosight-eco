@@ -22,6 +22,7 @@ module.exports = function(io) {
         }
         rl.prompt();
     }).on('close', function () {
+        io.emit('chat', 'Server se vypíná!', 'console');
         console.log('Vypínám server..');
         process.exit(0);
     });

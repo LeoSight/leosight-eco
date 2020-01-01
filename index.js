@@ -1,20 +1,24 @@
-const log = console.log;
+require('dotenv').config();
+const fs = require('fs');
 const express = require('express');
 const app = express();
-const http = require('http').createServer(app);
+const http = (process.env.HTTPS === 'true' ?
+    require('https').createServer({
+        key: fs.readFileSync(process.env.SSL_KEY),
+        cert: fs.readFileSync(process.env.SSL_CERT)
+    }, app) : require('http').createServer(app));
 const io = require('socket.io')(http, {pingInterval: 5000});
 const MongoClient = require('mongodb').MongoClient;
-const database = "mongodb://localhost:27017/";
+const database = process.env.DB_URL;
 
-log('Načítám moduly..');
+console.log('Načítám moduly..');
 
 require(__dirname + '/antispam.js')(io);
 require(__dirname + '/commands.js')(io);
 
 let players = [];
 
-/*
-MongoClient.connect(database, {useUnifiedTopology: true}, function(err, db) {
+MongoClient.connect(database, { "useUnifiedTopology": true }, function(err, db) {
     if (err) throw err;
     let dbo = db.db("leosight-eco");
 
@@ -25,9 +29,8 @@ MongoClient.connect(database, {useUnifiedTopology: true}, function(err, db) {
         db.close();
     });
 });
-*/
 
-app.use(express.static(__dirname + '/client'));
+app.use(express.static(__dirname + '/client', { dotfiles: 'allow' } ));
 
 app.get('/', (req, res) => {
     res.sendFile(__dirname + '/client/index.html');

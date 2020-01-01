@@ -15,6 +15,7 @@
   },
   "homepage": "https://github.com/RatajVaver/leosight-eco#readme",
   "dependencies": {
+    "dotenv": "^8.2.0",
     "express": "^4.17.1",
     "mongodb": "^3.4.1",
     "socket-anti-spam": "^2.0.0",
