@@ -32,8 +32,8 @@ const db = {
     users: require(__dirname + '/db/users.js')(mongoWork)
 };
 
-let players = [];
-let users = [];
+let players = []; // Aktuálně připojení hráči
+let users = []; // Databáze uživatelů
 
 mongoWork(function(db, client) {
     let mySort = { username: 1 };
@@ -92,6 +92,9 @@ io.on('connection', function(socket){
                 if(userData){
                     socket.emit('chat', `Vítej, naposledy jsi se přihlásil ${utils.date(userData.lastlogin)}`, 'console');
                     userData.lastlogin = new Date().valueOf();
+                }else{
+                    socket.emit('chat', `Vítej v LeoSight Eco! Zdá se, že jsi tu poprvé, pokud potřebuješ s něčím pomoct, neváhej se obrátit na ostatní v místnosti #leosight-eco našeho Discord serveru (discord.gg/RJmtV3p).`, 'console');
+                    users.push( { username: username, security: response, lastlogin: new Date().valueOf() } );
                 }
 
                 io.emit('chat', `[#${index}] ${username} se přihlásil. 👋`, 'console');
