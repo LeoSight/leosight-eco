@@ -8,28 +8,39 @@ const http = (process.env.HTTPS === 'true' ?
         cert: fs.readFileSync(process.env.SSL_CERT)
     }, app) : require('http').createServer(app));
 const io = require('socket.io')(http, {pingInterval: 5000});
-const MongoClient = require('mongodb').MongoClient;
+const mongo = require('mongodb').MongoClient;
 const database = process.env.DB_URL;
+const mgOpts = { "useUnifiedTopology": true };
+
+const mongoWork = (cb) => {
+    mongo.connect(database, mgOpts, function(err, client) {
+        if (err) throw err;
+        let db = client.db("leosight-eco");
+        cb(db, client);
+    });
+};
 
 console.log('Načítám moduly..');
 
+const utils = require(__dirname + '/utils.js');
 require(__dirname + '/antispam.js')(io);
 require(__dirname + '/commands.js')(io);
 const security = require(__dirname + '/security.js');
 const account = require(__dirname + '/account.js')(security);
 const discord = require(__dirname + '/discord.js');
+const db = {
+    users: require(__dirname + '/db/users.js')(mongoWork)
+};
 
 let players = [];
+let users = [];
 
-MongoClient.connect(database, { "useUnifiedTopology": true }, function(err, db) {
-    if (err) throw err;
-    let dbo = db.db("leosight-eco");
-
-    let mySort = { name: 1 };
-    dbo.collection("users").find().sort(mySort).toArray(function(err, result) {
+mongoWork(function(db, client) {
+    let mySort = { username: 1 };
+    db.collection("users").find().sort(mySort).toArray(function(err, result) {
         if (err) throw err;
-        console.log(result);
-        db.close();
+        users = result;
+        client.close();
     });
 });
 
@@ -75,6 +86,14 @@ io.on('connection', function(socket){
                 players[index]['logged'] = true;
                 players[index]['security'] = response;
 
+                db.users.loginUpdate(username, response);
+
+                let userData = users.find(x => x.security === response);
+                if(userData){
+                    socket.emit('chat', `Vítej, naposledy jsi se přihlásil ${utils.date(userData.lastlogin)}`, 'console');
+                    userData.lastlogin = new Date().valueOf();
+                }
+
                 io.emit('chat', `[#${index}] ${username} se přihlásil. 👋`, 'console');
                 SendPlayerList();
             }
@@ -84,7 +103,7 @@ io.on('connection', function(socket){
     });
 
     socket.on('chat', function(msg) {
-        if (msg.length <= 255){
+        if (players[index] && players[index].logged && msg.length <= 255){
             if(msg === '!players'){
                 SendPlayerList();
             }else {
