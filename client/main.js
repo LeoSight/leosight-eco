@@ -10,17 +10,18 @@ $(function () {
 
     socket.on('connect', function() {
         $('#ping').html('Připojení navázáno!');
-        AddChatMessage('Navázáno připojení k serveru!', 'green');
+        AddChatMessage(null, 'Navázáno připojení k serveru!', '#45b70a');
         $('#login').show();
     });
 
     socket.on('disconnect', function() {
         $('#ping').html('Spojení ztraceno!');
-        AddChatMessage('Spojení se serverem bylo ztraceno!', 'red');
+        AddChatMessage(null, 'Spojení se serverem bylo ztraceno!', '#e1423e');
     });
 
     socket.on('players', function(playerList) {
-        $('#players').html('<p>Hráči online:</p><ul><li>' + playerList.join('</li><li>') + '</li></ul>');
+        $('#players').html('<p>Hráči online:</p><ul></ul>');
+        playerList.forEach( player => $('#players > ul').append('<li style="color:' + player.color + '">[#' + player.id + '] ' + player.username + '</li>') );
     });
 
     // LOGIN
@@ -41,9 +42,17 @@ $(function () {
 
     // CHAT
 
-    function AddChatMessage(msg, classes){
-        classes = classes || '';
-        messages.append($('<li>').text(msg).addClass(classes));
+    function AddChatMessage(username, msg, color){
+        color = color || '#fff';
+
+        let newline = $('<li>').appendTo(messages);
+        if(typeof(username) == 'string' && username.length > 0) {
+            $('<span class="username">').text(username + ': ').css('color', color).appendTo(newline);
+            $('<span class="text">').text(msg).appendTo(newline);
+        }else{
+            $('<span class="text">').text(msg).css('color', color).appendTo(newline);
+        }
+
         messages.animate({ scrollTop: messages.prop("scrollHeight")}, 500);
     }
 
@@ -62,14 +71,13 @@ $(function () {
 
     const map = $('#map');
     const move = $('#main');
+    const w = 50, h = 20;
 
     function CreateMap(){
-        const w = 50, h = 20;
-
         for (let i = -h; i <= h; i++) {
             let row = $('<div class="row"></div>').appendTo(map);
             for (let j = -w; j <= w; j++) {
-                $('<div class="cell">' + i + '<br>' + j + '</div>').appendTo(row);
+                $('<div class="cell">').html(j + '<br>' + i).attr('data-x', j).attr('data-y', i).appendTo(row);
             }
         }
 
@@ -88,8 +96,16 @@ $(function () {
 
         move.scrollTop( move.height() / 2 );
         move.scrollLeft( move.width() / 2 );
+
+        $('.cell').click(function() {
+            socket.emit('capture', $(this).data('x'), $(this).data('y'));
+        });
     }
     CreateMap();
+
+    socket.on('capture', function(color, x, y){
+        $('#map .row').eq(h + y).find('.cell').eq(w + x).css('background', color);
+    });
 
     // KLÁVESOVÉ ZKRATKY
 

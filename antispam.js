@@ -10,12 +10,12 @@ module.exports = function(io) {
     });
 
     socketAntiSpam.event.on('kick', (socket, data) => {
-        socket.emit('chat', 'Byl jsi vyhozen za spam!', 'red');
+        socket.emit('chat', null, 'Byl jsi vyhozen za spam!', '#e1423e');
         console.log('[KICK] Spam: ' + socket.ip);
     });
 
     socketAntiSpam.event.on('ban', (socket, data) => {
-        socket.emit('chat', 'Byl jsi zabanován za spam!', 'red');
+        socket.emit('chat', null, 'Byl jsi zabanován za spam!', '#e1423e');
         console.log('[BAN] Spam: ' + socket.ip);
     });
 

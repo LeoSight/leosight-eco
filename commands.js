@@ -10,7 +10,7 @@ module.exports = function(io) {
         switch (cmd[0]) {
             case 'say':
                 cmd.shift();
-                io.emit('chat', cmd.join(' '), 'console');
+                io.emit('chat', null, cmd.join(' '), '#44cee8');
                 console.log('[CHAT] Console: ' + cmd.join(' '));
                 break;
             case 'exit':
@@ -22,7 +22,7 @@ module.exports = function(io) {
         }
         rl.prompt();
     }).on('close', function () {
-        io.emit('chat', 'Server se vypíná!', 'console');
+        io.emit('chat', null, 'Server se vypíná!', '#44cee8');
         console.log('Vypínám server..');
         process.exit(0);
     });

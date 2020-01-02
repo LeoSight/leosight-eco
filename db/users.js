@@ -10,6 +10,16 @@ module.exports = function(mongoWork) {
                     client.close();
                 });
             });
+        },
+        updateColor: (security, color) => {
+            mongoWork(function (db, client) {
+                db.collection("users").updateOne( {'security': security}, { $set: {
+                    color: color
+                } }, function (err) {
+                    if (err) throw err;
+                    client.close();
+                });
+            });
         }
     }
 };

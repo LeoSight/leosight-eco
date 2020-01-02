@@ -68,7 +68,7 @@ io.on('connection', function(socket){
         console.log('[DISCONNECT] Uživatel [' + index + '] se odpojil');
 
         if(players[index] && players[index].logged) {
-            io.emit('chat', `[#${index}] ${players[index].username} se odpojil. 😴`, 'console');
+            io.emit('chat', null, `[#${index}] ${players[index].username} se odpojil. 😴`, '#44cee8');
         }
 
         players[index] = 0;
@@ -90,14 +90,14 @@ io.on('connection', function(socket){
 
                 let userData = users.find(x => x.security === response);
                 if(userData){
-                    socket.emit('chat', `Vítej, naposledy jsi se přihlásil ${utils.date(userData.lastlogin)}`, 'console');
+                    socket.emit('chat', null, `Vítej, naposledy jsi se přihlásil ${utils.date(userData.lastlogin)}`, '#44cee8');
                     userData.lastlogin = new Date().valueOf();
                 }else{
-                    socket.emit('chat', `Vítej v LeoSight Eco! Zdá se, že jsi tu poprvé, pokud potřebuješ s něčím pomoct, neváhej se obrátit na ostatní v místnosti #leosight-eco našeho Discord serveru (discord.gg/RJmtV3p).`, 'console');
+                    socket.emit('chat', null, `Vítej v LeoSight Eco! Zdá se, že jsi tu poprvé, pokud potřebuješ s něčím pomoct, neváhej se obrátit na ostatní v místnosti #leosight-eco našeho Discord serveru (discord.gg/RJmtV3p).`, '#44cee8');
                     users.push( { username: username, security: response, lastlogin: new Date().valueOf() } );
                 }
 
-                io.emit('chat', `[#${index}] ${username} se přihlásil. 👋`, 'console');
+                io.emit('chat', null, `[#${index}] ${username} se přihlásil. 👋`, '#44cee8');
                 SendPlayerList();
             }
 
@@ -107,12 +107,35 @@ io.on('connection', function(socket){
 
     socket.on('chat', function(msg) {
         if (players[index] && players[index].logged && msg.length <= 255){
-            if(msg === '!players'){
-                SendPlayerList();
-            }else {
-                io.emit('chat', `[#${index}] ${players[index].username}: ${msg}`);
+            let userData = users.find(x => x.security === players[index].security);
+
+            if(msg.startsWith('/')){
+                if(msg.startsWith('/color')){
+                    let hex = msg.replace('/color ', '');
+                    if(/^#([0-9A-F]{3}){1,2}$/i.test(hex)){
+                        db.users.updateColor(userData.security, hex);
+                        userData.color = hex;
+                        SendPlayerList();
+                    }
+                }else if(msg.startsWith('/players')) {
+                    SendPlayerList();
+                }
+            }else{
+                let color = '#fff';
+                if(userData && userData.color){
+                    color = userData.color;
+                }
+
+                io.emit('chat', `[#${index}] ${players[index].username}`, msg, color);
                 console.log(`[CHAT] [#${index}] ${players[index].username}: ${msg}`);
             }
+        }
+    });
+
+    socket.on('capture', function(x, y){
+        if (players[index] && players[index].logged) {
+            let userData = users.find(x => x.security === players[index].security);
+            io.emit('capture', userData.color, x, y);
         }
     });
 });
@@ -121,7 +144,8 @@ function SendPlayerList(){
     let playerList = [];
     players.forEach((value, key) => {
         if(value.logged) {
-            playerList.push(`[#${key}] ${value.username}`);
+            let userData = users.find(x => x.security === value.security);
+            playerList.push( { id: key, username: value.username, color: userData.color } );
         }
     });
     io.emit('players', playerList);
