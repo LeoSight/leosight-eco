@@ -17,6 +17,7 @@ require(__dirname + '/antispam.js')(io);
 require(__dirname + '/commands.js')(io);
 const security = require(__dirname + '/security.js');
 const account = require(__dirname + '/account.js')(security);
+const discord = require(__dirname + '/discord.js');
 
 let players = [];
 
