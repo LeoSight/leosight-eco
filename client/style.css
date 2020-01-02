@@ -160,4 +160,13 @@ body {
   padding: 5px 10px;
 }
 
+#players {
+  position: absolute;
+  top: 0;
+  left: 0;
+  background: #111;
+  color: #fff;
+  padding: 5px 10px;
+}
+
 /*# sourceMappingURL=style.css.map */

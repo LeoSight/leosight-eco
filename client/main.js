@@ -11,11 +11,16 @@ $(function () {
     socket.on('connect', function() {
         $('#ping').html('Připojení navázáno!');
         AddChatMessage('Navázáno připojení k serveru!', 'green');
+        $('#login').show();
     });
 
     socket.on('disconnect', function() {
         $('#ping').html('Spojení ztraceno!');
         AddChatMessage('Spojení se serverem bylo ztraceno!', 'red');
+    });
+
+    socket.on('players', function(playerList) {
+        $('#players').html('<p>Hráči online:</p><ul><li>' + playerList.join('</li><li>') + '</li></ul>');
     });
 
     // LOGIN
@@ -27,7 +32,7 @@ $(function () {
 
     socket.on('login', function(success, response){
         if(success) {
-            $('#login').remove();
+            $('#login').hide();
             console.log('Přihlášení úspěšné (' + response + ')');
         }else{
             $('#login .title').fadeOut(100).html(response).fadeIn(100);

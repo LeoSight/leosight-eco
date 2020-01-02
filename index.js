@@ -47,8 +47,10 @@ io.on('connection', function(socket){
     console.log('[CONNECT] Uživatel [' + index + '] se připojil z IP ' + remoteIp);
 
     socket.on('disconnect', function(){
-        players.splice(index);
         console.log('[DISCONNECT] Uživatel [' + index + '] se odpojil');
+        io.emit('chat', `[#${index}] ${players[index].username} se odpojil. 😴`, 'console');
+        players.splice(index);
+        SendPlayerList();
     });
 
     socket.on('login', function(username, password){
@@ -61,6 +63,9 @@ io.on('connection', function(socket){
                 players[index]['username'] = username;
                 players[index]['logged'] = true;
                 players[index]['security'] = response;
+
+                io.emit('chat', `[#${index}] ${username} se přihlásil. 👋`, 'console');
+                SendPlayerList();
             }
 
             socket.emit('login', success, response);
@@ -69,8 +74,20 @@ io.on('connection', function(socket){
 
     socket.on('chat', function(msg) {
         if (msg.length <= 255){
-            io.emit('chat', `${players[index].username} [#${index}]: ${msg}`);
-            console.log(`[CHAT] ${players[index].username} [#${index}]: ${msg}`);
+            if(msg === '!players'){
+                SendPlayerList();
+            }else {
+                io.emit('chat', `[#${index}] ${players[index].username}: ${msg}`);
+                console.log(`[CHAT] [#${index}] ${players[index].username}: ${msg}`);
+            }
         }
     });
 });
+
+function SendPlayerList(){
+    let playerList = [];
+    players.forEach((value, key) => {
+        playerList.push(`[#${key}] ${value.username}`);
+    });
+    io.emit('players', playerList);
+}
