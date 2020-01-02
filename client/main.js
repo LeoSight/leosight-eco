@@ -57,4 +57,53 @@ $(function () {
     });
 
     socket.on('chat', AddChatMessage);
+
+    // MAPA
+
+    const map = $('#map');
+    const move = $('#main');
+
+    function CreateMap(){
+        const w = 50, h = 20;
+
+        for (let i = -h; i <= h; i++) {
+            let row = $('<div class="row"></div>').appendTo(map);
+            for (let j = -w; j <= w; j++) {
+                $('<div class="cell">' + i + '<br>' + j + '</div>').appendTo(row);
+            }
+        }
+
+        let x, y;
+        let scroll = false;
+        move.mousemove(function(event) {
+            if (scroll) {
+                move.scrollTop(move.scrollTop() + (y - event.pageY));
+                move.scrollLeft(move.scrollLeft() + (x - event.pageX));
+            }
+            x = event.pageX;
+            y = event.pageY;
+        });
+        move.mousedown(function() { scroll = true; return false; });
+        move.mouseup(function() { scroll = false; return false; });
+
+        move.scrollTop( move.height() / 2 );
+        move.scrollLeft( move.width() / 2 );
+    }
+    CreateMap();
+
+    // KLÁVESOVÉ ZKRATKY
+
+    $(window).keypress(function(e) {
+        if ( $('input:focus').length > 0 ) {  return; }
+        if (e.which === 32) {
+            if($('#chat').is(':visible')) {
+                $('#chat,#players,#ping,#version').fadeOut(200);
+                $('#tip').html('Zobrazit HUD můžeš opět stisknutím mezerníku').fadeIn(100).delay(2000).fadeOut(100);
+            }else{
+                $('#chat,#players,#ping,#version').fadeIn(200);
+                $('#tip').html('');
+            }
+        }
+    });
+
 });
