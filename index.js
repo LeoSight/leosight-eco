@@ -43,13 +43,23 @@ http.listen(3005, () => console.log('Server spuštěn na portu 3005'));
 io.on('connection', function(socket){
     let remoteIp = socket.request.connection.remoteAddress;
     let remotePort = socket.request.connection.remotePort;
-    let index = players.push( { "username": 'Humorníček', "logged": false, "ip": remoteIp } ) - 1;
+    let playerData = { "username": 'Humorníček', "logged": false, "ip": remoteIp };
+    let index = players.indexOf(0);
+    if(index > -1){
+        players[index] = playerData;
+    }else{
+        index = players.push( playerData ) - 1;
+    }
     console.log('[CONNECT] Uživatel [' + index + '] se připojil z IP ' + remoteIp);
 
     socket.on('disconnect', function(){
         console.log('[DISCONNECT] Uživatel [' + index + '] se odpojil');
-        io.emit('chat', `[#${index}] ${players[index].username} se odpojil. 😴`, 'console');
-        players.splice(index);
+
+        if(players[index] && players[index].logged) {
+            io.emit('chat', `[#${index}] ${players[index].username} se odpojil. 😴`, 'console');
+        }
+
+        players[index] = 0;
         SendPlayerList();
     });
 
@@ -87,7 +97,9 @@ io.on('connection', function(socket){
 function SendPlayerList(){
     let playerList = [];
     players.forEach((value, key) => {
-        playerList.push(`[#${key}] ${value.username}`);
+        if(value.logged) {
+            playerList.push(`[#${key}] ${value.username}`);
+        }
     });
     io.emit('players', playerList);
 }
