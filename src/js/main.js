@@ -3,6 +3,7 @@ $(function () {
     const messages = $('#messages');
     let latency = 0;
     let info = { username: '', energy: 0, cells: 0 };
+    let selection = { x: 0, y: 0 };
 
     socket.on('pong', function(ms) {
         latency = ms;
@@ -73,13 +74,13 @@ $(function () {
 
     const map = $('#map');
     const move = $('#main');
-    const w = 50, h = 20;
+    const w = 30, h = 20;
 
     function CreateMap(){
         for (let i = -h; i <= h; i++) {
             let row = $('<div class="row"></div>').appendTo(map);
             for (let j = -w; j <= w; j++) {
-                $('<div class="cell">').html(j + '<br>' + i).attr('data-x', j).attr('data-y', i).appendTo(row);
+                $('<div class="cell">').data('x', j).data('y', i).appendTo(row);
             }
         }
 
@@ -93,8 +94,8 @@ $(function () {
             x = event.pageX;
             y = event.pageY;
         });
-        move.mousedown(function() { scroll = true; return false; });
-        move.mouseup(function() { scroll = false; return false; });
+        move.mousedown(function(e) { if(e.which === 1){ scroll = true; return false; } });
+        move.mouseup(function(e) { if(e.which === 1){ scroll = false; return false; } });
 
         move.scrollTop( move.height() / 2 );
         move.scrollLeft( move.width() / 2 );
@@ -103,18 +104,33 @@ $(function () {
             socket.emit('capture', $(this).data('x'), $(this).data('y'));
         });*/
 
+        move.oncontextmenu = function(){ return false; };
+
+        $('#map .cell').on('contextmenu', function(e) {
+            selection.x = $(this).data('x');
+            selection.y = $(this).data('y');
+            selection.owner = $(this).data('owner');
+            selection.isHQ = $(this).data('hq');
+            DrawSelection();
+        });
+
         $.contextMenu({
             selector: ".cell",
             build: function($trigger, e) {
                 const x = $trigger.data('x');
                 const y = $trigger.data('y');
+                const owner = $trigger.data('owner');
+                const hq = $trigger.data('hq');
 
                 return {
                     items: {
                         info: { name: "X: " + x + ", Y: " + y, disabled: true },
-                        owner: { name: "Vlastník: " + ($trigger.data('owner') || 'Nikdo'), disabled: true },
+                        owner: { name: "Vlastník: " + (owner || 'Nikdo'), disabled: true },
                         capture: { name: (info.cells === 0 ? "Vybudovat základnu (⚡1)" : "Obsadit pole (⚡1)"), callback: CaptureCell, disabled: function(){
-                            return !( info.energy > 0 && (CheckAdjacent(x, y) || info.cells === 0) );
+                            return !( info.energy > 0 && (CheckAdjacent(x, y) || info.cells === 0) && owner !== info.username && !hq );
+                        } },
+                        moveHQ: { name: "Přesunout základnu (⚡10)", callback: MoveHQ, disabled: function(){
+                            return !( info.energy >= 10 && info.cells > 0 && owner === info.username && !hq );
                         } }
                     }
                 };
@@ -143,16 +159,26 @@ $(function () {
         socket.emit('capture', $(this).data('x'), $(this).data('y'));
     }
 
+    function MoveHQ(){
+        socket.emit('movehq', $(this).data('x'), $(this).data('y'));
+    }
+
+    function DrawSelection(){
+        $('#selection').html(`X: ${selection.x}<br>Y: ${selection.y}<br>Vlastník: ${selection.owner || 'Nikdo'}<br>${selection.isHQ ? 'HQ!' : ''}`);
+    }
+
     socket.on('mapload', function(size){
         console.log('Načítám svět: ' + size);
     });
 
     socket.on('cell', function(x, y, username, color, isHQ){
-        let cell = $('#map .row').eq(h + y).find('.cell').eq(w + x)
-        cell.attr('data-owner', username).css('background', color);
+        let cell = $('#map .row').eq(h + y).find('.cell').eq(w + x);
+        cell.data('owner', username).css('background', color);
 
         if(isHQ){
-            cell.attr('data-hq', true).text('HQ').css('font-size', '16px');
+            cell.data('hq', true).text('HQ');
+        }else{
+            cell.data('hq', false).text('');
         }
     });
 
@@ -175,10 +201,10 @@ $(function () {
         if ( $('input:focus').length > 0 ) {  return; }
         if (e.which === 32) {
             if($('#chat').is(':visible')) {
-                $('#chat,#players,#serverinfo,#playerinfo').fadeOut(200);
+                $('#chat,#players,#serverinfo,#playerinfo,#selection').fadeOut(200);
                 $('#tip').html('Zobrazit HUD můžeš opět stisknutím mezerníku').fadeIn(100).delay(2000).fadeOut(100);
             }else{
-                $('#chat,#players,#serverinfo,#playerinfo').fadeIn(200);
+                $('#chat,#players,#serverinfo,#playerinfo,#selection').fadeIn(200);
                 $('#tip').html('');
             }
         }
