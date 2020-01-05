@@ -140,7 +140,7 @@ io.on('connection', function(socket){
                             world.push(cell);
                         }
 
-                        db.world.cellUpdate(x, y, userData.security);
+                        db.world.cellUpdate(x, y, userData.security, cell.hq);
                         io.emit('cell', x, y, userData.username, userData.color, userData.cells === 0);
                         //io.emit('capture', userData.color, x, y);
 
