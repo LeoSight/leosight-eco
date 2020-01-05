@@ -2,7 +2,7 @@ $(function () {
     const socket = io();
     const messages = $('#messages');
     let latency = 0;
-    let energy = 0;
+    let info = { username: '', energy: 0, cells: 0 };
 
     socket.on('pong', function(ms) {
         latency = ms;
@@ -29,6 +29,7 @@ $(function () {
 
     $('#login form').submit(function(e){
         e.preventDefault();
+        info.username = $('#username').val();
         socket.emit('login', $('#username').val(), $('#password').val());
     });
 
@@ -105,17 +106,38 @@ $(function () {
         $.contextMenu({
             selector: ".cell",
             build: function($trigger, e) {
+                const x = $trigger.data('x');
+                const y = $trigger.data('y');
+
                 return {
                     items: {
-                        info: { name: "X: " + $trigger.data('x') + ", Y: " + $trigger.data('y'), disabled: true },
+                        info: { name: "X: " + x + ", Y: " + y, disabled: true },
                         owner: { name: "Vlastník: " + ($trigger.data('owner') || 'Nikdo'), disabled: true },
-                        capture: { name: "Obsadit pole (⚡1)", callback: CaptureCell, disabled: function(){ return energy <= 0; } }
+                        capture: { name: (info.cells === 0 ? "Vybudovat základnu (⚡1)" : "Obsadit pole (⚡1)"), callback: CaptureCell, disabled: function(){
+                            return !( info.energy > 0 && (CheckAdjacent(x, y) || info.cells === 0) );
+                        } }
                     }
                 };
             }
         });
     }
     CreateMap();
+
+    /**
+     * @return {boolean}
+     */
+    function CheckAdjacent(x, y){
+        const mapRows = $('#map .row');
+        const adj_left = mapRows.eq(h + y).find('.cell').eq(w + x - 1);
+        const adj_right = mapRows.eq(h + y).find('.cell').eq(w + x + 1);
+        const adj_top = mapRows.eq(h + y - 1).find('.cell').eq(w + x);
+        const adj_bottom = mapRows.eq(h + y + 1).find('.cell').eq(w + x);
+
+        return (adj_left && adj_left.data('owner') === info.username) ||
+            (adj_right && adj_right.data('owner') === info.username) ||
+            (adj_top && adj_top.data('owner') === info.username) ||
+            (adj_bottom && adj_bottom.data('owner') === info.username);
+    }
 
     function CaptureCell(){
         socket.emit('capture', $(this).data('x'), $(this).data('y'));
@@ -125,13 +147,22 @@ $(function () {
         console.log('Načítám svět: ' + size);
     });
 
-    socket.on('cell', function(x, y, username, color){
-        $('#map .row').eq(h + y).find('.cell').eq(w + x).attr('data-owner', username).css('background', color);
+    socket.on('cell', function(x, y, username, color, isHQ){
+        let cell = $('#map .row').eq(h + y).find('.cell').eq(w + x)
+        cell.attr('data-owner', username).css('background', color);
+
+        if(isHQ){
+            cell.attr('data-hq', true).text('HQ').css('font-size', '16px');
+        }
     });
 
-    socket.on('energy', function(newEnergy){
-        energy = newEnergy;
-        $('#energy').text('⚡ ' + newEnergy + '/10');
+    socket.on('info', function(newInfo){
+        Object.keys(newInfo).forEach((key) => {
+            info[key] = newInfo[key];
+        });
+
+        $('#energy > span').text(info.energy);
+        $('#cells > span').text(info.cells);
     });
 
     socket.on('capture', function(color, x, y){

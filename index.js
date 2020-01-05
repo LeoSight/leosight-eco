@@ -109,62 +109,119 @@ io.on('connection', function(socket){
         }
     });
 
-    socket.on('chat', function(msg) {
-        if (players[index] && players[index].logged && msg.length <= 255){
-            let userData = users.find(x => x.security === players[index].security);
-
-            if(msg.startsWith('/')){
-                if(msg.startsWith('/color')){
-                    let hex = msg.replace('/color ', '');
-                    if(/^#([0-9A-F]{3}){1,2}$/i.test(hex)){
-                        db.users.updateColor(userData.security, hex);
-                        userData.color = hex;
-                        SendPlayerList();
-                    }
-                }else if(msg.startsWith('/players')) {
-                    SendPlayerList();
-                }
-            }else{
-                let color = '#fff';
-                if(userData && userData.color){
-                    color = userData.color;
-                }
-
-                io.emit('chat', `[#${index}] ${players[index].username}`, msg, color);
-                console.log(`[CHAT] [#${index}] ${players[index].username}: ${msg}`);
-            }
-        }
-    });
+    socket.on('chat', (msg) => ChatHandler(msg, index));
 
     socket.on('capture', function(x, y){
         if (players[index] && players[index].logged) {
             let userData = users.find(x => x.security === players[index].security);
             if(userData && userData.color && userData.energy) {
                 if(userData.energy > 0) {
-                    let cell = users.find(d => d.x === x && d.y === y);
-                    if(cell){
-                        cell.owner = players[index].security;
-                    }else{
-                        world.push({ x: x, y: y, owner: players[index].security });
+                    userData.cells = CountPlayerCells(userData.security);
+                    if(userData.cells === 0 || CheckAdjacent(x, y, userData.security)) {
+                        let cell = users.find(d => d.x === x && d.y === y);
+                        if (cell) {
+                            if(cell.hq) return; // Nelze zabrat HQ
+                            if (cell.owner) {
+                                if(userData.cells === 0) return; // Nemůže zabrat cizí čtverec jako první tah
+                                if(cell.owner === userData.security) return; // Nelze zabrat vlastní čtverec znovu
+
+                                let oldOwner = users.find(x => x.security === cell.owner);
+                                if (oldOwner && oldOwner.socket) {
+                                    oldOwner.cells = CountPlayerCells(oldOwner.security);
+                                    oldOwner.socket.emit('info', { cells: oldOwner.cells });
+                                }
+                            }
+
+                            cell.owner = players[index].security;
+                            if(userData.cells === 0) cell.hq = true;
+                        } else {
+                            cell = { x: x, y: y, owner: players[index].security };
+                            if(userData.cells === 0) cell.hq = true;
+                            world.push(cell);
+                        }
+
+                        db.world.cellUpdate(x, y, userData.security);
+                        io.emit('cell', x, y, userData.username, userData.color, userData.cells === 0);
+                        //io.emit('capture', userData.color, x, y);
+
+                        userData.energy -= 1;
+                        userData.cells += 1;
+
+                        socket.emit('info', { energy: userData.energy, cells: userData.cells });
                     }
-
-                    db.world.cellUpdate(x, y, userData.security);
-                    io.emit('cell', x, y, userData.username, userData.color);
-                    //io.emit('capture', userData.color, x, y);
-
-                    userData.energy -= 1;
-                    socket.emit('energy', userData.energy);
                 }
             }
         }
     });
 });
 
+function ChatHandler(msg, index) {
+    if (players[index] && players[index].logged && msg.length <= 255){
+        let userData = users.find(x => x.security === players[index].security);
+
+        if(msg.startsWith('/')){
+            if(msg.startsWith('/color')){
+                let hex = msg.replace('/color ', '');
+                if(/^#([0-9A-F]{3}){1,2}$/i.test(hex)){
+                    db.users.updateColor(userData.security, hex);
+                    userData.color = hex;
+                    SendPlayerList();
+                    UpdatePlayerCells(userData.security);
+                }
+            }else if(msg.startsWith('/players')) {
+                SendPlayerList();
+            }
+        }else{
+            let color = '#fff';
+            if(userData && userData.color){
+                color = userData.color;
+            }
+
+            io.emit('chat', `[#${index}] ${players[index].username}`, msg, color);
+            console.log(`[CHAT] [#${index}] ${players[index].username}: ${msg}`);
+        }
+    }
+}
+
+/**
+ * @return {number}
+ */
+function CountPlayerCells(security){
+    let i = 0;
+    world.forEach(cell => {
+        if(cell.owner === security) {
+            i++;
+        }
+    });
+    return i;
+}
+
+function UpdatePlayerCells(security){
+    world.forEach(cell => {
+        if(cell.owner === security) {
+            let owner = users.find(x => x.security === security);
+            io.emit('cell', cell.x, cell.y, owner.username, owner.color, cell.hq);
+        }
+    });
+}
+
+function CheckAdjacent(x, y, security){
+    let adj_left = world.find(d => d.x === x - 1 && d.y === y);
+    let adj_right = world.find(d => d.x === x + 1 && d.y === y);
+    let adj_top = world.find(d => d.x === x && d.y === y - 1);
+    let adj_bottom = world.find(d => d.x === x && d.y === y + 1);
+
+    return (adj_left && adj_left.owner === security) ||
+            (adj_right && adj_right.owner === security) ||
+            (adj_top && adj_top.owner === security) ||
+            (adj_bottom && adj_bottom.owner === security);
+}
+
 function SendMap(socket){
     socket.emit('mapload', world.length);
     world.forEach(cell => {
         let owner = users.find(x => x.security === cell.owner);
-        socket.emit('cell', cell.x, cell.y, owner.username, owner.color);
+        socket.emit('cell', cell.x, cell.y, owner.username, owner.color, cell.hq);
     });
 }
 
@@ -179,17 +236,22 @@ function SendPlayerList(){
     io.emit('players', playerList);
 }
 
-function FetchUserData(socket, index){
-    let userData = users.find(x => x.security === players[index].security);
+function FetchUserData(socket, security){
+    let info = {};
+    let userData = users.find(x => x.security === security);
     if(userData) {
         if(userData.energy){
-            socket.emit('energy', userData.energy);
+            info.energy = userData.energy;
         }else{
             db.users.updateEnergy(userData.security, 0);
-            socket.emit('energy', 0);
+            info.energy = 0;
         }
+
+        info.cells = CountPlayerCells(userData.security);
+
+        socket.emit('info', info);
     }else{
-        console.log('[ERROR] Nepodařilo se načíst data hráči ' + players[index].username + '!');
+        console.log('[ERROR] Nepodařilo se načíst data hráče "' + security + '"!');
     }
 }
 
@@ -215,7 +277,7 @@ function LoginCallback(socket, index, username, success, response){
         io.emit('chat', null, `[#${index}] ${username} se přihlásil. 👋`, '#44cee8');
 
         SendPlayerList();
-        FetchUserData(socket, index);
+        FetchUserData(socket, response);
     }
 
     socket.emit('login', success, response);
@@ -231,7 +293,7 @@ function RestoreEnergy() {
             db.users.updateEnergy(userData.security, newEnergy);
 
             if(userData.socket) {
-                userData.socket.emit('energy', newEnergy);
+                userData.socket.emit('info', {energy: newEnergy});
             }
         }
     });
