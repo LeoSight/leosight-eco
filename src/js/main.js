@@ -2,6 +2,7 @@ $(function () {
     const socket = io();
     const messages = $('#messages');
     let latency = 0;
+    let energy = 0;
 
     socket.on('pong', function(ms) {
         latency = ms;
@@ -97,11 +98,41 @@ $(function () {
         move.scrollTop( move.height() / 2 );
         move.scrollLeft( move.width() / 2 );
 
-        $('.cell').click(function() {
+        /*$('.cell').click(function() {
             socket.emit('capture', $(this).data('x'), $(this).data('y'));
+        });*/
+
+        $.contextMenu({
+            selector: ".cell",
+            build: function($trigger, e) {
+                return {
+                    items: {
+                        info: { name: "X: " + $trigger.data('x') + ", Y: " + $trigger.data('y'), disabled: true },
+                        owner: { name: "Vlastník: " + ($trigger.data('owner') || 'Nikdo'), disabled: true },
+                        capture: { name: "Obsadit pole (⚡1)", callback: CaptureCell, disabled: function(){ return energy <= 0; } }
+                    }
+                };
+            }
         });
     }
     CreateMap();
+
+    function CaptureCell(){
+        socket.emit('capture', $(this).data('x'), $(this).data('y'));
+    }
+
+    socket.on('mapload', function(size){
+        console.log('Načítám svět: ' + size);
+    });
+
+    socket.on('cell', function(x, y, username, color){
+        $('#map .row').eq(h + y).find('.cell').eq(w + x).attr('data-owner', username).css('background', color);
+    });
+
+    socket.on('energy', function(newEnergy){
+        energy = newEnergy;
+        $('#energy').text('⚡ ' + newEnergy + '/10');
+    });
 
     socket.on('capture', function(color, x, y){
         $('#map .row').eq(h + y).find('.cell').eq(w + x).css('background', color);
@@ -113,10 +144,10 @@ $(function () {
         if ( $('input:focus').length > 0 ) {  return; }
         if (e.which === 32) {
             if($('#chat').is(':visible')) {
-                $('#chat,#players,#ping,#version').fadeOut(200);
+                $('#chat,#players,#serverinfo,#playerinfo').fadeOut(200);
                 $('#tip').html('Zobrazit HUD můžeš opět stisknutím mezerníku').fadeIn(100).delay(2000).fadeOut(100);
             }else{
-                $('#chat,#players,#ping,#version').fadeIn(200);
+                $('#chat,#players,#serverinfo,#playerinfo').fadeIn(200);
                 $('#tip').html('');
             }
         }

@@ -80,7 +80,7 @@ html, body, #wrapper{
     }
 }
 
-#chat, #ping, #version, #players{
+#chat, #serverinfo, #playerinfo, #players{
     background: #111;
     color: #fff;
     opacity: .8;
@@ -130,16 +130,6 @@ html, body, #wrapper{
             &:nth-child(odd) {
                 background: #1a1a1a;
             }
-
-            &.red{
-                color: #e1423e;
-            }
-            &.green{
-                color: #45b70a;
-            }
-            &.console{
-                color: #44cee8;
-            }
         }
     }
 
@@ -164,14 +154,14 @@ html, body, #wrapper{
     }
 }
 
-#ping{
+#playerinfo{
     position: absolute;
     top: 0;
     right: 8px;
     padding: 5px 10px;
 }
 
-#version{
+#serverinfo{
     position: absolute;
     bottom: 8px;
     right: 8px;
@@ -224,6 +214,10 @@ html, body, #wrapper{
                 width: 32px;
                 height: 32px;
                 font-size: 8px;
+
+                &.context-menu-active{
+                    border: 1px solid #00b8b8;
+                }
             }
         }
     }
