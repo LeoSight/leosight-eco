@@ -3,7 +3,25 @@ $(function () {
     const messages = $('#messages');
     let latency = 0;
     let info = { username: '', energy: 0, cells: 0 };
-    let selection = { x: 0, y: 0 };
+    let selection = { };
+
+    const builds = {
+        HQ: 1,
+        GOLD: 2,
+        COAL: 3,
+        OIL: 4,
+        IRON: 5,
+        BAUXITE: 6,
+    };
+    const builds_info = [
+        { title: 'Pozemek' },
+        { title: 'Základna', abbr: 'HQ' },
+        { title: 'Zlatý důl', abbr: 'Z' },
+        { title: 'Uhelný důl', abbr: 'U' },
+        { title: 'Ropný vrt', abbr: 'R' },
+        { title: 'Železný důl', abbr: 'Ž' },
+        { title: 'Bauxitový důl', abbr: 'B' },
+    ];
 
     socket.on('pong', function(ms) {
         latency = ms;
@@ -100,17 +118,13 @@ $(function () {
         move.scrollTop( move.height() / 2 );
         move.scrollLeft( move.width() / 2 );
 
-        /*$('.cell').click(function() {
-            socket.emit('capture', $(this).data('x'), $(this).data('y'));
-        });*/
-
         move.oncontextmenu = function(){ return false; };
 
         $('#map .cell').on('contextmenu', function(e) {
             selection.x = $(this).data('x');
             selection.y = $(this).data('y');
             selection.owner = $(this).data('owner');
-            selection.isHQ = $(this).data('hq');
+            selection.build = $(this).data('build');
             DrawSelection();
         });
 
@@ -120,19 +134,42 @@ $(function () {
                 const x = $trigger.data('x');
                 const y = $trigger.data('y');
                 const owner = $trigger.data('owner');
-                const hq = $trigger.data('hq');
+                const build = $trigger.data('build');
+
+                let items = {
+                    info: { name: "X: " + x + ", Y: " + y, disabled: true },
+                    owner: { name: "Vlastník: " + (owner || 'Nikdo'), disabled: true },
+                    type: { name: "Typ: " + (builds_info[build] ? builds_info[build].title : 'Pozemek'), disabled: true },
+                };
+
+                if(build !== builds.HQ) {
+                    if (owner === info.username) {
+                        items.unclaim = {
+                            name: "Zrušit obsazení (⚡1)", callback: UnclaimCell, disabled: function () {
+                                return !(info.energy > 0);
+                            }
+                        };
+
+                        if(build == null) {
+                            items.moveHQ = {
+                                name: "Přesunout základnu (⚡10)", callback: MoveHQ, disabled: function () {
+                                    return !(info.energy >= 10 && info.cells > 0);
+                                }
+                            };
+                        }
+                    } else {
+                        items.capture = {
+                            name: (info.cells === 0 ? "Vybudovat základnu (⚡1)" : "Obsadit pole (⚡1)"),
+                            callback: CaptureCell,
+                            disabled: function () {
+                                return !(info.energy > 0 && (CheckAdjacent(x, y) || info.cells === 0));
+                            }
+                        };
+                    }
+                }
 
                 return {
-                    items: {
-                        info: { name: "X: " + x + ", Y: " + y, disabled: true },
-                        owner: { name: "Vlastník: " + (owner || 'Nikdo'), disabled: true },
-                        capture: { name: (info.cells === 0 ? "Vybudovat základnu (⚡1)" : "Obsadit pole (⚡1)"), callback: CaptureCell, disabled: function(){
-                            return !( info.energy > 0 && (CheckAdjacent(x, y) || info.cells === 0) && owner !== info.username && !hq );
-                        } },
-                        moveHQ: { name: "Přesunout základnu (⚡10)", callback: MoveHQ, disabled: function(){
-                            return !( info.energy >= 10 && info.cells > 0 && owner === info.username && !hq );
-                        } }
-                    }
+                    items: items
                 };
             }
         });
@@ -159,26 +196,45 @@ $(function () {
         socket.emit('capture', $(this).data('x'), $(this).data('y'));
     }
 
+    function UnclaimCell(){
+        socket.emit('unclaim', $(this).data('x'), $(this).data('y'));
+    }
+
     function MoveHQ(){
         socket.emit('movehq', $(this).data('x'), $(this).data('y'));
     }
 
     function DrawSelection(){
-        $('#selection').html(`X: ${selection.x}<br>Y: ${selection.y}<br>Vlastník: ${selection.owner || 'Nikdo'}<br>${selection.isHQ ? 'HQ!' : ''}`);
+        $('#selection').html(`X: ${selection.x}<br>Y: ${selection.y}<br>Vlastník: ${selection.owner || 'Nikdo'}<br>Typ: ${builds_info[selection.build] ? builds_info[selection.build].title : 'Pozemek'}`);
+    }
+
+    /**
+     * @return {string}
+     */
+    function HexToBackground(hex){
+        hex = hex.replace('#','');
+        let r = parseInt(hex.substring(0,2), 16);
+        let g = parseInt(hex.substring(2,4), 16);
+        let b = parseInt(hex.substring(4,6), 16);
+        return `rgba(${r}, ${g}, ${b}, .8)`;
     }
 
     socket.on('mapload', function(size){
         console.log('Načítám svět: ' + size);
     });
 
-    socket.on('cell', function(x, y, username, color, isHQ){
+    socket.on('cell', function(x, y, username, color, build){
         let cell = $('#map .row').eq(h + y).find('.cell').eq(w + x);
-        cell.data('owner', username).css('background', color);
+        if(username) {
+            cell.data('owner', username).data('build', build).css('background', HexToBackground(color));
 
-        if(isHQ){
-            cell.data('hq', true).text('HQ');
+            if(builds_info[build] && builds_info[build].abbr) {
+                cell.text(builds_info[build].abbr);
+            }else{
+                cell.text('');
+            }
         }else{
-            cell.data('hq', false).text('');
+            cell.data('owner', null).css('background', '');
         }
     });
 
