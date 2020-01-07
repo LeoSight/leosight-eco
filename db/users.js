@@ -15,7 +15,18 @@ module.exports = function(mongoWork) {
             mongoWork(function (db, client) {
                 db.collection("users").updateOne( {'security': security}, { $set: {
                         color: '#fff',
-                        energy: 0
+                        energy: 0,
+                        money: 0
+                    } }, function (err) {
+                    if (err) throw err;
+                    client.close();
+                });
+            });
+        },
+        update: (security, key, value) => {
+            mongoWork(function (db, client) {
+                db.collection("users").updateOne( {'security': security}, { $set: {
+                        [key]: value
                     } }, function (err) {
                     if (err) throw err;
                     client.close();

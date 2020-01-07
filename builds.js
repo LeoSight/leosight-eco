@@ -5,4 +5,5 @@ module.exports = {
     OIL: 4,
     IRON: 5,
     BAUXITE: 6,
+    FORT: 7,
 };

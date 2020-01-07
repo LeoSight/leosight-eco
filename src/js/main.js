@@ -2,7 +2,7 @@ $(function () {
     const socket = io();
     const messages = $('#messages');
     let latency = 0;
-    let info = { username: '', energy: 0, cells: 0 };
+    let info = { username: '', energy: 0, money: 0, cells: 0 };
     let selection = { };
 
     const builds = {
@@ -12,7 +12,9 @@ $(function () {
         OIL: 4,
         IRON: 5,
         BAUXITE: 6,
+        FORT: 7,
     };
+
     const builds_info = [
         { title: 'Pozemek' },
         { title: 'Základna', abbr: 'HQ' },
@@ -21,6 +23,7 @@ $(function () {
         { title: 'Ropný vrt', abbr: 'R' },
         { title: 'Železný důl', abbr: 'Ž' },
         { title: 'Bauxitový důl', abbr: 'B' },
+        { title: 'Pevnost', abbr: 'P' },
     ];
 
     socket.on('pong', function(ms) {
@@ -65,6 +68,7 @@ $(function () {
 
     function AddChatMessage(username, msg, color){
         color = color || '#fff';
+        let scroll = (messages.scrollTop() + messages.height() > messages.prop("scrollHeight") - 40);
 
         let newline = $('<li>').appendTo(messages);
         if(typeof(username) == 'string' && username.length > 0) {
@@ -74,7 +78,9 @@ $(function () {
             $('<span class="text">').text(msg).css('color', color).appendTo(newline);
         }
 
-        messages.animate({ scrollTop: messages.prop("scrollHeight")}, 500);
+        if(scroll){
+            messages.animate({scrollTop: messages.prop("scrollHeight")}, 500);
+        }
     }
 
     $('#chat form').submit(function(e){
@@ -156,15 +162,43 @@ $(function () {
                                     return !(info.energy >= 10 && info.cells > 0);
                                 }
                             };
+
+                            if(info.cells > 0) {
+                                items.buildFort = {
+                                    name: "Postavit pevnost (⚡10+💰100)", callback: BuildFort, disabled: function () {
+                                        return !(info.energy >= 10 && info.money >= 100);
+                                    }
+                                };
+                            }
                         }
                     } else {
-                        items.capture = {
-                            name: (info.cells === 0 ? "Vybudovat základnu (⚡1)" : "Obsadit pole (⚡1)"),
-                            callback: CaptureCell,
-                            disabled: function () {
-                                return !(info.energy > 0 && (CheckAdjacent(x, y) || info.cells === 0));
+                        if(owner == null) {
+                            items.capture = {
+                                name: (info.cells === 0 ? "Vybudovat základnu (⚡1)" : "Obsadit pole (⚡1)"),
+                                callback: CaptureCell,
+                                disabled: function () {
+                                    return !(info.energy >= 1 && (CheckAdjacent(x, y) || info.cells === 0));
+                                }
+                            };
+                        }else{
+                            if(build === builds.FORT && info.cells > 0){
+                                items.capture = {
+                                    name: "Dobýt pevnost (⚡10)",
+                                    callback: CaptureCell,
+                                    disabled: function () {
+                                        return !(info.energy >= 10 && CheckAdjacent(x, y));
+                                    }
+                                };
+                            }else{
+                                items.capture = {
+                                    name: (info.cells === 0 ? "Vybudovat základnu (⚡2)" : "Obsadit pole (⚡2)"),
+                                    callback: CaptureCell,
+                                    disabled: function () {
+                                        return !(info.energy >= 2 && (CheckAdjacent(x, y) || info.cells === 0));
+                                    }
+                                };
                             }
-                        };
+                        }
                     }
                 }
 
@@ -204,6 +238,10 @@ $(function () {
         socket.emit('movehq', $(this).data('x'), $(this).data('y'));
     }
 
+    function BuildFort(){
+        socket.emit('build', $(this).data('x'), $(this).data('y'), builds.FORT);
+    }
+
     function DrawSelection(){
         $('#selection').html(`X: ${selection.x}<br>Y: ${selection.y}<br>Vlastník: ${selection.owner || 'Nikdo'}<br>Typ: ${builds_info[selection.build] ? builds_info[selection.build].title : 'Pozemek'}`);
     }
@@ -216,7 +254,7 @@ $(function () {
         let r = parseInt(hex.substring(0,2), 16);
         let g = parseInt(hex.substring(2,4), 16);
         let b = parseInt(hex.substring(4,6), 16);
-        return `rgba(${r}, ${g}, ${b}, .8)`;
+        return `rgba(${r}, ${g}, ${b}, .5)`;
     }
 
     socket.on('mapload', function(size){
@@ -227,14 +265,14 @@ $(function () {
         let cell = $('#map .row').eq(h + y).find('.cell').eq(w + x);
         if(username) {
             cell.data('owner', username).data('build', build).css('background', HexToBackground(color));
-
-            if(builds_info[build] && builds_info[build].abbr) {
-                cell.text(builds_info[build].abbr);
-            }else{
-                cell.text('');
-            }
         }else{
             cell.data('owner', null).css('background', '');
+        }
+
+        if(builds_info[build] && builds_info[build].abbr) {
+            cell.text(builds_info[build].abbr);
+        }else{
+            cell.text('');
         }
     });
 
@@ -244,6 +282,7 @@ $(function () {
         });
 
         $('#energy > span').text(info.energy);
+        $('#money > span').text(info.money);
         $('#cells > span').text(info.cells);
     });
 

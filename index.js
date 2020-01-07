@@ -119,6 +119,7 @@ io.on('connection', function(socket){
                 if(userData.energy > 0) {
                     userData.cells = CountPlayerCells(userData.security);
                     if(userData.cells === 0 || CheckAdjacent(x, y, userData.security)) {
+                        let energyCost = 1;
                         let cell = world.find(d => d.x === x && d.y === y);
                         if (cell) {
                             if(cell.build === builds.HQ) return; // Nelze zabrat HQ
@@ -127,9 +128,19 @@ io.on('connection', function(socket){
                                 if(cell.owner === userData.security) return; // Nelze zabrat vlastní čtverec znovu
 
                                 let oldOwner = users.find(x => x.security === cell.owner);
-                                if (oldOwner && oldOwner.socket) {
-                                    oldOwner.cells = CountPlayerCells(oldOwner.security);
-                                    oldOwner.socket.emit('info', { cells: oldOwner.cells });
+                                if (oldOwner) {
+                                    if(userData.energy < 2) return; // Zabrání již obsazeného pole stojí 2 energie
+                                    energyCost = 2;
+
+                                    if(cell.build === builds.FORT){
+                                        if(userData.energy < 10) return; // Zabrání pevnosti stojí 10 energie
+                                        energyCost = 10;
+                                    }
+
+                                    if(oldOwner.socket) {
+                                        oldOwner.cells = CountPlayerCells(oldOwner.security);
+                                        oldOwner.socket.emit('info', {cells: oldOwner.cells});
+                                    }
                                 }
                             }
 
@@ -144,7 +155,7 @@ io.on('connection', function(socket){
                         db.world.cellUpdate(x, y, userData.security, cell.build);
                         io.emit('cell', x, y, userData.username, userData.color, cell.build);
 
-                        userData.energy -= 1;
+                        userData.energy -= energyCost;
                         userData.cells += 1;
 
                         socket.emit('info', { energy: userData.energy, cells: userData.cells });
@@ -195,6 +206,27 @@ io.on('connection', function(socket){
                         userData.cells -= 1;
 
                         socket.emit('info', { energy: userData.energy, cells: userData.cells });
+                    }
+                }
+            }
+        }
+    });
+
+    socket.on('build', function(x, y, building){
+        if (players[index] && players[index].logged) {
+            let userData = users.find(x => x.security === players[index].security);
+            if (userData && userData.energy && userData.money) {
+                if (building === builds.FORT && userData.energy >= 10 && userData.money >= 100) {
+                    let cell = world.find(d => d.x === x && d.y === y);
+                    if(cell && cell.owner === userData.security && cell.build == null){
+                        cell.build = builds.FORT;
+                        db.world.cellUpdate(x, y, userData.security, cell.build);
+                        io.emit('cell', x, y, userData.security, userData.color, cell.build);
+
+                        userData.energy -= 10;
+                        userData.money -= 100;
+
+                        socket.emit('info', { energy: userData.energy, money: userData.money });
                     }
                 }
             }
@@ -271,7 +303,7 @@ function SendMap(socket){
         if(owner) {
             socket.emit('cell', cell.x, cell.y, owner.username, owner.color, cell.build);
         }else{
-            socket.emit('cell', cell.x, cell.y, 'ERROR', '#000', null);
+            socket.emit('cell', cell.x, cell.y, null, null, cell.build);
         }
     });
 }
@@ -298,6 +330,7 @@ function FetchUserData(socket, security){
             info.energy = 0;
         }
 
+        info.money = userData.money || 0;
         info.cells = CountPlayerCells(userData.security);
 
         socket.emit('info', info);
@@ -334,7 +367,7 @@ function LoginCallback(socket, index, username, success, response){
     socket.emit('login', success, response);
 }
 
-function RestoreEnergy() {
+function Periodic() {
     users.forEach(userData => {
         if(!userData.energy) userData.energy = 0;
         let newEnergy = Math.min(userData.energy + 1, 10);
@@ -349,6 +382,22 @@ function RestoreEnergy() {
         }
     });
 
-    return Promise.delay(5000).then(() => RestoreEnergy());
+    world.filter(x => x.build === builds.GOLD).forEach(cell => {
+        if(cell.owner){
+            let userData = users.find(x => x.security === cell.owner);
+            if(userData){
+                let money = userData.money || 0;
+                money += 5;
+                userData.money = money;
+                db.users.update(userData.security, 'money', money);
+
+                if(userData.socket){
+                    userData.socket.emit('info', {money: money});
+                }
+            }
+        }
+    });
+
+    return Promise.delay(5000).then(() => Periodic());
 }
-RestoreEnergy();
+Periodic();
