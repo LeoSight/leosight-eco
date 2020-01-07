@@ -222,7 +222,7 @@ io.on('connection', function(socket){
                     if(cell && cell.owner === userData.security && cell.build == null){
                         cell.build = builds.FORT;
                         db.world.cellUpdate(x, y, userData.security, cell.build);
-                        io.emit('cell', x, y, userData.security, userData.color, cell.build);
+                        io.emit('cell', x, y, userData.username, userData.color, cell.build);
 
                         userData.energy -= 10;
                         userData.money -= 100;
