@@ -358,12 +358,13 @@ function GetAdjacent(x, y){
  */
 function CheckAdjacent(x, y, security){
     let adjacent = GetAdjacent(x, y);
+    let r = false;
     adjacent.forEach(d => {
         if(d.owner === security){
-            return true;
+            r = true;
         }
     });
-    return false;
+    return r;
 }
 
 /**
@@ -371,12 +372,13 @@ function CheckAdjacent(x, y, security){
  */
 function AdjacentMine(x, y){
     let adjacent = GetAdjacent(x, y);
+    let r = false;
     adjacent.forEach(d => {
         if(d.build === builds.GOLD){
-            return true;
+            r = true;
         }
     });
-    return false;
+    return r;
 }
 
 function SendMap(socket){

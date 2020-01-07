@@ -232,12 +232,13 @@ $(function () {
      */
     function CheckAdjacent(x, y){
         let adjacent = GetAdjacent(x, y);
+        let r = false;
         adjacent.forEach(d => {
             if(d.data('owner') === info.username){
-                return true;
+                r = true;
             }
         });
-        return false;
+        return r;
     }
 
     /**
@@ -245,12 +246,13 @@ $(function () {
      */
     function AdjacentMine(x, y){
         let adjacent = GetAdjacent(x, y);
+        let r = false;
         adjacent.forEach(d => {
             if(d.data('build') === builds.GOLD){
-                return true;
+                r = true;
             }
         });
-        return false;
+        return r;
     }
 
     function CaptureCell(){
