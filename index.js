@@ -248,7 +248,7 @@ function ChatHandler(msg, index) {
             if(cmd === 'color') {
                 let hex = msg.replace('/color ', '');
                 if (/^#([0-9A-F]{3}){1,2}$/i.test(hex)) {
-                    db.users.updateColor(userData.security, hex);
+                    db.users.update(userData.security, 'color', hex);
                     userData.color = hex;
                     SendPlayerList();
                     UpdatePlayerCells(userData.security);
@@ -271,14 +271,14 @@ function ChatHandler(msg, index) {
                 }else{
                     players[index].socket.emit('chat', null, `SYNTAX: /w [ID] [Zpráva]`, '#e8b412');
                 }
-            }else if(cmd === 'pay'){
-                if(!isNaN(args[1]) && !isNaN(args[2])){
+            }else if(cmd === 'pay') {
+                if (!isNaN(args[1]) && !isNaN(args[2])) {
                     let targetIndex = parseInt(args[1]);
                     let amount = parseInt(args[2]);
                     let target = players[targetIndex];
                     let targetData = users.find(x => x.security === target.security);
-                    if(target && target.socket && targetData){
-                        if(userData.money >= amount) {
+                    if (target && target.socket && targetData) {
+                        if (userData.money >= amount) {
                             let playerMoney = userData.money;
                             playerMoney -= amount;
                             userData.money = playerMoney;
@@ -295,14 +295,24 @@ function ChatHandler(msg, index) {
                             target.socket.emit('chat', null, `[#${index}] ${players[index].username} ti poslal 💰${amount}.`, '#44cee8');
                             console.log(`[PAY] [#${index}] ${players[index].username} > [#${targetIndex}] ${target.username}: ${amount}`);
 
-                        }else{
+                        } else {
                             players[index].socket.emit('chat', null, `Nemáš dostatek peněz!`, '#e1423e');
                         }
-                    }else{
+                    } else {
                         players[index].socket.emit('chat', null, `Hráč s tímto ID nebyl nalezen!`, '#e1423e');
                     }
-                }else{
+                } else {
                     players[index].socket.emit('chat', null, `SYNTAX: /pay [ID] [Částka]`, '#e8b412');
+                }
+            }else if(cmd === 'country') {
+                if (args[1]) {
+                    args.shift();
+                    let country = args.join(' ');
+                    db.users.update(userData.security, 'country', country);
+                    userData.country = country;
+                    SendPlayerList();
+                }else{
+                    players[index].socket.emit('chat', null, `SYNTAX: /country [Název státu]`, '#e8b412');
                 }
             }else if(cmd === 'players') {
                 SendPlayerList();
@@ -404,7 +414,7 @@ function SendPlayerList(){
     players.forEach((value, key) => {
         if(value.logged) {
             let userData = users.find(x => x.security === value.security);
-            playerList.push( { id: key, username: value.username, color: userData.color } );
+            playerList.push( { id: key, username: value.username, color: userData.color, country: userData.country } );
         }
     });
     io.emit('players', playerList);
@@ -417,7 +427,7 @@ function FetchUserData(socket, security){
         if(userData.energy){
             info.energy = userData.energy;
         }else{
-            db.users.updateEnergy(userData.security, 0);
+            db.users.update(userData.security, 'energy', 0);
             info.energy = 0;
         }
 
@@ -465,7 +475,7 @@ function Periodic() {
 
         if(newEnergy !== userData.energy) {
             userData.energy = newEnergy;
-            db.users.updateEnergy(userData.security, newEnergy);
+            db.users.update(userData.security, 'energy', newEnergy);
 
             if(userData.socket) {
                 userData.socket.emit('info', {energy: newEnergy});

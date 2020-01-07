@@ -3,7 +3,8 @@ $(function () {
     const messages = $('#messages');
     let latency = 0;
     let info = { username: '', energy: 0, money: 0, cells: 0 };
-    let selection = { };
+    let selection = {};
+    let playerData = [];
 
     const builds = {
         HQ: 1,
@@ -46,9 +47,12 @@ $(function () {
         $('#login').html('<h2>Probíhá aktualizace!</h2>').show();
         setTimeout(function(){ window.location.reload(); }, 5000);
         AddChatMessage(null, 'Probíhá aktualizace klienta!', '#44cee8');
+        socket.disconnect();
+        socket.off();
     });
 
     socket.on('players', function(playerList) {
+        playerData = playerList;
         $('#players').html('<p>Hráči online:</p><ul></ul>');
         playerList.forEach( player => $('#players > ul').append('<li style="color:' + player.color + '">[#' + player.id + '] ' + player.username + '</li>') );
     });
@@ -137,6 +141,15 @@ $(function () {
             selection.y = $(this).data('y');
             selection.owner = $(this).data('owner');
             selection.build = $(this).data('build');
+
+            selection.country = null;
+            if(selection.owner) {
+                let ownerData = playerData.find(x => x.username === selection.owner);
+                if(ownerData && ownerData.country) {
+                    selection.country = ownerData.country;
+                }
+            }
+
             DrawSelection();
         });
 
@@ -148,11 +161,18 @@ $(function () {
                 const owner = $trigger.data('owner');
                 const build = $trigger.data('build');
 
-                let items = {
-                    info: { name: "X: " + x + ", Y: " + y, disabled: true },
-                    owner: { name: "Vlastník: " + (owner || 'Nikdo'), disabled: true },
-                    type: { name: "Typ: " + (builds_info[build] ? builds_info[build].title : 'Pozemek'), disabled: true },
-                };
+                let items = {};
+
+                if(owner) {
+                    let ownerData = playerData.find(x => x.username === owner);
+                    if(ownerData && ownerData.country) {
+                        items.name = {name: `<strong>${ownerData.country}</strong>`, isHtmlName: true, disabled: true };
+                    }
+                }
+
+                items.info = { name: "X: " + x + ", Y: " + y, disabled: true };
+                items.owner = { name: "Vlastník: " + (owner || 'Nikdo'), disabled: true };
+                items.type = { name: "Typ: " + (builds_info[build] ? builds_info[build].title : 'Pozemek'), disabled: true };
 
                 if(build !== builds.HQ) {
                     if (owner === info.username) {
@@ -178,6 +198,22 @@ $(function () {
                                     }
                                 };
                             }
+                        }else if(build === builds.FORT){
+                            items.destroy = {
+                                name: "Zničit pevnost (⚡1)",
+                                callback: DestroyBuilding,
+                                disabled: function () {
+                                    return !(info.energy >= 1);
+                                }
+                            };
+
+                            items.upgrade = {
+                                name: "Vylepšit pevnost (⚡10+💰100)",
+                                callback: UpgradeBuilding,
+                                disabled: function () {
+                                    return !(info.energy >= 10 && info.money >= 100);
+                                }
+                            };
                         }
                     } else {
                         if(owner == null) {
@@ -277,8 +313,16 @@ $(function () {
         socket.emit('build', $(this).data('x'), $(this).data('y'), builds.FORT);
     }
 
+    function UpgradeBuilding(){
+        socket.emit('upgrade', $(this).data('x'), $(this).data('y'));
+    }
+
+    function DestroyBuilding(){
+        socket.emit('destroy', $(this).data('x'), $(this).data('y'));
+    }
+
     function DrawSelection(){
-        $('#selection').html(`X: ${selection.x}<br>Y: ${selection.y}<br>Vlastník: ${selection.owner || 'Nikdo'}<br>Typ: ${builds_info[selection.build] ? builds_info[selection.build].title : 'Pozemek'}`);
+        $('#selection').html(`<strong>${selection.country || 'Nepojmenované území'}</strong><br>X: ${selection.x}<br>Y: ${selection.y}<br>Vlastník: ${selection.owner || 'Nikdo'}<br>Typ: ${builds_info[selection.build] ? builds_info[selection.build].title : 'Pozemek'}`);
     }
 
     /**

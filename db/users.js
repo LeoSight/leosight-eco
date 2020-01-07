@@ -33,25 +33,5 @@ module.exports = function(mongoWork) {
                 });
             });
         },
-        updateColor: (security, color) => {
-            mongoWork(function (db, client) {
-                db.collection("users").updateOne( {'security': security}, { $set: {
-                    color: color
-                } }, function (err) {
-                    if (err) throw err;
-                    client.close();
-                });
-            });
-        },
-        updateEnergy: (security, energy) => {
-            mongoWork(function (db, client) {
-                db.collection("users").updateOne( {'security': security}, { $set: {
-                        energy: energy
-                    } }, function (err) {
-                    if (err) throw err;
-                    client.close();
-                });
-            });
-        }
     }
 };
