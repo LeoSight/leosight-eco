@@ -13,6 +13,11 @@ module.exports = function(io) {
                 io.emit('chat', null, cmd.join(' '), '#44cee8');
                 console.log('[CHAT] Console: ' + cmd.join(' '));
                 break;
+            case 'update':
+                io.emit('announce-update');
+                console.log('Odeslána informace o aktualizaci! Do 5s spusť server!');
+                rl.close();
+                break;
             case 'exit':
                 rl.close();
                 break;

@@ -69,7 +69,7 @@ http.listen(3005, () => console.log('Server spuštěn na portu 3005'));
 io.on('connection', function(socket){
     let remoteIp = socket.request.connection.remoteAddress;
     let remotePort = socket.request.connection.remotePort;
-    let playerData = { "username": 'Humorníček', "logged": false, "ip": remoteIp };
+    let playerData = { username: 'Humorníček', logged: false, ip: remoteIp, socket: socket };
     let index = players.indexOf(0);
     if(index > -1){
         players[index] = playerData;
@@ -240,16 +240,74 @@ function ChatHandler(msg, index) {
         let userData = users.find(x => x.security === players[index].security);
 
         if(msg.startsWith('/')){
-            if(msg.startsWith('/color')){
+            let args = msg.split(' ');
+            let cmd = args[0].substr(1);
+
+            if(cmd === 'color') {
                 let hex = msg.replace('/color ', '');
-                if(/^#([0-9A-F]{3}){1,2}$/i.test(hex)){
+                if (/^#([0-9A-F]{3}){1,2}$/i.test(hex)) {
                     db.users.updateColor(userData.security, hex);
                     userData.color = hex;
                     SendPlayerList();
                     UpdatePlayerCells(userData.security);
+                }else{
+                    players[index].socket.emit('chat', null, `SYNTAX: /color [Barva v HEX kódu]`, '#e8b412');
                 }
-            }else if(msg.startsWith('/players')) {
+            }else if(cmd === 'w'){
+                if(!isNaN(args[1]) && args[2]){
+                    let targetIndex = parseInt(args[1]);
+                    let target = players[targetIndex];
+                    if(target && target.socket){
+                        args.shift(); args.shift(); // Už nepotřebujeme příkaz a ID, zajímá nás pouze zpráva
+                        let whisper = `[#${index}] ${players[index].username} > [#${targetIndex}] ${target.username}: ${args.join(' ')}`;
+                        players[index].socket.emit('chat', null, whisper, '#c78bf1');
+                        target.socket.emit('chat', null, whisper, '#c78bf1');
+                        console.log(`[WHISPER] ${whisper}`);
+                    }else{
+                        players[index].socket.emit('chat', null, `Hráč s tímto ID nebyl nalezen!`, '#e1423e');
+                    }
+                }else{
+                    players[index].socket.emit('chat', null, `SYNTAX: /w [ID] [Zpráva]`, '#e8b412');
+                }
+            }else if(cmd === 'pay'){
+                if(!isNaN(args[1]) && !isNaN(args[2])){
+                    let targetIndex = parseInt(args[1]);
+                    let amount = parseInt(args[2]);
+                    let target = players[targetIndex];
+                    let targetData = users.find(x => x.security === target.security);
+                    if(target && target.socket && targetData){
+                        if(userData.money >= amount) {
+                            let playerMoney = userData.money;
+                            playerMoney -= amount;
+                            userData.money = playerMoney;
+                            db.users.update(userData.security, 'money', playerMoney);
+                            userData.socket.emit('info', {money: playerMoney});
+
+                            let targetMoney = targetData.money;
+                            targetMoney -= amount;
+                            targetData.money = targetMoney;
+                            db.users.update(targetData.security, 'money', targetMoney);
+                            targetData.socket.emit('info', {money: targetMoney});
+
+                            players[index].socket.emit('chat', null, `Poslal jsi 💰${amount} hráči [#${targetIndex}] ${target.username}.`, '#44cee8');
+                            target.socket.emit('chat', null, `[#${index}] ${players[index].username} ti poslal 💰${amount}.`, '#44cee8');
+                            console.log(`[PAY] [#${index}] ${players[index].username} > [#${targetIndex}] ${target.username}: ${amount}`);
+
+                        }else{
+                            players[index].socket.emit('chat', null, `Nemáš dostatek peněz!`, '#e1423e');
+                        }
+                    }else{
+                        players[index].socket.emit('chat', null, `Hráč s tímto ID nebyl nalezen!`, '#e1423e');
+                    }
+                }else{
+                    players[index].socket.emit('chat', null, `SYNTAX: /pay [ID] [Částka]`, '#e8b412');
+                }
+            }else if(cmd === 'players') {
                 SendPlayerList();
+            }else if(cmd === 'help'){
+                players[index].socket.emit('chat', null, `Seznam příkazu:\n/color - Změna barvy\n/w - Šeptat hráči\n/pay - Poslat peníze`, '#e8b412');
+            }else{
+                players[index].socket.emit('chat', null, `Neznámý příkaz! Seznam příkazů najdeš pod příkazem /help`, '#e1423e');
             }
         }else{
             let color = '#fff';

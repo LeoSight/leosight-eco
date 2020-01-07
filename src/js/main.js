@@ -42,6 +42,12 @@ $(function () {
         AddChatMessage(null, 'Spojení se serverem bylo ztraceno!', '#e1423e');
     });
 
+    socket.on('announce-update', function() {
+        $('#login').html('<h2>Probíhá aktualizace!</h2>').show();
+        setTimeout(function(){ window.location.reload(); }, 5000);
+        AddChatMessage(null, 'Probíhá aktualizace klienta!', '#44cee8');
+    });
+
     socket.on('players', function(playerList) {
         $('#players').html('<p>Hráči online:</p><ul></ul>');
         playerList.forEach( player => $('#players > ul').append('<li style="color:' + player.color + '">[#' + player.id + '] ' + player.username + '</li>') );
