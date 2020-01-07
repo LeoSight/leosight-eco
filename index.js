@@ -346,11 +346,17 @@ function UpdatePlayerCells(security){
 }
 
 function GetAdjacent(x, y){
+    let adjacent = [];
     let adj_left = world.find(d => d.x === x - 1 && d.y === y);
     let adj_right = world.find(d => d.x === x + 1 && d.y === y);
     let adj_top = world.find(d => d.x === x && d.y === y - 1);
     let adj_bottom = world.find(d => d.x === x && d.y === y + 1);
-    return [adj_left, adj_right, adj_top, adj_bottom];
+
+    adj_left && adjacent.push(adj_left);
+    adj_right && adjacent.push(adj_right);
+    adj_top && adjacent.push(adj_top);
+    adj_bottom && adjacent.push(adj_bottom);
+    return adjacent;
 }
 
 /**

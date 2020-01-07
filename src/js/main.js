@@ -219,12 +219,18 @@ $(function () {
     CreateMap();
 
     function GetAdjacent(x, y){
+        let adjacent = [];
         const mapRows = $('#map .row');
         const adj_left = mapRows.eq(h + y).find('.cell').eq(w + x - 1);
         const adj_right = mapRows.eq(h + y).find('.cell').eq(w + x + 1);
         const adj_top = mapRows.eq(h + y - 1).find('.cell').eq(w + x);
         const adj_bottom = mapRows.eq(h + y + 1).find('.cell').eq(w + x);
-        return [adj_left, adj_right, adj_top, adj_bottom];
+
+        adj_left && adjacent.push(adj_left);
+        adj_right && adjacent.push(adj_right);
+        adj_top && adjacent.push(adj_top);
+        adj_bottom && adjacent.push(adj_bottom);
+        return adjacent;
     }
 
     /**
