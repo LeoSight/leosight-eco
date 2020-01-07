@@ -235,6 +235,26 @@ io.on('connection', function(socket){
             }
         }
     });
+
+    socket.on('destroy', function(x, y){
+        if (players[index] && players[index].logged) {
+            let userData = users.find(x => x.security === players[index].security);
+            if (userData && userData.energy && userData.money) {
+                if (userData.energy >= 1) {
+                    let cell = world.find(d => d.x === x && d.y === y);
+                    if(cell && cell.owner === userData.security && cell.build == builds.FORT){
+                        cell.build = null;
+                        db.world.cellUpdate(x, y, userData.security, null);
+                        io.emit('cell', x, y, userData.username, userData.color, null);
+
+                        userData.energy -= 1;
+
+                        socket.emit('info', { energy: userData.energy });
+                    }
+                }
+            }
+        }
+    });
 });
 
 function ChatHandler(msg, index) {
@@ -311,6 +331,7 @@ function ChatHandler(msg, index) {
                     db.users.update(userData.security, 'country', country);
                     userData.country = country;
                     SendPlayerList();
+                    io.emit('chat', null, `[#${index}] ${players[index].username} přejmenoval své území na "${country}"`, '#44cee8');
                 }else{
                     players[index].socket.emit('chat', null, `SYNTAX: /country [Název státu]`, '#e8b412');
                 }
