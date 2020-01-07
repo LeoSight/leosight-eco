@@ -163,11 +163,13 @@ $(function () {
                         };
 
                         if(build == null) {
-                            items.moveHQ = {
-                                name: "Přesunout základnu (⚡10)", callback: MoveHQ, disabled: function () {
-                                    return !(info.energy >= 10 && info.cells > 0);
-                                }
-                            };
+                            if(!AdjacentMine(x, y)) {
+                                items.moveHQ = {
+                                    name: "Přesunout základnu (⚡10)", callback: MoveHQ, disabled: function () {
+                                        return !(info.energy >= 10 && info.cells > 0);
+                                    }
+                                };
+                            }
 
                             if(info.cells > 0) {
                                 items.buildFort = {
@@ -183,7 +185,7 @@ $(function () {
                                 name: (info.cells === 0 ? "Vybudovat základnu (⚡1)" : "Obsadit pole (⚡1)"),
                                 callback: CaptureCell,
                                 disabled: function () {
-                                    return !(info.energy >= 1 && (CheckAdjacent(x, y) || info.cells === 0));
+                                    return !(info.energy >= 1 && (CheckAdjacent(x, y) || (info.cells === 0 && !AdjacentMine(x, y))));
                                 }
                             };
                         }else{
@@ -200,7 +202,7 @@ $(function () {
                                     name: (info.cells === 0 ? "Vybudovat základnu (⚡2)" : "Obsadit pole (⚡2)"),
                                     callback: CaptureCell,
                                     disabled: function () {
-                                        return !(info.energy >= 2 && (CheckAdjacent(x, y) || info.cells === 0));
+                                        return !(info.energy >= 2 && (CheckAdjacent(x, y) || (info.cells === 0 && !AdjacentMine(x, y))));
                                     }
                                 };
                             }
@@ -216,20 +218,39 @@ $(function () {
     }
     CreateMap();
 
-    /**
-     * @return {boolean}
-     */
-    function CheckAdjacent(x, y){
+    function GetAdjacent(x, y){
         const mapRows = $('#map .row');
         const adj_left = mapRows.eq(h + y).find('.cell').eq(w + x - 1);
         const adj_right = mapRows.eq(h + y).find('.cell').eq(w + x + 1);
         const adj_top = mapRows.eq(h + y - 1).find('.cell').eq(w + x);
         const adj_bottom = mapRows.eq(h + y + 1).find('.cell').eq(w + x);
+        return [adj_left, adj_right, adj_top, adj_bottom];
+    }
 
-        return (adj_left && adj_left.data('owner') === info.username) ||
-            (adj_right && adj_right.data('owner') === info.username) ||
-            (adj_top && adj_top.data('owner') === info.username) ||
-            (adj_bottom && adj_bottom.data('owner') === info.username);
+    /**
+     * @return {boolean}
+     */
+    function CheckAdjacent(x, y){
+        let adjacent = GetAdjacent(x, y);
+        adjacent.forEach(d => {
+            if(d.data('owner') === info.username){
+                return true;
+            }
+        });
+        return false;
+    }
+
+    /**
+     * @return {boolean}
+     */
+    function AdjacentMine(x, y){
+        let adjacent = GetAdjacent(x, y);
+        adjacent.forEach(d => {
+            if(d.data('build') === builds.GOLD){
+                return true;
+            }
+        });
+        return false;
     }
 
     function CaptureCell(){
