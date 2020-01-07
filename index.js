@@ -135,6 +135,7 @@ io.on('connection', function(socket){
                                     if(cell.build === builds.FORT){
                                         if(userData.energy < 10) return; // Zabrání pevnosti stojí 10 energie
                                         energyCost = 10;
+                                        cell.build = null;
                                     }
 
                                     if(oldOwner.socket) {
