@@ -327,7 +327,7 @@ function ChatHandler(msg, index) {
             }else if(cmd === 'country') {
                 if (args[1]) {
                     args.shift();
-                    let country = args.join(' ');
+                    let country = args.join(' ').replace(/(<([^>]+)>)/ig,"");
                     db.users.update(userData.security, 'country', country);
                     userData.country = country;
                     SendPlayerList();
