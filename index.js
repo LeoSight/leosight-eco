@@ -308,7 +308,7 @@ function ChatHandler(msg, index) {
                                     userData.socket.emit('info', {money: playerMoney});
 
                                     let targetMoney = targetData.money;
-                                    targetMoney -= amount;
+                                    targetMoney += amount;
                                     targetData.money = targetMoney;
                                     db.users.update(targetData.security, 'money', targetMoney);
                                     targetData.socket.emit('info', {money: targetMoney});
