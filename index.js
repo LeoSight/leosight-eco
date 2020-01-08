@@ -242,7 +242,7 @@ io.on('connection', function(socket){
             if (userData && userData.energy && userData.money) {
                 if (userData.energy >= 1) {
                     let cell = world.find(d => d.x === x && d.y === y);
-                    if(cell && cell.owner === userData.security && cell.build == builds.FORT){
+                    if(cell && cell.owner === userData.security && cell.build === builds.FORT){
                         cell.build = null;
                         db.world.cellUpdate(x, y, userData.security, null);
                         io.emit('cell', x, y, userData.username, userData.color, null);
@@ -296,27 +296,35 @@ function ChatHandler(msg, index) {
                     let targetIndex = parseInt(args[1]);
                     let amount = parseInt(args[2]);
                     let target = players[targetIndex];
-                    let targetData = users.find(x => x.security === target.security);
-                    if (target && target.socket && targetData) {
-                        if (userData.money >= amount) {
-                            let playerMoney = userData.money;
-                            playerMoney -= amount;
-                            userData.money = playerMoney;
-                            db.users.update(userData.security, 'money', playerMoney);
-                            userData.socket.emit('info', {money: playerMoney});
+                    if(target){
+                        let targetData = users.find(x => x.security === target.security);
+                        if (target && target.socket && targetData) {
+                            if(amount > 0) {
+                                if (userData.money >= amount) {
+                                    let playerMoney = userData.money;
+                                    playerMoney -= amount;
+                                    userData.money = playerMoney;
+                                    db.users.update(userData.security, 'money', playerMoney);
+                                    userData.socket.emit('info', {money: playerMoney});
 
-                            let targetMoney = targetData.money;
-                            targetMoney -= amount;
-                            targetData.money = targetMoney;
-                            db.users.update(targetData.security, 'money', targetMoney);
-                            targetData.socket.emit('info', {money: targetMoney});
+                                    let targetMoney = targetData.money;
+                                    targetMoney -= amount;
+                                    targetData.money = targetMoney;
+                                    db.users.update(targetData.security, 'money', targetMoney);
+                                    targetData.socket.emit('info', {money: targetMoney});
 
-                            players[index].socket.emit('chat', null, `Poslal jsi 💰${amount} hráči [#${targetIndex}] ${target.username}.`, '#44cee8');
-                            target.socket.emit('chat', null, `[#${index}] ${players[index].username} ti poslal 💰${amount}.`, '#44cee8');
-                            console.log(`[PAY] [#${index}] ${players[index].username} > [#${targetIndex}] ${target.username}: ${amount}`);
+                                    players[index].socket.emit('chat', null, `Poslal jsi 💰${amount} hráči [#${targetIndex}] ${target.username}.`, '#44cee8');
+                                    target.socket.emit('chat', null, `[#${index}] ${players[index].username} ti poslal 💰${amount}.`, '#44cee8');
+                                    console.log(`[PAY] [#${index}] ${players[index].username} > [#${targetIndex}] ${target.username}: ${amount}`);
 
-                        } else {
-                            players[index].socket.emit('chat', null, `Nemáš dostatek peněz!`, '#e1423e');
+                                } else {
+                                    players[index].socket.emit('chat', null, `Nemáš dostatek peněz!`, '#e1423e');
+                                }
+                            }else{
+                                players[index].socket.emit('chat', null, `Částka musí být kladné číslo!`, '#e1423e');
+                            }
+                        }else{
+                            players[index].socket.emit('chat', null, `Hráč s tímto ID nebyl nalezen!`, '#e1423e');
                         }
                     } else {
                         players[index].socket.emit('chat', null, `Hráč s tímto ID nebyl nalezen!`, '#e1423e');
