@@ -122,6 +122,7 @@ io.on('connection', function(socket){
                         let energyCost = 1;
                         let cell = world.find(d => d.x === x && d.y === y);
                         if (cell) {
+                            if(cell.build != null && userData.cells === 0) return; // Nelze vybudováním základny zbourat existující budovu
                             if(cell.build === builds.HQ) return; // Nelze zabrat HQ
                             if (cell.owner) {
                                 //if(userData.cells === 0) return; // Nemůže zabrat cizí čtverec jako první tah

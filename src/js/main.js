@@ -235,7 +235,7 @@ $(function () {
                                 name: (info.cells === 0 ? "Vybudovat základnu (⚡1)" : "Obsadit pole (⚡1)"),
                                 callback: CaptureCell,
                                 disabled: function () {
-                                    return !(info.energy >= 1 && (CheckAdjacent(x, y) || (info.cells === 0 && !CheckAdjacentBuilding(x, y, [builds.GOLD, builds.HQ]))));
+                                    return !(info.energy >= 1 && (CheckAdjacent(x, y) || (info.cells === 0 && build == null && !CheckAdjacentBuilding(x, y, [builds.GOLD, builds.HQ]))));
                                 }
                             };
                         }else{
@@ -252,7 +252,7 @@ $(function () {
                                     name: (info.cells === 0 ? "Vybudovat základnu (⚡2)" : "Obsadit pole (⚡2)"),
                                     callback: CaptureCell,
                                     disabled: function () {
-                                        return !(info.energy >= 2 && (CheckAdjacent(x, y) || (info.cells === 0 && !CheckAdjacentBuilding(x, y, [builds.GOLD, builds.HQ]))));
+                                        return !(info.energy >= 2 && (CheckAdjacent(x, y) || (info.cells === 0 && build == null && !CheckAdjacentBuilding(x, y, [builds.GOLD, builds.HQ]))));
                                     }
                                 };
                             }
