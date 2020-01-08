@@ -9,12 +9,13 @@ module.exports = function(mongoWork) {
                 });
             });
         },
-        cellUpdate: (x, y, owner, build) => {
+        cellUpdate: (x, y, owner, build, level) => {
             mongoWork(function (db, client) {
                 db.collection("world").updateOne( {'x': x, 'y': y }, { $set: {
                         owner: owner,
                         lastchange: new Date().valueOf(),
-                        build: build
+                        build: build,
+                        level: level
                     } }, {upsert: true}, function (err) {
                     if (err) throw err;
                     client.close();

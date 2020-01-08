@@ -118,7 +118,7 @@ io.on('connection', function(socket){
             if(userData && userData.color && userData.energy) {
                 if(userData.energy > 0) {
                     userData.cells = CountPlayerCells(userData.security);
-                    if((userData.cells === 0 && !AdjacentMine(x, y)) || CheckAdjacent(x, y, userData.security)) {
+                    if((userData.cells === 0 && !CheckAdjacentBuilding(x, y, [builds.GOLD, builds. HQ])) || CheckAdjacent(x, y, userData.security)) {
                         let energyCost = 1;
                         let cell = world.find(d => d.x === x && d.y === y);
                         if (cell) {
@@ -134,6 +134,18 @@ io.on('connection', function(socket){
 
                                     if(cell.build === builds.FORT){
                                         if(userData.energy < 10) return; // Zabrání pevnosti stojí 10 energie
+                                        if(cell.level > 1){
+                                            cell.level -= 1;
+
+                                            db.world.cellUpdate(x, y, oldOwner.security, cell.build, cell.level);
+                                            io.emit('cell', x, y, oldOwner.username, oldOwner.color, cell.build, cell.level);
+
+                                            userData.energy -= 10;
+                                            socket.emit('info', { energy: userData.energy });
+
+                                            return; // Neřešit další kód pro obsazení čtverce
+                                        }
+
                                         energyCost = 10;
                                         cell.build = null;
                                     }
@@ -153,8 +165,8 @@ io.on('connection', function(socket){
                             world.push(cell);
                         }
 
-                        db.world.cellUpdate(x, y, userData.security, cell.build);
-                        io.emit('cell', x, y, userData.username, userData.color, cell.build);
+                        db.world.cellUpdate(x, y, userData.security, cell.build, cell.level);
+                        io.emit('cell', x, y, userData.username, userData.color, cell.build, cell.level);
 
                         userData.energy -= energyCost;
                         userData.cells += 1;
@@ -173,7 +185,7 @@ io.on('connection', function(socket){
                 if (userData.energy >= 10) {
                     let cell = world.find(d => d.x === x && d.y === y);
                     if(cell && cell.owner === userData.security && cell.build == null){
-                        if(!AdjacentMine(x, y)) {
+                        if(!CheckAdjacentBuilding(x, y, [builds.GOLD, builds.HQ])) {
                             let oldHQ = world.find(d => d.build === builds.HQ && d.owner === userData.security);
                             if (oldHQ) {
                                 oldHQ.build = null;
@@ -223,8 +235,8 @@ io.on('connection', function(socket){
                     let cell = world.find(d => d.x === x && d.y === y);
                     if(cell && cell.owner === userData.security && cell.build == null){
                         cell.build = builds.FORT;
-                        db.world.cellUpdate(x, y, userData.security, cell.build);
-                        io.emit('cell', x, y, userData.username, userData.color, cell.build);
+                        db.world.cellUpdate(x, y, userData.security, cell.build, 1);
+                        io.emit('cell', x, y, userData.username, userData.color, cell.build, 1);
 
                         userData.energy -= 10;
                         userData.money -= 100;
@@ -236,10 +248,35 @@ io.on('connection', function(socket){
         }
     });
 
-    socket.on('destroy', function(x, y){
+    socket.on('upgrade', function(x, y){
         if (players[index] && players[index].logged) {
             let userData = users.find(x => x.security === players[index].security);
             if (userData && userData.energy && userData.money) {
+                if (userData.energy >= 10 && userData.money >= 500) {
+                    let cell = world.find(d => d.x === x && d.y === y);
+                    if(cell && cell.owner === userData.security && cell.build === builds.FORT){
+                        let level = cell.level || 1;
+                        if(level < 5){
+                            level += 1;
+                            cell.level = level;
+                            db.world.cellUpdate(x, y, userData.security, cell.build, cell.level);
+                            io.emit('cell', x, y, userData.username, userData.color, cell.build, cell.level);
+
+                            userData.energy -= 10;
+                            userData.money -= 500;
+
+                            socket.emit('info', { energy: userData.energy, money: userData.money });
+                        }
+                    }
+                }
+            }
+        }
+    });
+
+    socket.on('destroy', function(x, y){
+        if (players[index] && players[index].logged) {
+            let userData = users.find(x => x.security === players[index].security);
+            if (userData && userData.energy) {
                 if (userData.energy >= 1) {
                     let cell = world.find(d => d.x === x && d.y === y);
                     if(cell && cell.owner === userData.security && cell.build === builds.FORT){
@@ -346,7 +383,7 @@ function ChatHandler(msg, index) {
             }else if(cmd === 'players') {
                 SendPlayerList();
             }else if(cmd === 'help'){
-                players[index].socket.emit('chat', null, `Seznam příkazu:\n/color - Změna barvy\n/w - Šeptat hráči\n/pay - Poslat peníze`, '#e8b412');
+                players[index].socket.emit('chat', null, `Seznam příkazu:<br>/color - Změna barvy<br>/w - Šeptat hráči<br>/pay - Poslat peníze<br>/country - Nastavit název státu`, '#e8b412', true);
             }else{
                 players[index].socket.emit('chat', null, `Neznámý příkaz! Seznam příkazů najdeš pod příkazem /help`, '#e1423e');
             }
@@ -415,11 +452,15 @@ function CheckAdjacent(x, y, security){
 /**
  * @return {boolean}
  */
-function AdjacentMine(x, y){
+function CheckAdjacentBuilding(x, y, building){
     let adjacent = GetAdjacent(x, y);
     let r = false;
     adjacent.forEach(d => {
-        if(d.build === builds.GOLD){
+        if(Array.isArray(building)){
+            if(building.includes(d.build)){
+                r = true;
+            }
+        }else if(d.build === building){
             r = true;
         }
     });
@@ -431,7 +472,7 @@ function SendMap(socket){
     world.forEach(cell => {
         let owner = users.find(x => x.security === cell.owner);
         if(owner) {
-            socket.emit('cell', cell.x, cell.y, owner.username, owner.color, cell.build);
+            socket.emit('cell', cell.x, cell.y, owner.username, owner.color, cell.build, cell.level);
         }else{
             socket.emit('cell', cell.x, cell.y, null, null, cell.build);
         }
@@ -440,11 +481,9 @@ function SendMap(socket){
 
 function SendPlayerList(){
     let playerList = [];
-    players.forEach((value, key) => {
-        if(value.logged) {
-            let userData = users.find(x => x.security === value.security);
-            playerList.push( { id: key, username: value.username, color: userData.color, country: userData.country } );
-        }
+    users.forEach(userData => {
+        let index = Object.keys(players).find(key => players[key].security === userData.security) || -1;
+        playerList.push( { id: index, username: userData.username, color: userData.color, country: userData.country } );
     });
     io.emit('players', playerList);
 }
@@ -471,6 +510,12 @@ function FetchUserData(socket, security){
 
 function LoginCallback(socket, index, username, success, response){
     if (success) {
+        let existingPlayer = users.find(x => x.security === response);
+        if(existingPlayer && existingPlayer.socket){
+            socket.emit('login', false, 'Tento účet je již ve hře!');
+            return;
+        }
+
         players[index]['username'] = username;
         players[index]['logged'] = true;
         players[index]['security'] = response;

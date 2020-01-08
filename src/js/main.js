@@ -3,7 +3,7 @@ $(function () {
     const messages = $('#messages');
     let latency = 0;
     let info = { username: '', energy: 0, money: 0, cells: 0 };
-    let selection = {};
+    //let selection = {};
     let playerData = [];
 
     const builds = {
@@ -54,7 +54,11 @@ $(function () {
     socket.on('players', function(playerList) {
         playerData = playerList;
         $('#players').html('<p>Hráči online:</p><ul></ul>');
-        playerList.forEach( player => $('#players > ul').append('<li style="color:' + player.color + '">[#' + player.id + '] ' + player.username + '</li>') );
+        playerList.forEach(player => {
+            if(player.id >= 0){
+                $('#players > ul').append('<li style="color:' + player.color + '">[#' + player.id + '] ' + player.username + '</li>');
+            }
+        });
     });
 
     // LOGIN
@@ -76,8 +80,9 @@ $(function () {
 
     // CHAT
 
-    function AddChatMessage(username, msg, color){
+    function AddChatMessage(username, msg, color, isHtml){
         color = color || '#fff';
+        isHtml = isHtml || false;
         let scroll = (messages.scrollTop() + messages.height() > messages.prop("scrollHeight") - 40);
 
         let newline = $('<li>').appendTo(messages);
@@ -85,7 +90,11 @@ $(function () {
             $('<span class="username">').text(username + ': ').css('color', color).appendTo(newline);
             $('<span class="text">').text(msg).appendTo(newline);
         }else{
-            $('<span class="text">').text(msg).css('color', color).appendTo(newline);
+            if(isHtml){
+                $('<span class="text">').html(msg).css('color', color).appendTo(newline);
+            }else{
+                $('<span class="text">').text(msg).css('color', color).appendTo(newline);
+            }
         }
 
         if(scroll){
@@ -136,6 +145,7 @@ $(function () {
 
         move.oncontextmenu = function(){ return false; };
 
+        /*
         $('#map .cell').on('contextmenu', function(e) {
             selection.x = $(this).data('x');
             selection.y = $(this).data('y');
@@ -152,6 +162,7 @@ $(function () {
 
             DrawSelection();
         });
+        */
 
         $.contextMenu({
             selector: ".cell",
@@ -160,13 +171,14 @@ $(function () {
                 const y = $trigger.data('y');
                 const owner = $trigger.data('owner');
                 const build = $trigger.data('build');
+                const level = $trigger.data('level') || 1;
 
                 let items = {};
 
                 if(owner) {
                     let ownerData = playerData.find(x => x.username === owner);
-                    if(ownerData && ownerData.country) {
-                        items.name = {name: `<strong>${ownerData.country}</strong>`, isHtmlName: true, disabled: true };
+                    if(ownerData) {
+                        items.name = {name: `<strong>${ownerData.country || 'Bez názvu'}</strong>`, isHtmlName: true, disabled: true };
                     }
                 }
 
@@ -183,7 +195,7 @@ $(function () {
                         };
 
                         if(build == null) {
-                            if(!AdjacentMine(x, y)) {
+                            if(!CheckAdjacentBuilding(x, y, [builds.GOLD, builds.HQ])) {
                                 items.moveHQ = {
                                     name: "Přesunout základnu (⚡10)", callback: MoveHQ, disabled: function () {
                                         return !(info.energy >= 10 && info.cells > 0);
@@ -207,13 +219,15 @@ $(function () {
                                 }
                             };
 
-                            items.upgrade = {
-                                name: "Vylepšit pevnost (⚡10+💰100)",
-                                callback: UpgradeBuilding,
-                                disabled: function () {
-                                    return !(info.energy >= 10 && info.money >= 100);
-                                }
-                            };
+                            if(level < 5){
+                                items.upgrade = {
+                                    name: "Vylepšit pevnost (⚡10+💰500)",
+                                    callback: UpgradeBuilding,
+                                    disabled: function () {
+                                        return !(info.energy >= 10 && info.money >= 500);
+                                    }
+                                };
+                            }
                         }
                     } else {
                         if(owner == null) {
@@ -221,7 +235,7 @@ $(function () {
                                 name: (info.cells === 0 ? "Vybudovat základnu (⚡1)" : "Obsadit pole (⚡1)"),
                                 callback: CaptureCell,
                                 disabled: function () {
-                                    return !(info.energy >= 1 && (CheckAdjacent(x, y) || (info.cells === 0 && !AdjacentMine(x, y))));
+                                    return !(info.energy >= 1 && (CheckAdjacent(x, y) || (info.cells === 0 && !CheckAdjacentBuilding(x, y, [builds.GOLD, builds.HQ]))));
                                 }
                             };
                         }else{
@@ -238,7 +252,7 @@ $(function () {
                                     name: (info.cells === 0 ? "Vybudovat základnu (⚡2)" : "Obsadit pole (⚡2)"),
                                     callback: CaptureCell,
                                     disabled: function () {
-                                        return !(info.energy >= 2 && (CheckAdjacent(x, y) || (info.cells === 0 && !AdjacentMine(x, y))));
+                                        return !(info.energy >= 2 && (CheckAdjacent(x, y) || (info.cells === 0 && !CheckAdjacentBuilding(x, y, [builds.GOLD, builds.HQ]))));
                                     }
                                 };
                             }
@@ -286,11 +300,15 @@ $(function () {
     /**
      * @return {boolean}
      */
-    function AdjacentMine(x, y){
+    function CheckAdjacentBuilding(x, y, building){
         let adjacent = GetAdjacent(x, y);
         let r = false;
         adjacent.forEach(d => {
-            if(d.data('build') === builds.GOLD){
+            if(Array.isArray(building)){
+                if(building.includes(d.data('build'))){
+                    r = true;
+                }
+            }else if(d.data('build') === building){
                 r = true;
             }
         });
@@ -321,15 +339,18 @@ $(function () {
         socket.emit('destroy', $(this).data('x'), $(this).data('y'));
     }
 
+    /*
     function DrawSelection(){
         $('#selection').html(`<strong>${selection.country || 'Nepojmenované území'}</strong><br>X: ${selection.x}<br>Y: ${selection.y}<br>Vlastník: ${selection.owner || 'Nikdo'}<br>Typ: ${builds_info[selection.build] ? builds_info[selection.build].title : 'Pozemek'}`);
     }
+    */
 
     /**
      * @return {string}
      */
     function HexToBackground(hex){
         hex = hex.replace('#','');
+        if(hex.length == 3){ hex = `${hex}${hex}`; }
         let r = parseInt(hex.substring(0,2), 16);
         let g = parseInt(hex.substring(2,4), 16);
         let b = parseInt(hex.substring(4,6), 16);
@@ -340,16 +361,20 @@ $(function () {
         console.log('Načítám svět: ' + size);
     });
 
-    socket.on('cell', function(x, y, username, color, build){
+    socket.on('cell', function(x, y, username, color, build, level){
         let cell = $('#map .row').eq(h + y).find('.cell').eq(w + x);
         if(username) {
-            cell.data('owner', username).data('build', build).css('background', HexToBackground(color));
+            cell.data('owner', username).data('build', build).data('level', level).css('background', HexToBackground(color));
         }else{
             cell.data('owner', null).css('background', '');
         }
 
         if(builds_info[build] && builds_info[build].abbr) {
-            cell.text(builds_info[build].abbr);
+            if(level && level > 1){
+                cell.html(`${builds_info[build].abbr}<sub>${level}</sub>`);
+            }else{
+                cell.text(builds_info[build].abbr);
+            }
         }else{
             cell.text('');
         }
@@ -375,10 +400,10 @@ $(function () {
         if ( $('input:focus').length > 0 ) {  return; }
         if (e.which === 32) {
             if($('#chat').is(':visible')) {
-                $('#chat,#players,#serverinfo,#playerinfo,#selection').fadeOut(200);
+                $('#chat,#players,#serverinfo,#playerinfo').fadeOut(200);
                 $('#tip').html('Zobrazit HUD můžeš opět stisknutím mezerníku').fadeIn(100).delay(2000).fadeOut(100);
             }else{
-                $('#chat,#players,#serverinfo,#playerinfo,#selection').fadeIn(200);
+                $('#chat,#players,#serverinfo,#playerinfo').fadeIn(200);
                 $('#tip').html('');
             }
         }
