@@ -510,8 +510,8 @@ function FetchUserData(socket, security){
 
 function LoginCallback(socket, index, username, success, response){
     if (success) {
-        let existingPlayer = users.find(x => x.security === response);
-        if(existingPlayer && existingPlayer.socket){
+        let existingPlayer = players.find(x => x.security === response);
+        if(existingPlayer && existingPlayer.logged){
             socket.emit('login', false, 'Tento účet je již ve hře!');
             return;
         }

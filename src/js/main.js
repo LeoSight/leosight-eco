@@ -350,7 +350,7 @@ $(function () {
      */
     function HexToBackground(hex){
         hex = hex.replace('#','');
-        if(hex.length == 3){ hex = `${hex}${hex}`; }
+        if(hex.length === 3){ hex = `${hex}${hex}`; }
         let r = parseInt(hex.substring(0,2), 16);
         let g = parseInt(hex.substring(2,4), 16);
         let b = parseInt(hex.substring(4,6), 16);
@@ -363,6 +363,8 @@ $(function () {
 
     socket.on('cell', function(x, y, username, color, build, level){
         let cell = $('#map .row').eq(h + y).find('.cell').eq(w + x);
+        level = level || 1;
+
         if(username) {
             cell.data('owner', username).data('build', build).data('level', level).css('background', HexToBackground(color));
         }else{
