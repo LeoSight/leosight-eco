@@ -30,6 +30,7 @@ const security = (process.env.LOGIN === 'API' ? require(__dirname + '/security.j
 const account = (process.env.LOGIN === 'API' ? require(__dirname + '/account.js')(security) : null);
 const discord = (process.env.DISCORD_TOKEN.length > 0 ? require(__dirname + '/discord.js') : null);
 const builds = require(__dirname + '/builds.js');
+const resources = require(__dirname + '/resources.js');
 const db = {
     users: require(__dirname + '/db/users.js')(mongoWork),
     world: require(__dirname + '/db/world.js')(mongoWork)
@@ -120,6 +121,7 @@ io.on('connection', function(socket){
                     userData.cells = CountPlayerCells(userData.security);
                     if((userData.cells === 0 && !CheckAdjacentBuilding(x, y, [builds.GOLD, builds. HQ])) || CheckAdjacent(x, y, userData.security)) {
                         let energyCost = 1;
+                        let resistance = false;
                         let cell = world.find(d => d.x === x && d.y === y);
                         if (cell) {
                             if(cell.build != null && userData.cells === 0) return; // Nelze vybudováním základny zbourat existující budovu
@@ -132,6 +134,11 @@ io.on('connection', function(socket){
                                 if (oldOwner) {
                                     if(userData.energy < 2) return; // Zabrání již obsazeného pole stojí 2 energie
                                     energyCost = 2;
+
+                                    if(userData.cells === 0){
+                                        io.emit('chat', null, `[#${index}] ${userData.username} vybudoval základnu odboje na území "${oldOwner.country || 'Bez názvu'}" a bojuje o nezávislost.`, '#44cee8');
+                                        resistance = true;
+                                    }
 
                                     if(cell.build === builds.FORT){
                                         if(userData.energy < 10) return; // Zabrání pevnosti stojí 10 energie
@@ -166,6 +173,10 @@ io.on('connection', function(socket){
                             world.push(cell);
                         }
 
+                        if(userData.cells === 0 && !resistance){
+                            io.emit('chat', null, `[#${index}] ${userData.username} právě založil nezávislý národ.`, '#44cee8');
+                        }
+
                         db.world.cellUpdate(x, y, userData.security, cell.build, cell.level);
                         io.emit('cell', x, y, userData.username, userData.color, cell.build, cell.level);
 
@@ -186,7 +197,7 @@ io.on('connection', function(socket){
                 if (userData.energy >= 10) {
                     let cell = world.find(d => d.x === x && d.y === y);
                     if(cell && cell.owner === userData.security && cell.build == null){
-                        if(!CheckAdjacentBuilding(x, y, [builds.GOLD, builds.HQ])) {
+                        if(!CheckAdjacentBuilding(x, y, [builds.GOLD, builds.HQ]) && CheckAdjacentOwnAll(x, y, userData.security)) {
                             let oldHQ = world.find(d => d.build === builds.HQ && d.owner === userData.security);
                             if (oldHQ) {
                                 oldHQ.build = null;
@@ -445,6 +456,20 @@ function CheckAdjacent(x, y, security){
     adjacent.forEach(d => {
         if(d.owner === security){
             r = true;
+        }
+    });
+    return r;
+}
+
+/**
+ * @return {boolean}
+ */
+function CheckAdjacentOwnAll(x, y, security){
+    let adjacent = GetAdjacent(x, y);
+    let r = true;
+    adjacent.forEach(d => {
+        if(d.owner !== security){
+            r = false;
         }
     });
     return r;

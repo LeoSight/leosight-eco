@@ -3,8 +3,10 @@ $(function () {
     const messages = $('#messages');
     let latency = 0;
     let info = { username: '', energy: 0, money: 0, cells: 0 };
-    //let selection = {};
+    let myHQ = {};
     let playerData = [];
+
+    console.log('Copak tu hledáš? 🤨');
 
     const builds = {
         HQ: 1,
@@ -198,7 +200,7 @@ $(function () {
                             if(!CheckAdjacentBuilding(x, y, [builds.GOLD, builds.HQ])) {
                                 items.moveHQ = {
                                     name: "Přesunout základnu (⚡10)", callback: MoveHQ, disabled: function () {
-                                        return !(info.energy >= 10 && info.cells > 0);
+                                        return !(info.energy >= 10 && info.cells > 0 && CheckAdjacentOwnAll(x, y));
                                     }
                                 };
                             }
@@ -300,6 +302,20 @@ $(function () {
     /**
      * @return {boolean}
      */
+    function CheckAdjacentOwnAll(x, y){
+        let adjacent = GetAdjacent(x, y);
+        let r = true;
+        adjacent.forEach(d => {
+            if(d.data('owner') !== info.username){
+                r = false;
+            }
+        });
+        return r;
+    }
+
+    /**
+     * @return {boolean}
+     */
     function CheckAdjacentBuilding(x, y, building){
         let adjacent = GetAdjacent(x, y);
         let r = false;
@@ -348,13 +364,22 @@ $(function () {
     /**
      * @return {string}
      */
-    function HexToBackground(hex){
+    function GenerateBackground(hex, build, level){
         hex = hex.replace('#','');
         if(hex.length === 3){ hex = `${hex}${hex}`; }
         let r = parseInt(hex.substring(0,2), 16);
         let g = parseInt(hex.substring(2,4), 16);
         let b = parseInt(hex.substring(4,6), 16);
-        return `rgba(${r}, ${g}, ${b}, .5)`;
+
+        if(build){
+            if(level && level > 1){
+                return `url('../images/builds/${build}_${level}.png'), rgba(${r}, ${g}, ${b}, .5)`;
+            }else {
+                return `url('../images/builds/${build}.png'), rgba(${r}, ${g}, ${b}, .5)`;
+            }
+        }else {
+            return `rgba(${r}, ${g}, ${b}, .5)`;
+        }
     }
 
     socket.on('mapload', function(size){
@@ -366,7 +391,11 @@ $(function () {
         level = level || 1;
 
         if(username) {
-            cell.data('owner', username).data('build', build).data('level', level).css('background', HexToBackground(color));
+            cell.data('owner', username).data('build', build).data('level', level).css('background', GenerateBackground(color, build, level));
+
+            if(username === info.username && build === builds.HQ){
+                myHQ = { x: x, y: y };
+            }
         }else{
             cell.data('owner', null).css('background', '');
         }
