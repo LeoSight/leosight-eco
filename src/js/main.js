@@ -2,7 +2,12 @@ $(function () {
     const socket = io();
     const messages = $('#messages');
     let latency = 0;
-    let info = { username: '', energy: 0, money: 0, cells: 0 };
+    let info = {
+        username: '',
+        energy: 0,
+        cells: 0,
+        money: 0
+    };
     let myHQ = {};
     let playerData = [];
 
@@ -16,18 +21,44 @@ $(function () {
         IRON: 5,
         BAUXITE: 6,
         FORT: 7,
+        LEAD: 8,
+        SULFUR: 9,
+        NITER: 10,
+        FACTORY: 11,
+        MILITARY: 12,
+        STONE: 13,
     };
 
     const builds_info = [
         { title: 'Pozemek' },
-        { title: 'Základna', abbr: 'HQ' },
+        { title: 'Hlavní základna', abbr: 'HQ' },
         { title: 'Zlatý důl', abbr: 'Z' },
         { title: 'Uhelný důl', abbr: 'U' },
         { title: 'Ropný vrt', abbr: 'R' },
         { title: 'Železný důl', abbr: 'Ž' },
         { title: 'Bauxitový důl', abbr: 'B' },
         { title: 'Pevnost', abbr: 'P' },
+        { title: 'Olověný důl', abbr: 'O' },
+        { title: 'Sírový důl', abbr: 'S' },
+        { title: 'Ledkový důl', abbr: 'L' },
+        { title: 'Továrna', abbr: 'T' },
+        { title: 'Vojenská základna', abbr: 'V' },
+        { title: 'Kamenolom', abbr: 'K' },
     ];
+
+    const resources = {
+        GOLD: 'Zlato',
+        COAL: 'Uhlí',
+        OIL: 'Ropa',
+        IRON: 'Železo',
+        BAUXITE: 'Bauxit',
+        LEAD: 'Olovo',
+        SULFUR: 'Síra',
+        NITER: 'Ledek',
+        GUNPOWDER: 'Střelný prach',
+        AMMO: 'Munice',
+        STONE: 'Kámen',
+    };
 
     socket.on('pong', function(ms) {
         latency = ms;
@@ -188,7 +219,17 @@ $(function () {
                 items.owner = { name: "Vlastník: " + (owner || 'Nikdo'), disabled: true };
                 items.type = { name: "Typ: " + (builds_info[build] ? builds_info[build].title : 'Pozemek'), disabled: true };
 
-                if(build !== builds.HQ) {
+                if(build === builds.HQ) {
+                    if (owner === info.username) {
+                        items.destroy = {
+                            name: "Zničit základnu (⚡1)",
+                            callback: DestroyBuilding,
+                            disabled: function () {
+                                return !(info.energy >= 1 && info.cells === 1);
+                            }
+                        };
+                    }
+                }else{
                     if (owner === info.username) {
                         items.unclaim = {
                             name: "Zrušit obsazení (⚡1)", callback: UnclaimCell, disabled: function () {
@@ -207,8 +248,8 @@ $(function () {
 
                             if(info.cells > 0) {
                                 items.buildFort = {
-                                    name: "Postavit pevnost (⚡10+💰100)", callback: BuildFort, disabled: function () {
-                                        return !(info.energy >= 10 && info.money >= 100);
+                                    name: "Postavit pevnost (⚡10+K100)", callback: BuildFort, disabled: function () {
+                                        return !(info.energy >= 10 && info.stone >= 100);
                                     }
                                 };
                             }
@@ -223,10 +264,10 @@ $(function () {
 
                             if(level < 5){
                                 items.upgrade = {
-                                    name: "Vylepšit pevnost (⚡10+💰500)",
+                                    name: "Vylepšit pevnost (⚡10+K500)",
                                     callback: UpgradeBuilding,
                                     disabled: function () {
-                                        return !(info.energy >= 10 && info.money >= 500);
+                                        return !(info.energy >= 10 && info.stone >= 500);
                                     }
                                 };
                             }
@@ -419,6 +460,13 @@ $(function () {
         $('#energy > span').text(info.energy);
         $('#money > span').text(info.money);
         $('#cells > span').text(info.cells);
+
+        let res = $('#resources').text('');
+        Object.keys(info).forEach((key) => {
+            if (key.toUpperCase() in resources) {
+                $('<p>').text(`${resources[key.toUpperCase()]}: ${info[key]}`).appendTo(res);
+            }
+        });
     });
 
     socket.on('capture', function(color, x, y){

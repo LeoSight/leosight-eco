@@ -242,8 +242,8 @@ io.on('connection', function(socket){
     socket.on('build', function(x, y, building){
         if (players[index] && players[index].logged) {
             let userData = users.find(x => x.security === players[index].security);
-            if (userData && userData.energy && userData.money) {
-                if (building === builds.FORT && userData.energy >= 10 && userData.money >= 100) {
+            if (userData && userData.energy && userData.stone) {
+                if (building === builds.FORT && userData.energy >= 10 && userData.stone >= 100) {
                     let cell = world.find(d => d.x === x && d.y === y);
                     if(cell && cell.owner === userData.security && cell.build == null){
                         cell.build = builds.FORT;
@@ -251,9 +251,9 @@ io.on('connection', function(socket){
                         io.emit('cell', x, y, userData.username, userData.color, cell.build, 1);
 
                         userData.energy -= 10;
-                        userData.money -= 100;
+                        userData.stone -= 100;
 
-                        socket.emit('info', { energy: userData.energy, money: userData.money });
+                        socket.emit('info', { energy: userData.energy, stone: userData.stone });
                     }
                 }
             }
@@ -263,8 +263,8 @@ io.on('connection', function(socket){
     socket.on('upgrade', function(x, y){
         if (players[index] && players[index].logged) {
             let userData = users.find(x => x.security === players[index].security);
-            if (userData && userData.energy && userData.money) {
-                if (userData.energy >= 10 && userData.money >= 500) {
+            if (userData && userData.energy && userData.stone) {
+                if (userData.energy >= 10 && userData.stone >= 500) {
                     let cell = world.find(d => d.x === x && d.y === y);
                     if(cell && cell.owner === userData.security && cell.build === builds.FORT){
                         let level = cell.level || 1;
@@ -275,9 +275,9 @@ io.on('connection', function(socket){
                             io.emit('cell', x, y, userData.username, userData.color, cell.build, cell.level);
 
                             userData.energy -= 10;
-                            userData.money -= 500;
+                            userData.stone -= 500;
 
-                            socket.emit('info', { energy: userData.energy, money: userData.money });
+                            socket.emit('info', { energy: userData.energy, stone: userData.stone });
                         }
                     }
                 }
@@ -291,7 +291,7 @@ io.on('connection', function(socket){
             if (userData && userData.energy) {
                 if (userData.energy >= 1) {
                     let cell = world.find(d => d.x === x && d.y === y);
-                    if(cell && cell.owner === userData.security && cell.build === builds.FORT){
+                    if(cell && cell.owner === userData.security && (cell.build === builds.FORT || (cell.build === builds.HQ && userData.cells === 1))){
                         cell.build = null;
                         db.world.cellUpdate(x, y, userData.security, null);
                         io.emit('cell', x, y, userData.username, userData.color, null);
@@ -381,6 +381,48 @@ function ChatHandler(msg, index) {
                 } else {
                     players[index].socket.emit('chat', null, `SYNTAX: /pay [ID] [Částka]`, '#e8b412');
                 }
+            }else if(cmd === 'send') {
+                if (!isNaN(args[1]) && args[2] && args[2].toUpperCase() in resources && !isNaN(args[3])) {
+                    let targetIndex = parseInt(args[1]);
+                    let amount = parseInt(args[3]);
+                    let material = args[2].toLowerCase();
+                    let target = players[targetIndex];
+                    if(target){
+                        let targetData = users.find(x => x.security === target.security);
+                        if (target && target.socket && targetData) {
+                            if(amount > 0) {
+                                if (userData[material] && userData[material] >= amount) {
+                                    let playerValue = userData[material];
+                                    playerValue -= amount;
+                                    userData[material] = playerValue;
+                                    db.users.update(userData.security, material, playerValue);
+                                    userData.socket.emit('info', {[material]: playerValue});
+
+                                    let targetValue = targetData[material];
+                                    targetValue += amount;
+                                    targetData[material] = targetValue;
+                                    db.users.update(targetData.security, material, targetValue);
+                                    targetData.socket.emit('info', {[material]: targetValue});
+
+                                    players[index].socket.emit('chat', null, `Poslal jsi ${amount}x "${material}" hráči [#${targetIndex}] ${target.username}.`, '#44cee8');
+                                    target.socket.emit('chat', null, `[#${index}] ${players[index].username} ti poslal ${amount}x "${material}".`, '#44cee8');
+                                    console.log(`[SEND] [#${index}] ${players[index].username} > [#${targetIndex}] ${target.username}: ${amount}x ${material}`);
+
+                                } else {
+                                    players[index].socket.emit('chat', null, `Nemáš dostatek tohoto materiálu!`, '#e1423e');
+                                }
+                            }else{
+                                players[index].socket.emit('chat', null, `Počet musí být kladné číslo!`, '#e1423e');
+                            }
+                        }else{
+                            players[index].socket.emit('chat', null, `Hráč s tímto ID nebyl nalezen!`, '#e1423e');
+                        }
+                    } else {
+                        players[index].socket.emit('chat', null, `Hráč s tímto ID nebyl nalezen!`, '#e1423e');
+                    }
+                } else {
+                    players[index].socket.emit('chat', null, `SYNTAX: /send [ID] [Materiál] [Počet]<br>Platné názvy materiálů jsou: ${Object.keys(resources).join(', ')}`, '#e8b412', true);
+                }
             }else if(cmd === 'country') {
                 if (args[1]) {
                     args.shift();
@@ -395,7 +437,7 @@ function ChatHandler(msg, index) {
             }else if(cmd === 'players') {
                 SendPlayerList();
             }else if(cmd === 'help'){
-                players[index].socket.emit('chat', null, `Seznam příkazu:<br>/color - Změna barvy<br>/w - Šeptat hráči<br>/pay - Poslat peníze<br>/country - Nastavit název státu`, '#e8b412', true);
+                players[index].socket.emit('chat', null, `Seznam příkazu:<br>/color - Změna barvy<br>/w - Šeptat hráči<br>/pay - Poslat peníze<br>/send - Poslat materiál<br>/country - Nastavit název státu`, '#e8b412', true);
             }else{
                 players[index].socket.emit('chat', null, `Neznámý příkaz! Seznam příkazů najdeš pod příkazem /help`, '#e1423e');
             }
@@ -431,6 +473,13 @@ function UpdatePlayerCells(security){
             io.emit('cell', cell.x, cell.y, owner.username, owner.color, cell.build);
         }
     });
+}
+
+/**
+ * @return {number}
+ */
+function GetDistance(x1, y1, x2, y2){
+    return Math.round(Math.sqrt(Math.pow(x1 - x2, 2) + Math.pow(y1 - y2, 2)));
 }
 
 function GetAdjacent(x, y){
@@ -525,6 +574,10 @@ function FetchUserData(socket, security){
             info.energy = 0;
         }
 
+        Object.keys(resources).forEach((key) => {
+            info[key.toLowerCase()] = userData[key.toLowerCase()] || 0;
+        });
+
         info.money = userData.money || 0;
         info.cells = CountPlayerCells(userData.security);
 
@@ -568,7 +621,25 @@ function LoginCallback(socket, index, username, success, response){
     socket.emit('login', success, response);
 }
 
-function Periodic() {
+function GainResource(build, res, gain){
+    world.filter(x => x.build === build).forEach(cell => {
+        if(cell.owner){
+            let userData = users.find(x => x.security === cell.owner);
+            if(userData){
+                let value = userData[res] || 0;
+                value += gain;
+                userData[res] = value;
+                db.users.update(userData.security, res, value);
+
+                if(userData.socket){
+                    userData.socket.emit('info', {[res]: value});
+                }
+            }
+        }
+    });
+}
+
+function Periodic5s() {
     users.forEach(userData => {
         if(!userData.energy) userData.energy = 0;
         let newEnergy = Math.min(userData.energy + 1, 10);
@@ -583,22 +654,21 @@ function Periodic() {
         }
     });
 
-    world.filter(x => x.build === builds.GOLD).forEach(cell => {
-        if(cell.owner){
-            let userData = users.find(x => x.security === cell.owner);
-            if(userData){
-                let money = userData.money || 0;
-                money += 5;
-                userData.money = money;
-                db.users.update(userData.security, 'money', money);
-
-                if(userData.socket){
-                    userData.socket.emit('info', {money: money});
-                }
-            }
-        }
-    });
-
-    return Promise.delay(5000).then(() => Periodic());
+    return Promise.delay(5000).then(() => Periodic5s());
 }
-Periodic();
+Periodic5s();
+
+function Periodic15s(){
+    GainResource(builds.GOLD, 'gold', 5);
+    GainResource(builds.COAL, 'coal', 5);
+    GainResource(builds.OIL, 'oil', 5);
+    GainResource(builds.IRON, 'iron', 5);
+    GainResource(builds.BAUXITE, 'bauxite', 5);
+    GainResource(builds.LEAD, 'lead', 5);
+    GainResource(builds.SULFUR, 'sulfur', 5);
+    GainResource(builds.NITER, 'niter', 5);
+    GainResource(builds.STONE, 'stone', 5);
+
+    return Promise.delay(15000).then(() => Periodic15s());
+}
+Periodic15s();

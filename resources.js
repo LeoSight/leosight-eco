@@ -1,5 +1,4 @@
 module.exports = {
-    MONEY: 1,
     GOLD: 2,
     COAL: 3,
     OIL: 4,
@@ -10,4 +9,5 @@ module.exports = {
     NITER: 10,
     GUNPOWDER: 11,
     AMMO: 12,
+    STONE: 13,
 };

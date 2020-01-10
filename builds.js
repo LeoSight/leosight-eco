@@ -10,4 +10,6 @@ module.exports = {
     SULFUR: 9,
     NITER: 10,
     FACTORY: 11,
+    MILITARY: 12,
+    STONE: 13,
 };
