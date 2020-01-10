@@ -252,6 +252,18 @@ $(function () {
                                         return !(info.energy >= 10 && info.stone >= 100);
                                     }
                                 };
+
+                                items.buildFactory = {
+                                    name: "Postavit továrnu (⚡10+K100+Ž200+B300)", callback: BuildFactory, disabled: function () {
+                                        return !(info.energy >= 10 && info.stone >= 100 && info.iron >= 200 && info.bauxite >= 300);
+                                    }
+                                };
+
+                                items.buildMilitary = {
+                                    name: "Postavit vojenskou základnu (⚡10+Z1000+K1000+Ž1000+B1000)", callback: BuildMilitary, disabled: function () {
+                                        return !(info.energy >= 10 && info.gold >= 1000 && info.stone >= 1000 && info.iron >= 1000 && info.bauxite >= 1000);
+                                    }
+                                };
                             }
                         }else if(build === builds.FORT){
                             items.destroy = {
@@ -271,6 +283,22 @@ $(function () {
                                     }
                                 };
                             }
+                        }else if(build === builds.FACTORY){
+                            items.destroy = {
+                                name: "Zničit továrnu (⚡1)",
+                                callback: DestroyBuilding,
+                                disabled: function () {
+                                    return !(info.energy >= 1);
+                                }
+                            };
+                        }else if(build === builds.MILITARY){
+                            items.destroy = {
+                                name: "Zničit vojenskou základnu (⚡1)",
+                                callback: DestroyBuilding,
+                                disabled: function () {
+                                    return !(info.energy >= 1);
+                                }
+                            };
                         }
                     } else {
                         if(owner == null) {
@@ -282,9 +310,17 @@ $(function () {
                                 }
                             };
                         }else{
-                            if(build === builds.FORT && info.cells > 0){
+                            if(build === builds.FORT && info.cells > 0) {
                                 items.capture = {
                                     name: "Dobýt pevnost (⚡10)",
+                                    callback: CaptureCell,
+                                    disabled: function () {
+                                        return !(info.energy >= 10 && CheckAdjacent(x, y));
+                                    }
+                                };
+                            }else if(build === builds.MILITARY && info.cells > 0){
+                                items.capture = {
+                                    name: "Dobýt vojenskou základnu (⚡10+M500)",
                                     callback: CaptureCell,
                                     disabled: function () {
                                         return !(info.energy >= 10 && CheckAdjacent(x, y));
@@ -393,6 +429,14 @@ $(function () {
 
     function BuildFort(){
         socket.emit('build', $(this).data('x'), $(this).data('y'), builds.FORT);
+    }
+
+    function BuildFactory(){
+        socket.emit('build', $(this).data('x'), $(this).data('y'), builds.FACTORY);
+    }
+
+    function BuildMilitary(){
+        socket.emit('build', $(this).data('x'), $(this).data('y'), builds.MILITARY);
     }
 
     function UpgradeBuilding(){

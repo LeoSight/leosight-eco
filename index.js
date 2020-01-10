@@ -138,6 +138,13 @@ io.on('connection', function(socket){
                                     if(userData.cells === 0){
                                         io.emit('chat', null, `[#${index}] ${userData.username} vybudoval základnu odboje na území "${oldOwner.country || 'Bez názvu'}" a bojuje o nezávislost.`, '#44cee8');
                                         resistance = true;
+                                    }else{
+                                        if(!ProcessFight(x, y, userData, oldOwner)) { // Útok může selhat (nedostatek munice)
+                                            userData.energy -= energyCost;
+                                            socket.emit('info', { energy: userData.energy, ammo: userData.ammo });
+                                            socket.emit('chat', null, `Armáda z "${oldOwner.country || 'Bez názvu'}" odrazila tvůj útok!`, '#e1423e');
+                                            return;
+                                        }
                                     }
 
                                     if(cell.build === builds.FORT){
@@ -154,6 +161,12 @@ io.on('connection', function(socket){
                                             return; // Neřešit další kód pro obsazení čtverce
                                         }
 
+                                        energyCost = 10;
+                                        cell.build = null;
+                                    }else if(cell.build === builds.MILITARY){
+                                        if(userData.energy < 10) return; // Zabrání vojenské základny stojí 10 energie
+                                        if(userData.ammo < 500) return; // Zabrání vojenské základny stojí 500 munice
+                                        userData.ammo -= 500;
                                         energyCost = 10;
                                         cell.build = null;
                                     }
@@ -183,7 +196,7 @@ io.on('connection', function(socket){
                         userData.energy -= energyCost;
                         userData.cells += 1;
 
-                        socket.emit('info', { energy: userData.energy, cells: userData.cells });
+                        socket.emit('info', { energy: userData.energy, cells: userData.cells, ammo: userData.ammo });
                     }
                 }
             }
@@ -242,18 +255,40 @@ io.on('connection', function(socket){
     socket.on('build', function(x, y, building){
         if (players[index] && players[index].logged) {
             let userData = users.find(x => x.security === players[index].security);
-            if (userData && userData.energy && userData.stone) {
-                if (building === builds.FORT && userData.energy >= 10 && userData.stone >= 100) {
-                    let cell = world.find(d => d.x === x && d.y === y);
-                    if(cell && cell.owner === userData.security && cell.build == null){
-                        cell.build = builds.FORT;
+            if (userData) {
+                let cell = world.find(d => d.x === x && d.y === y);
+                if(cell && cell.owner === userData.security && cell.build == null) {
+                    let cost = {};
+                    if (building === builds.FORT) {
+                        cost = {energy: 10, stone: 100}
+                    } else if (building === builds.FACTORY) {
+                        cost = {energy: 10, stone: 100, iron: 200, bauxite: 300}
+                    } else if (building === builds.MILITARY) {
+                        cost = {energy: 10, gold: 1000, stone: 1000, iron: 1000, bauxite: 1000}
+                    } else {
+                        return;
+                    }
+
+                    let costMet = true;
+                    Object.keys(cost).forEach((key) => {
+                        if (!userData[key] || userData[key] < cost[key]) {
+                            costMet = false;
+                        }
+                    });
+
+                    if (costMet) {
+                        cell.build = building;
                         db.world.cellUpdate(x, y, userData.security, cell.build, 1);
                         io.emit('cell', x, y, userData.username, userData.color, cell.build, 1);
 
-                        userData.energy -= 10;
-                        userData.stone -= 100;
+                        let newMaterials = {};
+                        Object.keys(cost).forEach((key) => {
+                            userData[key] -= cost[key];
+                            newMaterials[key] = userData[key];
+                            db.users.update(userData.security, key, userData[key]);
+                        });
 
-                        socket.emit('info', { energy: userData.energy, stone: userData.stone });
+                        socket.emit('info', newMaterials);
                     }
                 }
             }
@@ -292,7 +327,7 @@ io.on('connection', function(socket){
                 if (userData.energy >= 1) {
                     userData.cells = CountPlayerCells(userData.security);
                     let cell = world.find(d => d.x === x && d.y === y);
-                    if(cell && cell.owner === userData.security && (cell.build === builds.FORT || (cell.build === builds.HQ && userData.cells <= 1))){
+                    if(cell && cell.owner === userData.security && (cell.build in [builds.FORT, builds.FACTORY, builds.MILITARY] || (cell.build === builds.HQ && userData.cells <= 1))){
                         if(cell.build === builds.HQ){
                             cell.owner = null;
                             cell.build = null;
@@ -304,7 +339,7 @@ io.on('connection', function(socket){
                             userData.cells -= 1;
 
                             socket.emit('info', {energy: userData.energy, cells: userData.cells});
-                        }else {
+                        }else{
                             cell.build = null;
                             db.world.cellUpdate(x, y, userData.security, null);
                             io.emit('cell', x, y, userData.username, userData.color, null);
@@ -406,13 +441,13 @@ function ChatHandler(msg, index) {
                         if (target && target.socket && targetData) {
                             if(amount > 0) {
                                 if (userData[material] && userData[material] >= amount) {
-                                    let playerValue = userData[material];
+                                    let playerValue = userData[material] || 0;
                                     playerValue -= amount;
                                     userData[material] = playerValue;
                                     db.users.update(userData.security, material, playerValue);
                                     userData.socket.emit('info', {[material]: playerValue});
 
-                                    let targetValue = targetData[material];
+                                    let targetValue = targetData[material] || 0;
                                     targetValue += amount;
                                     targetData[material] = targetValue;
                                     db.users.update(targetData.security, material, targetValue);
@@ -496,6 +531,26 @@ function GetDistance(x1, y1, x2, y2){
     return Math.round(Math.sqrt(Math.pow(x1 - x2, 2) + Math.pow(y1 - y2, 2)));
 }
 
+/**
+ * @return {null|Object}
+ */
+function NearestBuilding(x, y, build, owner, maxDistance){
+    let nearest = null;
+    maxDistance = maxDistance || 1000;
+
+    world.filter(x => (Array.isArray(build) ? x.build in build : x.build === build)).forEach(cell => {
+        if(!owner || cell.owner === owner){
+            let dist = GetDistance(x, y, cell.x, cell.y);
+            if(dist < maxDistance){
+                nearest = cell;
+                maxDistance = dist;
+            }
+        }
+    });
+
+    return nearest;
+}
+
 function GetAdjacent(x, y){
     let adjacent = [];
     let adj_left = world.find(d => d.x === x - 1 && d.y === y);
@@ -561,6 +616,24 @@ function CheckAdjacentBuilding(x, y, building){
  */
 function CanBuildHQ(x, y){
     return !CheckAdjacentBuilding(x, y, [builds.HQ, builds.GOLD, builds.COAL, builds.OIL, builds.IRON, builds.BAUXITE, builds.LEAD, builds.SULFUR, builds.NITER, builds.STONE]);
+}
+
+/**
+ * @return {boolean}
+ */
+function ProcessFight(x, y, userData, targetData){
+    let nearHQ = NearestBuilding(x, y, [builds.HQ, builds.MILITARY], targetData.security, 5);
+    if(nearHQ) {
+        let userAmmo = userData.ammo || 0;
+        let targetAmmo = targetData.ammo || 0;
+        userData.ammo = Math.max(0, userAmmo - Math.min(targetAmmo, 50));
+        targetData.ammo = Math.max(0, targetAmmo - Math.min(userAmmo, 50));
+        db.users.update(userData.security, 'ammo', userData.ammo);
+        db.users.update(targetData.security, 'ammo', targetData.ammo);
+        return userAmmo > targetAmmo;
+    }else{
+        return true;
+    }
 }
 
 function SendMap(socket){
@@ -660,6 +733,45 @@ function GainResource(build, res, gain){
     });
 }
 
+function ProcessFactories(){
+    world.filter(x => x.build === builds.FACTORY).forEach(cell => {
+        if(cell.owner){
+            let userData = users.find(x => x.security === cell.owner);
+            if(userData){
+                let newMaterials = {};
+
+                let niter = userData.niter || 0;
+                let sulfur = userData.sulfur || 0;
+                let gunpowder = userData.gunpowder || 0;
+                let lead = userData.lead || 0;
+                let iron = userData.iron || 0;
+                let ammo = userData.ammo || 0;
+
+                if(niter >= 5 && sulfur >= 2){
+                    newMaterials.niter = niter - 5;
+                    newMaterials.sulfur = sulfur - 2;
+                    newMaterials.gunpowder = gunpowder + 4;
+                }
+                if(gunpowder >= 3 && lead >= 1 && iron >= 3){
+                    newMaterials.gunpowder = gunpowder - 3;
+                    newMaterials.lead = lead - 1;
+                    newMaterials.iron = iron - 3;
+                    newMaterials.ammo = ammo + 3;
+                }
+
+                Object.keys(newMaterials).forEach((key) => {
+                    userData[key] = newMaterials[key];
+                    db.users.update(userData.security, key, newMaterials[key]);
+                });
+
+                if(userData.socket){
+                    userData.socket.emit('info', newMaterials);
+                }
+            }
+        }
+    });
+}
+
 function Periodic5s() {
     users.forEach(userData => {
         if(!userData.energy) userData.energy = 0;
@@ -689,6 +801,7 @@ function Periodic15s(){
     GainResource(builds.SULFUR, 'sulfur', 5);
     GainResource(builds.NITER, 'niter', 5);
     GainResource(builds.STONE, 'stone', 5);
+    ProcessFactories();
 
     return Promise.delay(15000).then(() => Periodic15s());
 }
