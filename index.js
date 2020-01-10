@@ -119,7 +119,7 @@ io.on('connection', function(socket){
             if(userData && userData.color && userData.energy) {
                 if(userData.energy > 0) {
                     userData.cells = CountPlayerCells(userData.security);
-                    if((userData.cells === 0 && !CheckAdjacentBuilding(x, y, [builds.GOLD, builds. HQ])) || CheckAdjacent(x, y, userData.security)) {
+                    if((userData.cells === 0 && CanBuildHQ(x, y)) || CheckAdjacent(x, y, userData.security)) {
                         let energyCost = 1;
                         let resistance = false;
                         let cell = world.find(d => d.x === x && d.y === y);
@@ -197,7 +197,7 @@ io.on('connection', function(socket){
                 if (userData.energy >= 10) {
                     let cell = world.find(d => d.x === x && d.y === y);
                     if(cell && cell.owner === userData.security && cell.build == null){
-                        if(!CheckAdjacentBuilding(x, y, [builds.GOLD, builds.HQ]) && CheckAdjacentOwnAll(x, y, userData.security)) {
+                        if(CanBuildHQ(x, y) && CheckAdjacentOwnAll(x, y, userData.security)) {
                             let oldHQ = world.find(d => d.build === builds.HQ && d.owner === userData.security);
                             if (oldHQ) {
                                 oldHQ.build = null;
@@ -290,15 +290,29 @@ io.on('connection', function(socket){
             let userData = users.find(x => x.security === players[index].security);
             if (userData && userData.energy) {
                 if (userData.energy >= 1) {
+                    userData.cells = CountPlayerCells(userData.security);
                     let cell = world.find(d => d.x === x && d.y === y);
-                    if(cell && cell.owner === userData.security && (cell.build === builds.FORT || (cell.build === builds.HQ && userData.cells === 1))){
-                        cell.build = null;
-                        db.world.cellUpdate(x, y, userData.security, null);
-                        io.emit('cell', x, y, userData.username, userData.color, null);
+                    if(cell && cell.owner === userData.security && (cell.build === builds.FORT || (cell.build === builds.HQ && userData.cells <= 1))){
+                        if(cell.build === builds.HQ){
+                            cell.owner = null;
+                            cell.build = null;
 
-                        userData.energy -= 1;
+                            db.world.cellUpdate(x, y, null, null);
+                            io.emit('cell', x, y, null, null, null);
 
-                        socket.emit('info', { energy: userData.energy });
+                            userData.energy -= 1;
+                            userData.cells -= 1;
+
+                            socket.emit('info', {energy: userData.energy, cells: userData.cells});
+                        }else {
+                            cell.build = null;
+                            db.world.cellUpdate(x, y, userData.security, null);
+                            io.emit('cell', x, y, userData.username, userData.color, null);
+
+                            userData.energy -= 1;
+
+                            socket.emit('info', {energy: userData.energy});
+                        }
                     }
                 }
             }
@@ -540,6 +554,13 @@ function CheckAdjacentBuilding(x, y, building){
         }
     });
     return r;
+}
+
+/**
+ * @return {boolean}
+ */
+function CanBuildHQ(x, y){
+    return !CheckAdjacentBuilding(x, y, [builds.HQ, builds.GOLD, builds.COAL, builds.OIL, builds.IRON, builds.BAUXITE, builds.LEAD, builds.SULFUR, builds.NITER, builds.STONE]);
 }
 
 function SendMap(socket){

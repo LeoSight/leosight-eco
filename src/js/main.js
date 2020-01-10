@@ -238,7 +238,7 @@ $(function () {
                         };
 
                         if(build == null) {
-                            if(!CheckAdjacentBuilding(x, y, [builds.GOLD, builds.HQ])) {
+                            if(CanBuildHQ(x, y)) {
                                 items.moveHQ = {
                                     name: "Přesunout základnu (⚡10)", callback: MoveHQ, disabled: function () {
                                         return !(info.energy >= 10 && info.cells > 0 && CheckAdjacentOwnAll(x, y));
@@ -278,7 +278,7 @@ $(function () {
                                 name: (info.cells === 0 ? "Vybudovat základnu (⚡1)" : "Obsadit pole (⚡1)"),
                                 callback: CaptureCell,
                                 disabled: function () {
-                                    return !(info.energy >= 1 && (CheckAdjacent(x, y) || (info.cells === 0 && build == null && !CheckAdjacentBuilding(x, y, [builds.GOLD, builds.HQ]))));
+                                    return !(info.energy >= 1 && (CheckAdjacent(x, y) || (info.cells === 0 && build == null && CanBuildHQ(x, y))));
                                 }
                             };
                         }else{
@@ -295,7 +295,7 @@ $(function () {
                                     name: (info.cells === 0 ? "Vybudovat základnu (⚡2)" : "Obsadit pole (⚡2)"),
                                     callback: CaptureCell,
                                     disabled: function () {
-                                        return !(info.energy >= 2 && (CheckAdjacent(x, y) || (info.cells === 0 && build == null && !CheckAdjacentBuilding(x, y, [builds.GOLD, builds.HQ]))));
+                                        return !(info.energy >= 2 && (CheckAdjacent(x, y) || (info.cells === 0 && build == null && CanBuildHQ(x, y))));
                                     }
                                 };
                             }
@@ -372,6 +372,13 @@ $(function () {
         return r;
     }
 
+    /**
+     * @return {boolean}
+     */
+    function CanBuildHQ(x, y){
+        return !CheckAdjacentBuilding(x, y, [builds.HQ, builds.GOLD, builds.COAL, builds.OIL, builds.IRON, builds.BAUXITE, builds.LEAD, builds.SULFUR, builds.NITER, builds.STONE]);
+    }
+
     function CaptureCell(){
         socket.emit('capture', $(this).data('x'), $(this).data('y'));
     }
@@ -438,7 +445,7 @@ $(function () {
                 myHQ = { x: x, y: y };
             }
         }else{
-            cell.data('owner', null).css('background', '');
+            cell.data('owner', null).data('build', build).css('background', '');
         }
 
         if(builds_info[build] && builds_info[build].abbr) {
