@@ -641,7 +641,7 @@ function SendMap(socket){
     world.forEach(cell => {
         let owner = users.find(x => x.security === cell.owner);
         if(owner) {
-            socket.emit('cell', cell.x, cell.y, owner.username, owner.color, cell.build, cell.level);
+            socket.emit('cell', cell.x, cell.y, owner.username, (owner.color || '#fff'), cell.build, cell.level);
         }else{
             socket.emit('cell', cell.x, cell.y, null, null, cell.build);
         }
