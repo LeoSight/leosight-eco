@@ -25,10 +25,10 @@ console.log('Načítám moduly..');
 
 const utils = require(__dirname + '/utils.js');
 require(__dirname + '/antispam.js')(io);
-require(__dirname + '/commands.js')(io);
 const security = (process.env.LOGIN === 'API' ? require(__dirname + '/security.js') : null);
 const account = (process.env.LOGIN === 'API' ? require(__dirname + '/account.js')(security) : null);
 const discord = (process.env.DISCORD_TOKEN.length > 0 ? require(__dirname + '/discord.js') : null);
+require(__dirname + '/commands.js')(io, discord);
 const builds = require(__dirname + '/builds.js');
 const resources = require(__dirname + '/resources.js');
 const db = {
@@ -125,7 +125,7 @@ io.on('connection', function(socket){
                         let cell = world.find(d => d.x === x && d.y === y);
                         if (cell) {
                             if(cell.build != null && userData.cells === 0) return; // Nelze vybudováním základny zbourat existující budovu
-                            if(cell.build === builds.HQ) return; // Nelze zabrat HQ
+                            //if(cell.build === builds.HQ) return; // Nelze zabrat HQ
                             if (cell.owner) {
                                 //if(userData.cells === 0) return; // Nemůže zabrat cizí čtverec jako první tah
                                 if(cell.owner === userData.security) return; // Nelze zabrat vlastní čtverec znovu
@@ -140,6 +140,9 @@ io.on('connection', function(socket){
                                         resistance = true;
                                     }else{
                                         if(!ProcessFight(x, y, userData, oldOwner)) { // Útok může selhat (nedostatek munice)
+                                            if(oldOwner.socket){
+                                                oldOwner.socket.emit('info', { ammo: oldOwner.ammo });
+                                            }
                                             let estimate = Math.pow(10, (oldOwner.ammo - userData.ammo).toString().length - 1);
                                             userData.energy -= energyCost;
                                             socket.emit('info', { energy: userData.energy, ammo: userData.ammo });
@@ -170,6 +173,22 @@ io.on('connection', function(socket){
                                         userData.ammo -= 500;
                                         energyCost = 10;
                                         cell.build = null;
+                                        io.emit('chat', null, `[#${index}] ${userData.username} právě zničil vojenskou základnu "${oldOwner.country || 'Bez názvu'}"!`, '#44cee8');
+                                        discord.broadcast(`${userData.username} právě zničil vojenskou základnu "${oldOwner.country || 'Bez názvu'}"!`);
+                                    }else if(cell.build === builds.HQ){
+                                        if(userData.energy < 10) return; // Zabrání hlavní základny stojí 10 energie
+                                        if(userData.ammo < 500) return; // Zabrání hlavní základny stojí 500 munice
+                                        if(!CheckAdjacentOwnAll(x, y, userData.security)) return; // Musí vlastnit všechny okolní pole
+                                        userData.ammo -= 500;
+                                        energyCost = 10;
+                                        cell.build = null;
+                                        io.emit('chat', null, `[#${index}] ${userData.username} právě dobyl hlavní základnu "${oldOwner.country || 'Bez názvu'}"!`, '#44cee8');
+                                        discord.broadcast(`${userData.username} právě dobyl hlavní základnu "${oldOwner.country || 'Bez názvu'}"!`);
+                                        userData.ammo += oldOwner.ammo;
+                                        oldOwner.ammo = 0;
+                                        if(oldOwner.socket){
+                                            oldOwner.socket.emit('info', { ammo: oldOwner.ammo });
+                                        }
                                     }
 
                                     if(oldOwner.socket) {
@@ -265,6 +284,7 @@ io.on('connection', function(socket){
                     } else if (building === builds.FACTORY) {
                         cost = {energy: 10, stone: 100, iron: 200, bauxite: 300}
                     } else if (building === builds.MILITARY) {
+                        if(!CheckAdjacentOwnAll(x, y, userData.security)) return; // Musí vlastnit všechna přilehlá pole
                         cost = {energy: 10, gold: 1000, stone: 1000, iron: 1000, bauxite: 1000}
                     } else {
                         return;
@@ -349,6 +369,26 @@ io.on('connection', function(socket){
 
                             socket.emit('info', {energy: userData.energy});
                         }
+                    }
+                }
+            }
+        }
+    });
+
+    socket.on('switch', function(x, y){
+        if (players[index] && players[index].logged) {
+            let userData = users.find(x => x.security === players[index].security);
+            if (userData && userData.energy) {
+                if (userData.energy >= 1) {
+                    let cell = world.find(d => d.x === x && d.y === y);
+                    if(cell && cell.owner === userData.security && cell.build === builds.FACTORY){
+                        let working = cell.working || false;
+                        working = !working;
+                        cell.working = working;
+                        db.world.update(x, y, 'working', working);
+                        io.emit('cell-data', x, y, 'working', working);
+                        userData.energy -= 1;
+                        socket.emit('info', {energy: userData.energy});
                     }
                 }
             }
@@ -627,6 +667,7 @@ function ProcessFight(x, y, userData, targetData){
     if(nearHQ) {
         let userAmmo = userData.ammo || 0;
         let targetAmmo = targetData.ammo || 0;
+        if(targetAmmo === 0) return true;
         userData.ammo = Math.max(0, userAmmo - Math.min(targetAmmo, 50));
         targetData.ammo = Math.max(0, targetAmmo - Math.min(userAmmo, 50));
         db.users.update(userData.security, 'ammo', userData.ammo);
@@ -643,6 +684,10 @@ function SendMap(socket){
         let owner = users.find(x => x.security === cell.owner);
         if(owner) {
             socket.emit('cell', cell.x, cell.y, owner.username, (owner.color || '#fff'), cell.build, cell.level);
+
+            if(cell.working){
+                socket.emit('cell-data', cell.x, cell.y, 'working', cell.working);
+            }
         }else{
             socket.emit('cell', cell.x, cell.y, null, null, cell.build);
         }
@@ -736,7 +781,7 @@ function GainResource(build, res, gain){
 
 function ProcessFactories(){
     world.filter(x => x.build === builds.FACTORY).forEach(cell => {
-        if(cell.owner){
+        if(cell.owner && cell.working){
             let userData = users.find(x => x.security === cell.owner);
             if(userData){
                 let newMaterials = {};

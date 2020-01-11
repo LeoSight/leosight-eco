@@ -21,6 +21,16 @@ module.exports = function(mongoWork) {
                     client.close();
                 });
             });
-        }
+        },
+        update: (x, y, key, value) => {
+            mongoWork(function (db, client) {
+                db.collection("world").updateOne( {'x': x, 'y': y }, { $set: {
+                        [key]: value
+                    } }, function (err) {
+                    if (err) throw err;
+                    client.close();
+                });
+            });
+        },
     }
 };

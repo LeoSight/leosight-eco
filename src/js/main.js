@@ -203,6 +203,7 @@ $(function () {
                 const owner = $trigger.data('owner');
                 const build = $trigger.data('build');
                 const level = $trigger.data('level') || 1;
+                const working = $trigger.data('working') || false;
 
                 let items = {};
 
@@ -224,6 +225,15 @@ $(function () {
                             callback: DestroyBuilding,
                             disabled: function () {
                                 return !(info.energy >= 1 && info.cells === 1);
+                            }
+                        };
+                    }else{
+                        items.capture = {
+                            name: `Dobýt hlavní základnu (⚡10+${Resource('ammo')}500)`,
+                            isHtmlName: true,
+                            callback: CaptureCell,
+                            disabled: function () {
+                                return !(info.energy >= 10 && info.ammo >= 500 && CheckAdjacentOwnAll(x, y));
                             }
                         };
                     }
@@ -259,7 +269,7 @@ $(function () {
 
                                 items.buildMilitary = {
                                     name: `Postavit vojenskou základnu (⚡10+${Resource('gold')}1000+${Resource('stone')}1000+${Resource('iron')}1000+${Resource('bauxite')}1000)`, isHtmlName: true, callback: BuildMilitary, disabled: function () {
-                                        return !(info.energy >= 10 && info.gold >= 1000 && info.stone >= 1000 && info.iron >= 1000 && info.bauxite >= 1000);
+                                        return !(info.energy >= 10 && info.gold >= 1000 && info.stone >= 1000 && info.iron >= 1000 && info.bauxite >= 1000 && CheckAdjacentOwnAll(x, y));
                                     }
                                 };
                             }
@@ -286,6 +296,14 @@ $(function () {
                             items.destroy = {
                                 name: "Zničit továrnu (⚡1)",
                                 callback: DestroyBuilding,
+                                disabled: function () {
+                                    return !(info.energy >= 1);
+                                }
+                            };
+
+                            items.switch = {
+                                name: (working ? "Vypnout továrnu (⚡1)" : "Zapnout továrnu (⚡1)"),
+                                callback: SwitchFactory,
                                 disabled: function () {
                                     return !(info.energy >= 1);
                                 }
@@ -448,6 +466,10 @@ $(function () {
         socket.emit('destroy', $(this).data('x'), $(this).data('y'));
     }
 
+    function SwitchFactory(){
+        socket.emit('switch', $(this).data('x'), $(this).data('y'));
+    }
+
     /*
     function DrawSelection(){
         $('#selection').html(`<strong>${selection.country || 'Nepojmenované území'}</strong><br>X: ${selection.x}<br>Y: ${selection.y}<br>Vlastník: ${selection.owner || 'Nikdo'}<br>Typ: ${builds_info[selection.build] ? builds_info[selection.build].title : 'Pozemek'}`);
@@ -508,6 +530,20 @@ $(function () {
             }
         }else{
             cell.text('');
+        }
+    });
+
+    socket.on('cell-data', function(x, y, key, value){
+        let cell = $('#map .row').eq(h + y).find('.cell').eq(w + x);
+        let build = cell.data('build') || null;
+
+        if(key === 'working' && build === builds.FACTORY){
+            cell.data('working', value);
+            if(value){
+                cell.html(builds_info[build].abbr + '<span class="smoke"></span>');
+            }else{
+                cell.html(builds_info[build].abbr);
+            }
         }
     });
 

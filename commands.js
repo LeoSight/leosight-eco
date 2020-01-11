@@ -1,4 +1,4 @@
-module.exports = function(io) {
+module.exports = function(io, discord) {
     const readline = require('readline'),
         rl = readline.createInterface({input: process.stdin, output: process.stdout, terminal: false});
 
@@ -12,6 +12,11 @@ module.exports = function(io) {
                 cmd.shift();
                 io.emit('chat', null, cmd.join(' '), '#44cee8');
                 console.log('[CHAT] Console: ' + cmd.join(' '));
+                break;
+            case 'discord':
+                cmd.shift();
+                discord.broadcast(cmd.join(' '));
+                console.log('[DISCORD] Bot: ' + cmd.join(' '));
                 break;
             case 'update':
                 io.emit('announce-update');
@@ -28,7 +33,10 @@ module.exports = function(io) {
         rl.prompt();
     }).on('close', function () {
         io.emit('chat', null, 'Server se vypíná!', '#44cee8');
+        discord.broadcast('Server se vypíná!');
         console.log('Vypínám server..');
-        process.exit(0);
+        setTimeout(() => {
+            process.exit(0);
+        }, 500);
     });
 };
