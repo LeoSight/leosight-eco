@@ -515,7 +515,7 @@ $(function () {
         let res = $('#resources').text('');
         Object.keys(info).forEach((key) => {
             if (key.toUpperCase() in resources) {
-                $('<p>').text(`${resources[key.toUpperCase()]}: ${info[key]}`).appendTo(res);
+                $('<p>').html(`${info[key+'Spending'] ? '('+(-info[key+'Spending'])+') ' : ''}${info[key]} <img src="../images/resources/${key}.png" alt="${resources[key.toUpperCase()]}">`).appendTo(res);
             }
         });
     });

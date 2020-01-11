@@ -373,7 +373,7 @@ function ChatHandler(msg, index) {
                 }else{
                     players[index].socket.emit('chat', null, `SYNTAX: /color [Barva v HEX kódu]`, '#e8b412');
                 }
-            }else if(cmd === 'w'){
+            }else if(cmd === 'w' || cmd === 'pm'){
                 if(!isNaN(args[1]) && args[2]){
                     let targetIndex = parseInt(args[1]);
                     let target = players[targetIndex];
@@ -387,7 +387,7 @@ function ChatHandler(msg, index) {
                         players[index].socket.emit('chat', null, `Hráč s tímto ID nebyl nalezen!`, '#e1423e');
                     }
                 }else{
-                    players[index].socket.emit('chat', null, `SYNTAX: /w [ID] [Zpráva]`, '#e8b412');
+                    players[index].socket.emit('chat', null, `SYNTAX: /pm [ID] [Zpráva]`, '#e8b412');
                 }
             }else if(cmd === 'pay') {
                 if (!isNaN(args[1]) && !isNaN(args[2])) {
@@ -486,7 +486,7 @@ function ChatHandler(msg, index) {
             }else if(cmd === 'players') {
                 SendPlayerList();
             }else if(cmd === 'help'){
-                players[index].socket.emit('chat', null, `Seznam příkazu:<br>/color - Změna barvy<br>/w - Šeptat hráči<br>/pay - Poslat peníze<br>/send - Poslat materiál<br>/country - Nastavit název státu`, '#e8b412', true);
+                players[index].socket.emit('chat', null, `Seznam příkazu:<br>/color - Změna barvy<br>/pm /w - Šeptání hráči<br>/pay - Poslat peníze<br>/send - Poslat materiál<br>/country - Nastavit název státu`, '#e8b412', true);
             }else{
                 players[index].socket.emit('chat', null, `Neznámý příkaz! Seznam příkazů najdeš pod příkazem /help`, '#e1423e');
             }
@@ -811,14 +811,16 @@ function Periodic60s(){
     users.forEach(userData => {
         if(!userData.ammo) userData.ammo = 0;
         userData.cells = CountPlayerCells(userData.security);
-        let newAmmo = Math.max(0, userData.ammo - Math.ceil(userData.cells / 100));
+        let military = world.filter(x => x.owner === userData.security && x.build === builds.MILITARY).length;
+        let spending = Math.round(userData.cells / 200) - military;
+        let newAmmo = Math.max(0, userData.ammo - spending);
 
         if(newAmmo !== userData.ammo) {
             userData.ammo = newAmmo;
             db.users.update(userData.security, 'ammo', newAmmo);
 
             if(userData.socket) {
-                userData.socket.emit('info', {ammo: newAmmo});
+                userData.socket.emit('info', {ammo: newAmmo, ammoSpending: spending});
             }
         }
     });
