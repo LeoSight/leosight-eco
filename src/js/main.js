@@ -174,26 +174,24 @@ $(function () {
         move.mouseup(function(e) { if(e.which === 1){ scroll = false; return false; } });
 
         move.scrollTop( move.height() / 2 );
-        move.scrollLeft( move.width() / 2 );
+        move.scrollLeft( (map.offsetWidth - move.offsetWidth) / 2 );
 
         move.oncontextmenu = function(){ return false; };
 
         /*
-        $('#map .cell').on('contextmenu', function(e) {
-            selection.x = $(this).data('x');
-            selection.y = $(this).data('y');
-            selection.owner = $(this).data('owner');
-            selection.build = $(this).data('build');
+        let zoom = 1.0;
+        move.bind('wheel mousewheel', function(e){
+            e.preventDefault();
+            let delta;
 
-            selection.country = null;
-            if(selection.owner) {
-                let ownerData = playerData.find(x => x.username === selection.owner);
-                if(ownerData && ownerData.country) {
-                    selection.country = ownerData.country;
-                }
-            }
+            if (e.originalEvent.wheelDelta !== undefined)
+                delta = e.originalEvent.wheelDelta;
+            else
+                delta = e.originalEvent.deltaY * -1;
 
-            DrawSelection();
+            zoom += (delta > 0 ? 0.1 : -0.1);
+            zoom = Math.max(Math.min(zoom, 1.5), 0.5);
+            map.css('transform', 'scale('+zoom+')');
         });
         */
 
