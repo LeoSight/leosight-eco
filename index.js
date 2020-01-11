@@ -140,9 +140,10 @@ io.on('connection', function(socket){
                                         resistance = true;
                                     }else{
                                         if(!ProcessFight(x, y, userData, oldOwner)) { // Útok může selhat (nedostatek munice)
+                                            let estimate = Math.pow(10, (oldOwner.ammo - userData.ammo).toString().length - 1);
                                             userData.energy -= energyCost;
                                             socket.emit('info', { energy: userData.energy, ammo: userData.ammo });
-                                            socket.emit('chat', null, `Armáda z "${oldOwner.country || 'Bez názvu'}" odrazila tvůj útok!`, '#e1423e');
+                                            socket.emit('chat', null, `Armáda z "${oldOwner.country || 'Bez názvu'}" odrazila tvůj útok! Odhadovaná palebná převaha nepřítele je v řádech ${estimate} munice.`, '#e1423e');
                                             return;
                                         }
                                     }
