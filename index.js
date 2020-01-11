@@ -812,7 +812,7 @@ function Periodic60s(){
         if(!userData.ammo) userData.ammo = 0;
         userData.cells = CountPlayerCells(userData.security);
         let military = world.filter(x => x.owner === userData.security && x.build === builds.MILITARY).length;
-        let spending = Math.round(userData.cells / 200) - military;
+        let spending = Math.round(userData.cells / 200) + military;
         let newAmmo = Math.max(0, userData.ammo - spending);
 
         if(newAmmo !== userData.ammo) {
