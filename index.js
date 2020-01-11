@@ -806,3 +806,23 @@ function Periodic15s(){
     return Promise.delay(15000).then(() => Periodic15s());
 }
 Periodic15s();
+
+function Periodic60s(){
+    users.forEach(userData => {
+        if(!userData.ammo) userData.ammo = 0;
+        userData.cells = CountPlayerCells(userData.security);
+        let newAmmo = Math.max(0, userData.ammo - Math.ceil(userData.cells / 100));
+
+        if(newAmmo !== userData.ammo) {
+            userData.ammo = newAmmo;
+            db.users.update(userData.security, 'ammo', newAmmo);
+
+            if(userData.socket) {
+                userData.socket.emit('info', {ammo: newAmmo});
+            }
+        }
+    });
+
+    return Promise.delay(60000).then(() => Periodic60s());
+}
+Periodic60s();
