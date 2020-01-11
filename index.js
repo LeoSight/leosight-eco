@@ -439,7 +439,7 @@ function ChatHandler(msg, index) {
                         players[index].socket.emit('chat', null, `Hráč s tímto ID nebyl nalezen!`, '#e1423e');
                     }
                 }else{
-                    players[index].socket.emit('chat', null, `SYNTAX: /pm [ID] [Zpráva]`, '#e8b412');
+                    players[index].socket.emit('chat', null, `SYNTAX: /${cmd} [ID] [Zpráva]`, '#e8b412');
                 }
             }else if(cmd === 'pay') {
                 if (!isNaN(args[1]) && !isNaN(args[2])) {
@@ -505,8 +505,8 @@ function ChatHandler(msg, index) {
                                     db.users.update(targetData.security, material, targetValue);
                                     targetData.socket.emit('info', {[material]: targetValue});
 
-                                    players[index].socket.emit('chat', null, `Poslal jsi ${amount}x "${resources[material]}" hráči [#${targetIndex}] ${target.username}.`, '#44cee8');
-                                    target.socket.emit('chat', null, `[#${index}] ${players[index].username} ti poslal ${amount}x "${resources[material]}".`, '#44cee8');
+                                    players[index].socket.emit('chat', null, `Poslal jsi ${amount}x ${resources[material.toUpperCase()]} hráči [#${targetIndex}] ${target.username}.`, '#44cee8');
+                                    target.socket.emit('chat', null, `[#${index}] ${players[index].username} ti poslal ${amount}x ${resources[material.toUpperCase()]}.`, '#44cee8');
                                     console.log(`[SEND] [#${index}] ${players[index].username} > [#${targetIndex}] ${target.username}: ${amount}x ${material}`);
 
                                 } else {
