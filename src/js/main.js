@@ -240,7 +240,7 @@ $(function () {
                         if(build == null) {
                             if(CanBuildHQ(x, y)) {
                                 items.moveHQ = {
-                                    name: "Přesunout základnu (⚡10)", callback: MoveHQ, disabled: function () {
+                                    name: `Přesunout základnu (⚡10)`, callback: MoveHQ, disabled: function () {
                                         return !(info.energy >= 10 && info.cells > 0 && CheckAdjacentOwnAll(x, y));
                                     }
                                 };
@@ -248,19 +248,19 @@ $(function () {
 
                             if(info.cells > 0) {
                                 items.buildFort = {
-                                    name: "Postavit pevnost (⚡10+K100)", callback: BuildFort, disabled: function () {
+                                    name: `Postavit pevnost (⚡10+${Resource('stone')}100)`, isHtmlName: true, callback: BuildFort, disabled: function () {
                                         return !(info.energy >= 10 && info.stone >= 100);
                                     }
                                 };
 
                                 items.buildFactory = {
-                                    name: "Postavit továrnu (⚡10+K100+Ž200+B300)", callback: BuildFactory, disabled: function () {
+                                    name: `Postavit továrnu (⚡10+${Resource('stone')}100+${Resource('iron')}200+${Resource('bauxite')}300)`, isHtmlName: true, callback: BuildFactory, disabled: function () {
                                         return !(info.energy >= 10 && info.stone >= 100 && info.iron >= 200 && info.bauxite >= 300);
                                     }
                                 };
 
                                 items.buildMilitary = {
-                                    name: "Postavit vojenskou základnu (⚡10+Z1000+K1000+Ž1000+B1000)", callback: BuildMilitary, disabled: function () {
+                                    name: `Postavit vojenskou základnu (⚡10+${Resource('gold')}1000+${Resource('stone')}1000+${Resource('iron')}1000+${Resource('bauxite')}1000)`, isHtmlName: true, callback: BuildMilitary, disabled: function () {
                                         return !(info.energy >= 10 && info.gold >= 1000 && info.stone >= 1000 && info.iron >= 1000 && info.bauxite >= 1000);
                                     }
                                 };
@@ -276,7 +276,8 @@ $(function () {
 
                             if(level < 5){
                                 items.upgrade = {
-                                    name: "Vylepšit pevnost (⚡10+K500)",
+                                    name: `Vylepšit pevnost (⚡10+${Resource('stone')}500)`,
+                                    isHtmlName: true,
                                     callback: UpgradeBuilding,
                                     disabled: function () {
                                         return !(info.energy >= 10 && info.stone >= 500);
@@ -320,7 +321,8 @@ $(function () {
                                 };
                             }else if(build === builds.MILITARY && info.cells > 0){
                                 items.capture = {
-                                    name: "Dobýt vojenskou základnu (⚡10+M500)",
+                                    name: `Dobýt vojenskou základnu (⚡10+${Resource('ammo')}500)`,
+                                    isHtmlName: true,
                                     callback: CaptureCell,
                                     disabled: function () {
                                         return !(info.energy >= 10 && CheckAdjacent(x, y));
@@ -329,6 +331,7 @@ $(function () {
                             }else{
                                 items.capture = {
                                     name: (info.cells === 0 ? "Vybudovat základnu (⚡2)" : "Obsadit pole (⚡2)"),
+                                    isHtmlName: true,
                                     callback: CaptureCell,
                                     disabled: function () {
                                         return !(info.energy >= 2 && (CheckAdjacent(x, y) || (info.cells === 0 && build == null && CanBuildHQ(x, y))));
@@ -456,6 +459,13 @@ $(function () {
     /**
      * @return {string}
      */
+    function Resource(key){
+        return `<img src="../images/resources/${key}.png" alt="${resources[key.toUpperCase()]}" title="${resources[key.toUpperCase()]}">`;
+    }
+
+    /**
+     * @return {string}
+     */
     function GenerateBackground(hex, build, level){
         hex = hex.replace('#','');
         if(hex.length === 3){ hex = `${hex}${hex}`; }
@@ -515,7 +525,7 @@ $(function () {
         let res = $('#resources').text('');
         Object.keys(info).forEach((key) => {
             if (key.toUpperCase() in resources) {
-                $('<p>').html(`${info[key+'Spending'] ? '('+(-info[key+'Spending'])+') ' : ''}${info[key]} <img src="../images/resources/${key}.png" alt="${resources[key.toUpperCase()]}">`).appendTo(res);
+                $('<p>').html(`${info[key+'Spending'] ? '('+(-info[key+'Spending'])+') ' : ''}${info[key]} ${Resource(key)}`).appendTo(res);
             }
         });
     });
