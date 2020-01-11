@@ -61,6 +61,10 @@ db.world.loadWorld((result) => {
 
 app.use(express.static(__dirname + '/client', { dotfiles: 'allow' } ));
 
+app.get('/stats', (req, res) => {
+    res.json({ online: players.filter(x => x.socket).length });
+});
+
 app.get('/', (req, res) => {
     res.sendFile(__dirname + '/client/index.html');
 });
