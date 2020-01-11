@@ -127,7 +127,6 @@ io.on('connection', function(socket){
                             if(cell.build != null && userData.cells === 0) return; // Nelze vybudováním základny zbourat existující budovu
                             //if(cell.build === builds.HQ) return; // Nelze zabrat HQ
                             if (cell.owner) {
-                                //if(userData.cells === 0) return; // Nemůže zabrat cizí čtverec jako první tah
                                 if(cell.owner === userData.security) return; // Nelze zabrat vlastní čtverec znovu
 
                                 let oldOwner = users.find(x => x.security === cell.owner);
@@ -136,6 +135,12 @@ io.on('connection', function(socket){
                                     energyCost = 2;
 
                                     if(userData.cells === 0){
+                                        if(oldOwner.ammo > 0) { // Nemůže zabrat jako první tah čtverec někoho kdo má munici
+                                            userData.energy -= energyCost;
+                                            socket.emit('info', { energy: userData.energy });
+                                            socket.emit('chat', null, `Armáda z "${oldOwner.country || 'Bez názvu'}" se ubránila tvému pokusu o vybudování základny odboje.`, '#e1423e');
+                                            return;
+                                        }
                                         io.emit('chat', null, `[#${index}] ${userData.username} vybudoval základnu odboje na území "${oldOwner.country || 'Bez názvu'}" a bojuje o nezávislost.`, '#44cee8');
                                         discord.broadcast(`${userData.username} vybudoval základnu odboje na území "${oldOwner.country || 'Bez názvu'}" a bojuje o nezávislost.`);
                                         resistance = true;
@@ -190,6 +195,10 @@ io.on('connection', function(socket){
                                         if(oldOwner.socket){
                                             oldOwner.socket.emit('info', { ammo: oldOwner.ammo });
                                         }
+                                    }else if(cell.build === builds.FACTORY){
+                                        cell.working = false;
+                                        db.world.update(x, y, 'working', false);
+                                        io.emit('cell-data', x, y, 'working', false);
                                     }
 
                                     if(oldOwner.socket) {
