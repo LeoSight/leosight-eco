@@ -137,6 +137,7 @@ io.on('connection', function(socket){
 
                                     if(userData.cells === 0){
                                         io.emit('chat', null, `[#${index}] ${userData.username} vybudoval základnu odboje na území "${oldOwner.country || 'Bez názvu'}" a bojuje o nezávislost.`, '#44cee8');
+                                        discord.broadcast(`${userData.username} vybudoval základnu odboje na území "${oldOwner.country || 'Bez názvu'}" a bojuje o nezávislost.`);
                                         resistance = true;
                                     }else{
                                         if(!ProcessFight(x, y, userData, oldOwner)) { // Útok může selhat (nedostatek munice)
@@ -207,7 +208,8 @@ io.on('connection', function(socket){
                         }
 
                         if(userData.cells === 0 && !resistance){
-                            io.emit('chat', null, `[#${index}] ${userData.username} právě založil nezávislý národ.`, '#44cee8');
+                            io.emit('chat', null, `[#${index}] ${userData.username} právě založil nový nezávislý národ.`, '#44cee8');
+                            discord.broadcast(`${userData.username} právě založil nový nezávislý národ.`);
                         }
 
                         db.world.cellUpdate(x, y, userData.security, cell.build, cell.level);
