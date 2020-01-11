@@ -265,7 +265,7 @@ io.on('connection', function(socket){
                         io.emit('cell', x, y, null, null, cell.build);
 
                         userData.energy -= 1;
-                        userData.cells -= 1;
+                        userData.cells = CountPlayerCells(userData.security);
 
                         socket.emit('info', { energy: userData.energy, cells: userData.cells });
                     }
