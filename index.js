@@ -505,8 +505,8 @@ function ChatHandler(msg, index) {
                                     db.users.update(targetData.security, material, targetValue);
                                     targetData.socket.emit('info', {[material]: targetValue});
 
-                                    players[index].socket.emit('chat', null, `Poslal jsi ${amount}x "${material}" hráči [#${targetIndex}] ${target.username}.`, '#44cee8');
-                                    target.socket.emit('chat', null, `[#${index}] ${players[index].username} ti poslal ${amount}x "${material}".`, '#44cee8');
+                                    players[index].socket.emit('chat', null, `Poslal jsi ${amount}x "${resources[material]}" hráči [#${targetIndex}] ${target.username}.`, '#44cee8');
+                                    target.socket.emit('chat', null, `[#${index}] ${players[index].username} ti poslal ${amount}x "${resources[material]}".`, '#44cee8');
                                     console.log(`[SEND] [#${index}] ${players[index].username} > [#${targetIndex}] ${target.username}: ${amount}x ${material}`);
 
                                 } else {
@@ -522,7 +522,11 @@ function ChatHandler(msg, index) {
                         players[index].socket.emit('chat', null, `Hráč s tímto ID nebyl nalezen!`, '#e1423e');
                     }
                 } else {
-                    players[index].socket.emit('chat', null, `SYNTAX: /send [ID] [Materiál] [Počet]<br>Platné názvy materiálů jsou: ${Object.keys(resources).join(', ')}`, '#e8b412', true);
+                    let materials = [];
+                    Object.keys(resources).forEach((key) => {
+                        materials.push(`${key} (${resources[key]})`);
+                    });
+                    players[index].socket.emit('chat', null, `SYNTAX: /send [ID] [Materiál] [Počet]<br>Platné názvy materiálů jsou: ${materials.join(', ')}`, '#e8b412', true);
                 }
             }else if(cmd === 'country') {
                 if (args[1]) {
@@ -590,7 +594,7 @@ function NearestBuilding(x, y, build, owner, maxDistance){
     let nearest = null;
     maxDistance = maxDistance || 1000;
 
-    world.filter(x => (Array.isArray(build) ? x.build in build : x.build === build)).forEach(cell => {
+    world.filter(x => (Array.isArray(build) ? build.includes(x.build) : x.build === build)).forEach(cell => {
         if(!owner || cell.owner === owner){
             let dist = GetDistance(x, y, cell.x, cell.y);
             if(dist < maxDistance){
