@@ -14,6 +14,16 @@ Stejně tak na Discordu prober s ostatními tvůrci změnu, kterou bys rád prov
 
 3. Po odeslání pull requestu můžeš opět napsat na Discord a upozornit na něj správce projektu.
 
+Úpravy vždy dělej od nejnovější verze originálního repositáře! Nezapomeň si svůj Fork aktualizovat!
+
+Nezapomeň ve svém commitu vždy zvednout číslo revize v souboru .revision o 1 nebo příslušný počet commitů. Ideálně si nastav pre-commit hook na následující skript a ten to udělá za tebe automaticky:
+
+```
+#!/bin/sh
+git log master --pretty=oneline | wc -l > .revision
+git add .revision
+```
+
 ## Co se bude dít dál?
 
 Správce projektu zkontroluje tvůj pull request a udělá tzv. code review. Pokud je všechno v pořádku, přidá tvůj kód do hlavního repositáře (této akci se říká merge).
