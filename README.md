@@ -50,6 +50,8 @@ Následně se ujisti, že je spuštěna MongoDB a příkazem `node .` spusť ser
 
 Pokud jsi přivítán zprávou "Server spuštěn na portu 3005" pak se ti podařilo úspěšně spustit server. Připojit se na něj můžeš z [eco.leosight.cz](https://eco.leosight.cz) a přepnutím na lokální test server (neměj strach, ostatní jej s výchozím nastavením neuvidí).
 
+Při úpravě client-side kódu upravuj CSS a JS pouze v /src a spusť Gulp - ten je dobré ovládat z vývojového prostředí, nebo nainstalovat globálně příkazem `npm install --global gulp-cli`
+
 Jakékoliv problémy a dotazy určitě směřuj na Discord, ostatní kontributoři ti moc rádi pomohou.
 
 Další informace (o odesílání samotných pull requestů) najdeš v souboru CONTRIBUTING.md, mnoho zdaru!
