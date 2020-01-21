@@ -1,6 +1,8 @@
 $(function () {
     const socket = io();
     const messages = $('#messages');
+    let logged = false;
+    let menuActive = false;
     let latency = 0;
     let info = {
         username: '',
@@ -27,6 +29,8 @@ $(function () {
         FACTORY: 11,
         MILITARY: 12,
         STONE: 13,
+        EXPORT: 14,
+        FARM: 15
     };
 
     const builds_info = [
@@ -44,6 +48,8 @@ $(function () {
         { title: 'Továrna', abbr: 'T' },
         { title: 'Vojenská základna', abbr: 'V' },
         { title: 'Kamenolom', abbr: 'K' },
+        { title: 'Exportní sklad', abbr: 'E' },
+        { title: 'Farma', abbr: 'F' },
     ];
 
     const resources = {
@@ -69,6 +75,28 @@ $(function () {
         $('#ping').html('Připojení navázáno!');
         AddChatMessage(null, 'Navázáno připojení k serveru!', '#45b70a');
         $('#login').show();
+    });
+
+    socket.on('serverinfo', function(serverName, serverVersion) {
+        $('#login .current').html('Právě jsi připojen k serveru: <strong>' + serverName + '</strong><br><small>Verze serveru: ' + serverVersion + '</small>');
+
+        $('#serverlist').empty();
+
+        $.getJSON('https://eco.leosight.cz/servers.php', function(servers) {
+            servers.forEach(server => {
+                $.getJSON('//' + server.address + ':3005/stats', function(conn){
+                    $('#serverlist').append(`<option value="${server.address}"${server.servername === serverName ? ' selected' : ''}>${conn.servername} (${conn.online})</option>`);
+                });
+            });
+        });
+
+        $.getJSON('//127.0.0.1:3005/stats', function(conn){
+            $('#serverlist').append(`<option value="127.0.0.1"${conn.servername === serverName ? ' selected' : ''}>${conn.servername} (${conn.online}) - lokální</option>`);
+        });
+    });
+
+    $('#serverlist').change(function() {
+        window.location.href = '//' + $(this).val() + ':3005';
     });
 
     socket.on('disconnect', function() {
@@ -106,6 +134,7 @@ $(function () {
         if(success) {
             $('#login').hide();
             console.log('Přihlášení úspěšné (' + response + ')');
+            logged = true;
         }else{
             $('#login .title').fadeOut(100).html(response).fadeIn(100);
         }
@@ -374,10 +403,10 @@ $(function () {
         const adj_top = mapRows.eq(h + y - 1).find('.cell').eq(w + x);
         const adj_bottom = mapRows.eq(h + y + 1).find('.cell').eq(w + x);
 
-        adj_left && adjacent.push(adj_left);
-        adj_right && adjacent.push(adj_right);
-        adj_top && adjacent.push(adj_top);
-        adj_bottom && adjacent.push(adj_bottom);
+        adj_left.length > 0 && adjacent.push(adj_left);
+        adj_right.length > 0 && adjacent.push(adj_right);
+        adj_top.length > 0 && adjacent.push(adj_top);
+        adj_bottom.length > 0 && adjacent.push(adj_bottom);
         return adjacent;
     }
 
@@ -401,6 +430,7 @@ $(function () {
     function CheckAdjacentOwnAll(x, y){
         let adjacent = GetAdjacent(x, y);
         let r = true;
+        console.log(adjacent);
         adjacent.forEach(d => {
             if(d.data('owner') !== info.username){
                 r = false;
@@ -519,7 +549,7 @@ $(function () {
                 myHQ = { x: x, y: y };
             }
         }else{
-            cell.data('owner', null).data('build', build).css('background', '');
+            cell.data('owner', null).data('build', build).data('level', level).css('background', '');
         }
 
         if(builds_info[build] && builds_info[build].abbr) {
@@ -568,10 +598,26 @@ $(function () {
         $('#map .row').eq(h + y).find('.cell').eq(w + x).css('background', color);
     });
 
+    // MODÁLOVÁ OKNA
+
+    MicroModal.init({ awaitCloseAnimation: true });
+
     // KLÁVESOVÉ ZKRATKY
 
-    $(window).keypress(function(e) {
-        if ( $('input:focus').length > 0 ) {  return; }
+    $(window).keyup(function(e) {
+        if(!logged) return;
+
+        if (e.which === 27) {
+            if(!menuActive) {
+                MicroModal.show('modal-menu', {
+                    onClose: () => { menuActive = false; }
+                });
+                menuActive = true;
+            }
+        }
+
+        if ( $('input:focus').length > 0 ) {  return; } // Není aktivní psaní do chatu
+
         if (e.which === 32) {
             if($('#chat').is(':visible')) {
                 $('#chat,#players,#serverinfo,#playerinfo').fadeOut(200);

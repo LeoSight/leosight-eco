@@ -12,4 +12,6 @@ module.exports = {
     FACTORY: 11,
     MILITARY: 12,
     STONE: 13,
+    EXPORT: 14,
+    FARM: 15
 };

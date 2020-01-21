@@ -21,6 +21,9 @@ const mongoWork = (cb) => {
     });
 };
 
+const serverName = process.env.SERVERNAME;
+const version = fs.readFileSync('.revision').toString().trim();
+
 console.log('Načítám moduly..');
 
 const utils = require(__dirname + '/utils.js');
@@ -33,8 +36,11 @@ const builds = require(__dirname + '/builds.js');
 const resources = require(__dirname + '/resources.js');
 const db = {
     users: require(__dirname + '/db/users.js')(mongoWork),
-    world: require(__dirname + '/db/world.js')(mongoWork)
+    world: require(__dirname + '/db/world.js')(mongoWork),
+    market: require(__dirname + '/db/market.js')(mongoWork)
 };
+const market = require(__dirname + '/market.js')(db.market);
+const master = require(__dirname + '/master.js');
 
 let players = []; // Aktuálně připojení hráči
 let users = []; // Databáze uživatelů
@@ -43,6 +49,7 @@ let world = []; // Informace o celém gridu
 mongoWork(function(db, client) {
     db.createCollection('users');
     db.createCollection('world');
+    db.createCollection('market');
 
     let mySort = { username: 1 };
     db.collection("users").find().sort(mySort).toArray(function(err, result) {
@@ -59,10 +66,19 @@ db.world.loadWorld((result) => {
     console.log('Svět načten!');
 });
 
+market.init();
+
 app.use(express.static(__dirname + '/client', { dotfiles: 'allow' } ));
 
 app.get('/stats', (req, res) => {
-    res.json({ online: players.filter(x => x.socket).length });
+    let allowedOrigins = ['https://leosight.cz', 'https://eco.leosight.cz', 'https://guard.leosight.cz', 'http://127.0.0.1:3005', 'http://localhost:3005'];
+    let origin = req.headers.origin;
+    if(allowedOrigins.indexOf(origin) > -1){
+        res.header('Access-Control-Allow-Origin', origin);
+    }
+    res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
+
+    res.json({ online: players.filter(x => x.socket).length, servername: serverName });
 });
 
 app.get('/', (req, res) => {
@@ -83,6 +99,7 @@ io.on('connection', function(socket){
     }
 
     console.log('[CONNECT] Uživatel [' + index + '] se připojil z IP ' + remoteIp);
+    socket.emit('serverinfo', serverName, version);
     SendMap(socket);
 
     socket.on('disconnect', function(){
@@ -146,7 +163,9 @@ io.on('connection', function(socket){
                                             return;
                                         }
                                         io.emit('chat', null, `[#${index}] ${userData.username} vybudoval základnu odboje na území "${oldOwner.country || 'Bez názvu'}" a bojuje o nezávislost.`, '#44cee8');
-                                        discord.broadcast(`${userData.username} vybudoval základnu odboje na území "${oldOwner.country || 'Bez názvu'}" a bojuje o nezávislost.`);
+                                        if(discord) {
+                                            discord.broadcast(`${userData.username} vybudoval základnu odboje na území "${oldOwner.country || 'Bez názvu'}" a bojuje o nezávislost.`);
+                                        }
                                         resistance = true;
                                     }else{
                                         if(!ProcessFight(x, y, userData, oldOwner)) { // Útok může selhat (nedostatek munice)
@@ -184,7 +203,9 @@ io.on('connection', function(socket){
                                         energyCost = 10;
                                         cell.build = null;
                                         io.emit('chat', null, `[#${index}] ${userData.username} právě zničil vojenskou základnu "${oldOwner.country || 'Bez názvu'}"!`, '#44cee8');
-                                        discord.broadcast(`${userData.username} právě zničil vojenskou základnu "${oldOwner.country || 'Bez názvu'}"!`);
+                                        if(discord) {
+                                            discord.broadcast(`${userData.username} právě zničil vojenskou základnu "${oldOwner.country || 'Bez názvu'}"!`);
+                                        }
                                     }else if(cell.build === builds.HQ){
                                         if(userData.energy < 10) return; // Zabrání hlavní základny stojí 10 energie
                                         if(userData.ammo < 500) return; // Zabrání hlavní základny stojí 500 munice
@@ -193,7 +214,9 @@ io.on('connection', function(socket){
                                         energyCost = 10;
                                         cell.build = null;
                                         io.emit('chat', null, `[#${index}] ${userData.username} právě dobyl hlavní základnu "${oldOwner.country || 'Bez názvu'}"!`, '#44cee8');
-                                        discord.broadcast(`${userData.username} právě dobyl hlavní základnu "${oldOwner.country || 'Bez názvu'}"!`);
+                                        if(discord) {
+                                            discord.broadcast(`${userData.username} právě dobyl hlavní základnu "${oldOwner.country || 'Bez názvu'}"!`);
+                                        }
                                         userData.ammo += oldOwner.ammo;
                                         oldOwner.ammo = 0;
                                         if(oldOwner.socket){
@@ -222,7 +245,9 @@ io.on('connection', function(socket){
 
                         if(userData.cells === 0 && !resistance){
                             io.emit('chat', null, `[#${index}] ${userData.username} právě založil nový nezávislý národ.`, '#44cee8');
-                            discord.broadcast(`${userData.username} právě založil nový nezávislý národ.`);
+                            if(discord) {
+                                discord.broadcast(`${userData.username} právě založil nový nezávislý národ.`);
+                            }
                         }
 
                         db.world.cellUpdate(x, y, userData.security, cell.build, cell.level);
@@ -368,8 +393,8 @@ io.on('connection', function(socket){
                             cell.owner = null;
                             cell.build = null;
 
-                            db.world.cellUpdate(x, y, null, null);
-                            io.emit('cell', x, y, null, null, null);
+                            db.world.cellUpdate(x, y, null, null, null);
+                            io.emit('cell', x, y, null, null, null, null);
 
                             userData.energy -= 1;
                             userData.cells -= 1;
@@ -377,8 +402,8 @@ io.on('connection', function(socket){
                             socket.emit('info', {energy: userData.energy, cells: userData.cells});
                         }else{
                             cell.build = null;
-                            db.world.cellUpdate(x, y, userData.security, null);
-                            io.emit('cell', x, y, userData.username, userData.color, null);
+                            db.world.cellUpdate(x, y, userData.security, null, null);
+                            io.emit('cell', x, y, userData.username, userData.color, null, null);
 
                             userData.energy -= 1;
 
@@ -889,6 +914,9 @@ function Periodic60s(){
             }
         }
     });
+
+    // Odeslání aktuálních dat pro master server
+    master.update(process.env.SERVERNAME, players.filter(x => x.socket).length, process.env.LOGIN !== 'API');
 
     return Promise.delay(60000).then(() => Periodic60s());
 }

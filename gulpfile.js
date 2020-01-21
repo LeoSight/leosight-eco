@@ -20,6 +20,7 @@ function scripts() {
     return gulp.src([
         'node_modules/jquery/dist/jquery.min.js',
         'node_modules/jquery-contextmenu/dist/jquery.contextMenu.min.js',
+        'node_modules/micromodal/dist/micromodal.min.js',
         JS_SOURCE + '/**/*.js'
     ]).pipe(plumber({
             errorHandler: function (error) {
