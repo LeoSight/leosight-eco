@@ -71,7 +71,7 @@ market.init();
 app.use(express.static(__dirname + '/client', { dotfiles: 'allow' } ));
 
 app.get('/stats', (req, res) => {
-    let allowedOrigins = ['https://leosight.cz', 'https://eco.leosight.cz', 'https://guard.leosight.cz', 'http://127.0.0.1:3005', 'http://localhost:3005'];
+    let allowedOrigins = ['https://leosight.cz', 'https://leosight.cz:3005', 'https://eco.leosight.cz', 'https://guard.leosight.cz', 'http://127.0.0.1:3005', 'http://localhost:3005'];
     let origin = req.headers.origin;
     if(allowedOrigins.indexOf(origin) > -1){
         res.header('Access-Control-Allow-Origin', origin);
