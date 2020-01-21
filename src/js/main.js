@@ -78,7 +78,8 @@ $(function () {
     });
 
     socket.on('serverinfo', function(serverName, serverVersion) {
-        $('#login .current').html('Právě jsi připojen k serveru: <strong>' + serverName + '</strong><br><small>Verze serveru: ' + serverVersion + '</small>');
+        $('#login .current').html('Právě jsi připojen k serveru: <strong>' + serverName + '</strong><br><small>Verze serveru: r' + serverVersion + '</small>');
+        $('.version').html('Verze: r' + serverVersion);
 
         $('#serverlist').empty();
 

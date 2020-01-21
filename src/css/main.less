@@ -102,6 +102,10 @@ html, body, #wrapper{
     opacity: .8;
     transition: opacity .2s;
 
+    &:empty{
+        opacity: 0;
+    }
+
     &:hover{
         opacity: 1;
     }
