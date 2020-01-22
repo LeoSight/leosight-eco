@@ -7,7 +7,6 @@ module.exports = function(db) {
             console.log('Načítám trh..');
             db.loadMarket((result) => {
                 data = result;
-                console.log('Trh načten!');
             });
         }
     }

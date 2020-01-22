@@ -14,10 +14,10 @@ module.exports = function(mongoWork) {
         setDefault: (security) => {
             mongoWork(function (db, client) {
                 db.collection("users").updateOne( {'security': security}, { $set: {
-                        color: '#fff',
-                        energy: 0,
-                        money: 0
-                    } }, function (err) {
+                    color: '#fff',
+                    energy: 0,
+                    money: 0
+                } }, function (err) {
                     if (err) throw err;
                     client.close();
                 });

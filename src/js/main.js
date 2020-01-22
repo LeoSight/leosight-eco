@@ -518,20 +518,24 @@ $(function () {
      * @return {string}
      */
     function GenerateBackground(hex, build, level){
-        hex = hex.replace('#','');
-        if(hex.length === 3){ hex = `${hex}${hex}`; }
-        let r = parseInt(hex.substring(0,2), 16);
-        let g = parseInt(hex.substring(2,4), 16);
-        let b = parseInt(hex.substring(4,6), 16);
+        let color = 'rgba(51, 51, 51, 0.2)';
+        if(hex) {
+            hex = hex.replace('#', '');
+            if (hex.length === 3) hex = `${hex}${hex}`;
+            let r = parseInt(hex.substring(0, 2), 16);
+            let g = parseInt(hex.substring(2, 4), 16);
+            let b = parseInt(hex.substring(4, 6), 16);
+            color = `rgba(${r}, ${g}, ${b}, .5)`;
+        }
 
         if(build){
             if(level && level > 1){
-                return `url('../images/builds/${build}_${level}.png'), rgba(${r}, ${g}, ${b}, .5)`;
+                return `url('../images/builds/${build}_${level}.png'), ${color}`;
             }else {
-                return `url('../images/builds/${build}.png'), rgba(${r}, ${g}, ${b}, .5)`;
+                return `url('../images/builds/${build}.png'), ${color}`;
             }
         }else {
-            return `rgba(${r}, ${g}, ${b}, .5)`;
+            return color;
         }
     }
 
@@ -550,7 +554,7 @@ $(function () {
                 myHQ = { x: x, y: y };
             }
         }else{
-            cell.data('owner', null).data('build', build).data('level', level).css('background', '');
+            cell.data('owner', null).data('build', build).data('level', level).css('background', GenerateBackground(null, build, level));
         }
 
         if(builds_info[build] && builds_info[build].abbr) {

@@ -1,4 +1,4 @@
-[![GitHub last commit](https://img.shields.io/github/last-commit/LeoSight/leosight-eco.svg?style=flat)](https://github.com/RatajVaver/leosight-eco/commits/master)
+[![GitHub last commit](https://img.shields.io/github/last-commit/LeoSight/leosight-eco.svg?style=flat)](https://github.com/LeoSight/leosight-eco/commits/master)
 [![Discord](https://img.shields.io/discord/172025101963755520.svg?label=discord)](https://discord.gg/RJmtV3p)
 [![Donate](https://img.shields.io/badge/$-support-12a0df.svg?style=flat)](https://leosight.cz/donate) 
 

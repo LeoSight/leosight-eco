@@ -1,4 +1,6 @@
-module.exports = function(io, discord) {
+const global = require(__dirname + '/global.js');
+
+module.exports = function(io, db, discord, builds) {
     const readline = require('readline'),
         rl = readline.createInterface({input: process.stdin, output: process.stdout, terminal: false});
 
@@ -22,6 +24,33 @@ module.exports = function(io, discord) {
                 io.emit('announce-update');
                 console.log('Odeslána informace o aktualizaci! Do 5s spusť server!');
                 rl.close();
+                break;
+            case 'build':
+                let buildString = cmd[1];
+                let x = parseInt(cmd[2]);
+                let y = parseInt(cmd[3]);
+
+                if(buildString && buildString.toUpperCase() in builds){
+                    let build = builds[buildString.toUpperCase()];
+                    let owner, username, color = null;
+                    let cell = global.world.find(d => d.x === x && d.y === y);
+                    if(cell){
+                        cell.build = build;
+                        owner = cell.owner;
+                        let ownerData = global.users.find(x => x.security === owner);
+                        if(ownerData) {
+                            username = ownerData.username;
+                            color = ownerData.color;
+                        }
+                    }else{
+                        global.world.push({ x: x, y: y, owner: null, build: build });
+                    }
+
+                    db.world.cellUpdate(x, y, owner, build, 1);
+                    io.emit('cell', x, y, username, color, build, 1);
+                    console.log(`Budova "${buildString.toUpperCase()}" postavena na X: ${x}, Y: ${y}`);
+                }
+
                 break;
             case 'exit':
                 rl.close();

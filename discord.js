@@ -1,6 +1,6 @@
 console.log('Spouštím Discord integraci..');
 
-const utils = require(__dirname + '/utils.js');
+const utils = require(__dirname + '/utils.js')();
 const Discord = require('discord.js');
 const discordClient = new Discord.Client();
 
