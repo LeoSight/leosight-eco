@@ -85,19 +85,19 @@ $(function () {
 
         $.getJSON('https://eco.leosight.cz/servers.php', function(servers) {
             servers.forEach(server => {
-                $.getJSON('//' + server.address + ':3005/stats', function(conn){
-                    $('#serverlist').append(`<option value="${server.address}"${server.servername === serverName ? ' selected' : ''}>${conn.servername} (${conn.online})</option>`);
+                $.getJSON('https://' + server.address + ':3005/stats', function(conn){
+                    $('#serverlist').append(`<option value="https://${server.address}"${server.servername === serverName ? ' selected' : ''}>${conn.servername} (${conn.online})</option>`);
                 });
             });
         });
 
-        $.getJSON('//127.0.0.1:3005/stats', function(conn){
-            $('#serverlist').append(`<option value="127.0.0.1"${conn.servername === serverName ? ' selected' : ''}>${conn.servername} (${conn.online}) - lokální</option>`);
+        $.getJSON('http://127.0.0.1:3005/stats', function(conn){
+            $('#serverlist').append(`<option value="http://127.0.0.1"${conn.servername === serverName ? ' selected' : ''}>${conn.servername} (${conn.online}) - lokální</option>`);
         });
     });
 
     $('#serverlist').change(function() {
-        window.location.href = '//' + $(this).val() + ':3005';
+        window.location.href = $(this).val() + ':3005';
     });
 
     socket.on('disconnect', function() {
