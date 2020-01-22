@@ -44,6 +44,7 @@ HTTPS = "false"
 DISCORD_TOKEN = ""
 LOGIN = "NONE"
 SERVERNAME = "Test"
+CODEBASE = "[Tvé jméno na GitHubu]/leosight-eco"
 ```
 
 Následně se ujisti, že je spuštěna MongoDB a příkazem `node .` spusť server.

@@ -6,7 +6,7 @@ const discordClient = new Discord.Client();
 
 discordClient.on("ready", () => {
     discordClient.user.setActivity("LeoSight Eco", { type: "PLAYING"});
-    discordClient.channels.get("661926637453180958").setTopic("Diskuze a vývoj herního projektu: https://eco.leosight.cz/ | Poslední aktualizace: " + utils.date());
+    discordClient.channels.get("661926637453180958").setTopic(`Diskuze a vývoj herního projektu: https://eco.leosight.cz/ | Poslední aktualizace: ${utils.date()} | Aktuální verze: ${utils.version} | GitHub: https://github.com/${process.env.CODEBASE}`);
     broadcast('Server je online! https://eco.leosight.cz');
 });
 

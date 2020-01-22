@@ -77,9 +77,9 @@ $(function () {
         $('#login').show();
     });
 
-    socket.on('serverinfo', function(serverName, serverVersion) {
-        $('#login .current').html('Právě jsi připojen k serveru: <strong>' + serverName + '</strong><br><small>Verze serveru: r' + serverVersion + '</small>');
-        $('.version').html('Verze: r' + serverVersion);
+    socket.on('serverinfo', function(serverName, serverVersion, codebase) {
+        $('#login .current').html(`Právě jsi připojen k serveru: <strong>${serverName}</strong><br><small>Verze serveru: r${serverVersion} (${codebase})</small>`);
+        $('.version').html(`Verze: r${serverVersion}`);
 
         $('#serverlist').empty();
 

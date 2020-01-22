@@ -1,7 +1,7 @@
 const https = require('https');
 
-exports.update = (serverName, players, test) => {
-    let data = 'server='+serverName+'&players='+players+'&test='+(+test)+'&address='+(process.env.ADDRESS || 'default');
+exports.update = (serverName, players, test, version, codebase) => {
+    let data = 'server='+serverName+'&players='+players+'&test='+(+test)+'&address='+(process.env.ADDRESS || 'default')+'&version='+version+'&codebase='+codebase;
     const options = {
         hostname: 'eco.leosight.cz',
         port: 443,

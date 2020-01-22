@@ -21,9 +21,6 @@ const mongoWork = (cb) => {
     });
 };
 
-const serverName = process.env.SERVERNAME;
-const version = fs.readFileSync('.revision').toString().trim();
-
 console.log('Načítám moduly..');
 
 const utils = require(__dirname + '/utils.js');
@@ -41,6 +38,10 @@ const db = {
 };
 const market = require(__dirname + '/market.js')(db.market);
 const master = require(__dirname + '/master.js');
+
+const serverName = process.env.SERVERNAME;
+const version = utils.version;
+const codebase = process.env.CODEBASE;
 
 let players = []; // Aktuálně připojení hráči
 let users = []; // Databáze uživatelů
@@ -99,7 +100,7 @@ io.on('connection', function(socket){
     }
 
     console.log('[CONNECT] Uživatel [' + index + '] se připojil z IP ' + remoteIp);
-    socket.emit('serverinfo', serverName, version);
+    socket.emit('serverinfo', serverName, version, codebase);
     SendMap(socket);
 
     socket.on('disconnect', function(){
@@ -916,7 +917,7 @@ function Periodic60s(){
     });
 
     // Odeslání aktuálních dat pro master server
-    master.update(process.env.SERVERNAME, players.filter(x => x.socket).length, process.env.LOGIN !== 'API');
+    master.update(process.env.SERVERNAME, players.filter(x => x.socket).length, process.env.LOGIN !== 'API', version, codebase);
 
     return Promise.delay(60000).then(() => Periodic60s());
 }
