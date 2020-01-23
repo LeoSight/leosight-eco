@@ -1,4 +1,5 @@
 const global = require(__dirname + '/global.js');
+const resources = require(__dirname + '/resources.js');
 
 module.exports = function(io, db, discord, builds) {
     const readline = require('readline'),
@@ -12,11 +13,19 @@ module.exports = function(io, db, discord, builds) {
         switch (cmd[0]) {
             case 'say':
                 cmd.shift();
+                if(cmd.join(' ') == '') {
+                    console.log(`SYNTAX: say [TEXT]`); 
+                    break;
+                }
                 io.emit('chat', null, cmd.join(' '), '#44cee8');
                 console.log('[CHAT] Console: ' + cmd.join(' '));
                 break;
             case 'discord':
                 cmd.shift();
+                if(cmd.join(' ') == '') {
+                    console.log(`SYNTAX: discord [TEXT]`); 
+                    break;
+                }
                 discord.broadcast(cmd.join(' '));
                 console.log('[DISCORD] Bot: ' + cmd.join(' '));
                 break;
@@ -31,26 +40,48 @@ module.exports = function(io, db, discord, builds) {
                 let y = parseInt(cmd[3]);
 
                 if(buildString && buildString.toUpperCase() in builds){
-                    let build = builds[buildString.toUpperCase()];
-                    let owner, username, color = null;
-                    let cell = global.world.find(d => d.x === x && d.y === y);
-                    if(cell){
-                        cell.build = build;
-                        owner = cell.owner;
-                        let ownerData = global.users.find(x => x.security === owner);
-                        if(ownerData) {
-                            username = ownerData.username;
-                            color = ownerData.color;
+                    if(!isNaN(x) && !isNaN(y)){
+                        let build = builds[buildString.toUpperCase()];
+                        let owner, username, color = null;
+                        let cell = global.world.find(d => d.x === x && d.y === y);
+                        if(cell){
+                            cell.build = build;
+                            owner = cell.owner;
+                            let ownerData = global.users.find(x => x.security === owner);
+                            if(ownerData) {
+                                username = ownerData.username;
+                                color = ownerData.color;
+                            }
+                        }else{
+                            global.world.push({ x: x, y: y, owner: null, build: build });
                         }
-                    }else{
-                        global.world.push({ x: x, y: y, owner: null, build: build });
-                    }
 
-                    db.world.cellUpdate(x, y, owner, build, 1);
-                    io.emit('cell', x, y, username, color, build, 1);
-                    console.log(`Budova "${buildString.toUpperCase()}" postavena na X: ${x}, Y: ${y}`);
+                        db.world.cellUpdate(x, y, owner, build, 1);
+                        io.emit('cell', x, y, username, color, build, 1);
+                        console.log(`Budova "${buildString.toUpperCase()}" postavena na X: ${x}, Y: ${y}`);
+                    }else{
+                        let budovy = [];
+                        Object.keys(builds).forEach((key) => {
+                                budovy.push(`${key} (${builds[key]})`);
+                        });
+                        console.log(`SYNTAX: build [BUDOVA] [X] [Y]\nPlatné názvy materiálů jsou: ${budovy.join(', ')}`); 
+                    }
+                }else{
+                    let budovy = [];
+                    Object.keys(builds).forEach((key) => {
+                        budovy.push(`${key} (${builds[key]})`);
+                    });
+                    console.log(`SYNTAX: build [BUDOVA] [X] [Y]\nPlatné názvy materiálů jsou: ${budovy.join(', ')}`);
                 }
 
+                break;
+            case 'help':
+                console.log('Seznam příkazů:')
+                console.log('say - Zpráva do hry')
+                console.log('discord - Zpráva na discord')
+                console.log('update - Aktualizace hry')
+                console.log('build - Postavení budovy')
+                console.log('exit - Vypne server')
                 break;
             case 'exit':
                 rl.close();
