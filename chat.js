@@ -27,12 +27,18 @@ module.exports = function(io, db) {
                             let targetIndex = parseInt(args[1]);
                             let target = global.players[targetIndex];
                             if (target && target.socket) {
-                                args.shift();
-                                args.shift(); // Už nepotřebujeme příkaz a ID, zajímá nás pouze zpráva
-                                let whisper = `[#${index}] ${global.players[index].username} > [#${targetIndex}] ${target.username}: ${args.join(' ')}`;
-                                global.players[index].socket.emit('chat', null, whisper, '#c78bf1');
-                                target.socket.emit('chat', null, whisper, '#c78bf1');
-                                console.log(`[WHISPER] ${whisper}`);
+                            	if (index !== targetIndex) {
+
+	                                args.shift();
+	                                args.shift(); // Už nepotřebujeme příkaz a ID, zajímá nás pouze zpráva
+	                                let whisper = `[#${index}] ${global.players[index].username} > [#${targetIndex}] ${target.username}: ${args.join(' ')}`;
+	                                global.players[index].socket.emit('chat', null, whisper, '#c78bf1');
+	                                target.socket.emit('chat', null, whisper, '#c78bf1');
+	                                console.log(`[WHISPER] ${whisper}`);
+	                            
+		                        } else {
+	                                global.players[index].socket.emit('chat', null, `Nemůžeš odeslat sám sobě zprávu!`, '#e1423e');
+	                            }
                             } else {
                                 global.players[index].socket.emit('chat', null, `Hráč s tímto ID nebyl nalezen!`, '#e1423e');
                             }
@@ -48,26 +54,30 @@ module.exports = function(io, db) {
                                 let targetData = global.users.find(x => x.security === target.security);
                                 if (target && target.socket && targetData) {
                                     if (amount > 0) {
-                                        if (userData.money >= amount) {
-                                            let playerMoney = userData.money;
-                                            playerMoney -= amount;
-                                            userData.money = playerMoney;
-                                            db.users.update(userData.security, 'money', playerMoney);
-                                            userData.socket.emit('info', {money: playerMoney});
+                                    	if (index !== targetIndex) {
+	                                        if (userData.money >= amount) {
+	                                            let playerMoney = userData.money;
+	                                            playerMoney -= amount;
+	                                            userData.money = playerMoney;
+	                                            db.users.update(userData.security, 'money', playerMoney);
+	                                            userData.socket.emit('info', {money: playerMoney});
 
-                                            let targetMoney = targetData.money;
-                                            targetMoney += amount;
-                                            targetData.money = targetMoney;
-                                            db.users.update(targetData.security, 'money', targetMoney);
-                                            targetData.socket.emit('info', {money: targetMoney});
+	                                            let targetMoney = targetData.money;
+	                                            targetMoney += amount;
+	                                            targetData.money = targetMoney;
+	                                            db.users.update(targetData.security, 'money', targetMoney);
+	                                            targetData.socket.emit('info', {money: targetMoney});
 
-                                            global.players[index].socket.emit('chat', null, `Poslal jsi 💰${amount} hráči [#${targetIndex}] ${target.username}.`, '#44cee8');
-                                            target.socket.emit('chat', null, `[#${index}] ${global.players[index].username} ti poslal 💰${amount}.`, '#44cee8');
-                                            console.log(`[PAY] [#${index}] ${global.players[index].username} > [#${targetIndex}] ${target.username}: ${amount}`);
+	                                            global.players[index].socket.emit('chat', null, `Poslal jsi 💰${amount} hráči [#${targetIndex}] ${target.username}.`, '#44cee8');
+	                                            target.socket.emit('chat', null, `[#${index}] ${global.players[index].username} ti poslal 💰${amount}.`, '#44cee8');
+	                                            console.log(`[PAY] [#${index}] ${global.players[index].username} > [#${targetIndex}] ${target.username}: ${amount}`);
 
-                                        } else {
-                                            global.players[index].socket.emit('chat', null, `Nemáš dostatek peněz!`, '#e1423e');
-                                        }
+	                                        } else {
+	                                            global.players[index].socket.emit('chat', null, `Nemáš dostatek peněz!`, '#e1423e');
+	                                        }
+	                                    } else {
+	                                		global.players[index].socket.emit('chat', null, `Nemůžeš poslat sám sobě peníze!`, '#e1423e');
+	                            		}
                                     } else {
                                         global.players[index].socket.emit('chat', null, `Částka musí být kladné číslo!`, '#e1423e');
                                     }
@@ -90,26 +100,30 @@ module.exports = function(io, db) {
                                 let targetData = global.users.find(x => x.security === target.security);
                                 if (target && target.socket && targetData) {
                                     if (amount > 0) {
-                                        if (userData[material] && userData[material] >= amount) {
-                                            let playerValue = userData[material] || 0;
-                                            playerValue -= amount;
-                                            userData[material] = playerValue;
-                                            db.users.update(userData.security, material, playerValue);
-                                            userData.socket.emit('info', {[material]: playerValue});
+                                    	if (index !== targetIndex) {
+	                                        if (userData[material] && userData[material] >= amount) {
+	                                            let playerValue = userData[material] || 0;
+	                                            playerValue -= amount;
+	                                            userData[material] = playerValue;
+	                                            db.users.update(userData.security, material, playerValue);
+	                                            userData.socket.emit('info', {[material]: playerValue});
 
-                                            let targetValue = targetData[material] || 0;
-                                            targetValue += amount;
-                                            targetData[material] = targetValue;
-                                            db.users.update(targetData.security, material, targetValue);
-                                            targetData.socket.emit('info', {[material]: targetValue});
+	                                            let targetValue = targetData[material] || 0;
+	                                            targetValue += amount;
+	                                            targetData[material] = targetValue;
+	                                            db.users.update(targetData.security, material, targetValue);
+	                                            targetData.socket.emit('info', {[material]: targetValue});
 
-                                            global.players[index].socket.emit('chat', null, `Poslal jsi ${amount}x ${resources[material.toUpperCase()]} hráči [#${targetIndex}] ${target.username}.`, '#44cee8');
-                                            target.socket.emit('chat', null, `[#${index}] ${global.players[index].username} ti poslal ${amount}x ${resources[material.toUpperCase()]}.`, '#44cee8');
-                                            console.log(`[SEND] [#${index}] ${global.players[index].username} > [#${targetIndex}] ${target.username}: ${amount}x ${material}`);
+	                                            global.players[index].socket.emit('chat', null, `Poslal jsi ${amount}x ${resources[material.toUpperCase()]} hráči [#${targetIndex}] ${target.username}.`, '#44cee8');
+	                                            target.socket.emit('chat', null, `[#${index}] ${global.players[index].username} ti poslal ${amount}x ${resources[material.toUpperCase()]}.`, '#44cee8');
+	                                            console.log(`[SEND] [#${index}] ${global.players[index].username} > [#${targetIndex}] ${target.username}: ${amount}x ${material}`);
 
-                                        } else {
-                                            global.players[index].socket.emit('chat', null, `Nemáš dostatek tohoto materiálu!`, '#e1423e');
-                                        }
+	                                        } else {
+	                                            global.players[index].socket.emit('chat', null, `Nemáš dostatek tohoto materiálu!`, '#e1423e');
+	                                        }
+	                                    } else {
+	                                		global.players[index].socket.emit('chat', null, `Nemůžeš poslat sám sobě suroviny!`, '#e1423e');
+	                            		}
                                     } else {
                                         global.players[index].socket.emit('chat', null, `Počet musí být kladné číslo!`, '#e1423e');
                                     }
