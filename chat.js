@@ -27,18 +27,16 @@ module.exports = function(io, db) {
                             let targetIndex = parseInt(args[1]);
                             let target = global.players[targetIndex];
                             if (target && target.socket) {
-                            	if (index !== targetIndex) {
-
+                                if (index !== targetIndex) {
 	                                args.shift();
 	                                args.shift(); // Už nepotřebujeme příkaz a ID, zajímá nás pouze zpráva
 	                                let whisper = `[#${index}] ${global.players[index].username} > [#${targetIndex}] ${target.username}: ${args.join(' ')}`;
 	                                global.players[index].socket.emit('chat', null, whisper, '#c78bf1');
 	                                target.socket.emit('chat', null, whisper, '#c78bf1');
 	                                console.log(`[WHISPER] ${whisper}`);
-	                            
-		                        } else {
-	                                global.players[index].socket.emit('chat', null, `Nemůžeš odeslat sám sobě zprávu!`, '#e1423e');
-	                            }
+    	                        } else {
+                                    global.players[index].socket.emit('chat', null, `Nemůžeš odeslat zprávu sám sobě!`, '#e1423e');
+                                }
                             } else {
                                 global.players[index].socket.emit('chat', null, `Hráč s tímto ID nebyl nalezen!`, '#e1423e');
                             }
@@ -54,7 +52,7 @@ module.exports = function(io, db) {
                                 let targetData = global.users.find(x => x.security === target.security);
                                 if (target && target.socket && targetData) {
                                     if (amount > 0) {
-                                    	if (index !== targetIndex) {
+                                        if (index !== targetIndex) {
 	                                        if (userData.money >= amount) {
 	                                            let playerMoney = userData.money;
 	                                            playerMoney -= amount;
@@ -75,9 +73,9 @@ module.exports = function(io, db) {
 	                                        } else {
 	                                            global.players[index].socket.emit('chat', null, `Nemáš dostatek peněz!`, '#e1423e');
 	                                        }
-	                                    } else {
-	                                		global.players[index].socket.emit('chat', null, `Nemůžeš poslat sám sobě peníze!`, '#e1423e');
-	                            		}
+                                        } else {
+                                		    global.players[index].socket.emit('chat', null, `Nemůžeš poslat peníze sám sobě!`, '#e1423e');
+                                        }
                                     } else {
                                         global.players[index].socket.emit('chat', null, `Částka musí být kladné číslo!`, '#e1423e');
                                     }
@@ -100,7 +98,7 @@ module.exports = function(io, db) {
                                 let targetData = global.users.find(x => x.security === target.security);
                                 if (target && target.socket && targetData) {
                                     if (amount > 0) {
-                                    	if (index !== targetIndex) {
+                                        if (index !== targetIndex) {
 	                                        if (userData[material] && userData[material] >= amount) {
 	                                            let playerValue = userData[material] || 0;
 	                                            playerValue -= amount;
@@ -121,9 +119,9 @@ module.exports = function(io, db) {
 	                                        } else {
 	                                            global.players[index].socket.emit('chat', null, `Nemáš dostatek tohoto materiálu!`, '#e1423e');
 	                                        }
-	                                    } else {
-	                                		global.players[index].socket.emit('chat', null, `Nemůžeš poslat sám sobě suroviny!`, '#e1423e');
-	                            		}
+                                        } else {
+                                            global.players[index].socket.emit('chat', null, `Nemůžeš poslat sám sobě suroviny!`, '#e1423e');
+                                        }
                                     } else {
                                         global.players[index].socket.emit('chat', null, `Počet musí být kladné číslo!`, '#e1423e');
                                     }

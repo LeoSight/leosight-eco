@@ -1,9 +1,9 @@
 # Autoři
 
 Autoři a kontributoři:
-- **[Rataj](https://github.com/RatajVaver)** - Správce projektu
-- **Paradox** - Grafika
+- **[Rataj](https://github.com/RatajVaver)** - Správce projektu, hlavní programátor
+- **Paradox** - Grafik, programátor, tester
+- **Flyer** - Programátor, tester
 
 Poděkování:
-- **Flyer** - Nahlášení chyb, návrhy
 - **SedliX** - Nahlášení chyb, návrhy

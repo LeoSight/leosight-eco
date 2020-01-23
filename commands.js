@@ -62,7 +62,9 @@ module.exports = function(io, db, discord, builds) {
         rl.prompt();
     }).on('close', function () {
         io.emit('chat', null, 'Server se vypíná!', '#44cee8');
-        discord.broadcast('Server se vypíná!');
+        if(discord) {
+            discord.broadcast('Server se vypíná!');
+        }
         console.log('Vypínám server..');
         setTimeout(() => {
             process.exit(0);
