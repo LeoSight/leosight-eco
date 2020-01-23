@@ -611,14 +611,22 @@ $(function () {
 
     $(window).keyup(function(e) {
         if(!logged) return;
-
         if (e.which === 27) {
-            if(!menuActive) {
+            if($('#modal-menu').is(':hidden')){
+                $('#modal-menu').fadeIn(1);
                 MicroModal.show('modal-menu', {
                     onClose: () => { menuActive = false; }
                 });
-                menuActive = true;
+            }else{
+                MicroModal.close('modal-menu');
+                $('#modal-menu').fadeOut(1);
             }
+            // if(!menuActive) {
+            //     MicroModal.show('modal-menu', {
+            //         onClose: () => { menuActive = false; }
+            //     });
+            //     menuActive = true;
+            // }
         }
 
         if ( $('input:focus').length > 0 ) {  return; } // Není aktivní psaní do chatu
