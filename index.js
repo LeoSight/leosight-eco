@@ -388,7 +388,7 @@ io.on('connection', function(socket){
                 if (userData.energy >= 1) {
                     userData.cells = utils.countPlayerCells(userData.security);
                     let cell = global.world.find(d => d.x === x && d.y === y);
-                    if(cell && cell.owner === userData.security && ([builds.FORT, builds.FACTORY, builds.MILITARY].includes(cell.build) || (cell.build === builds.HQ && userData.cells <= 1))){
+                    if(cell && cell.owner === userData.security && ([builds.FORT, builds.FACTORY, builds.MILITARY, builds.ROCK].includes(cell.build) || (cell.build === builds.HQ && userData.cells <= 1))){
                         if(cell.build === builds.HQ){
                             cell.owner = null;
                             cell.build = null;
@@ -410,6 +410,23 @@ io.on('connection', function(socket){
                             socket.emit('info', {energy: userData.energy});
                         }
                     }
+                }
+            }
+        }
+    });
+
+    socket.on('destroyRock', function(x, y){
+        if (global.players[index] && global.players[index].logged) {
+            let userData = global.users.find(x => x.security === global.players[index].security);
+            let cell = global.world.find(d => d.x === x && d.y === y);
+            if (userData && userData.energy) {
+                if (userData.energy >= 5) {
+                    userData.energy -= 5;
+                    socket.emit('info', {energy: userData.energy});
+
+                    cell.build = null;
+                    db.world.cellUpdate(x, y, userData.security, null, null);
+                    io.emit('cell', x, y, null, null, null, null);
                 }
             }
         }
