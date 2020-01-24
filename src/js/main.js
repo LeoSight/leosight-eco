@@ -30,7 +30,8 @@ $(function () {
         MILITARY: 12,
         STONE: 13,
         EXPORT: 14,
-        FARM: 15
+        FARM: 15,
+        ROCK: 16
     };
 
     const builds_info = [
@@ -50,6 +51,7 @@ $(function () {
         { title: 'Kamenolom', abbr: 'K' },
         { title: 'Exportní sklad', abbr: 'E' },
         { title: 'Farma', abbr: 'F' },
+        { title: 'Skála', abbr: '' },
     ];
 
     const resources = {
@@ -267,6 +269,15 @@ $(function () {
                             }
                         };
                     }
+                }else if(build === builds.ROCK){ // PARADOXX
+                    items.destroy = {
+                        name: `Zničit skálu (⚡5)`,
+                        isHtmlName: true,
+                        callback: DestroyBuilding,
+                        disabled: function () {
+                            return !(info.energy >= 5);
+                        }
+                    }; // PARADOXX
                 }else{
                     if (owner === info.username) {
                         items.unclaim = {
@@ -462,7 +473,7 @@ $(function () {
      * @return {boolean}
      */
     function CanBuildHQ(x, y){
-        return !CheckAdjacentBuilding(x, y, [builds.HQ, builds.GOLD, builds.COAL, builds.OIL, builds.IRON, builds.BAUXITE, builds.LEAD, builds.SULFUR, builds.NITER, builds.STONE]);
+        return !CheckAdjacentBuilding(x, y, [builds.HQ, builds.GOLD, builds.COAL, builds.OIL, builds.IRON, builds.BAUXITE, builds.LEAD, builds.SULFUR, builds.NITER, builds.STONE, builds.ROCK]);
     }
 
     function CaptureCell(){
