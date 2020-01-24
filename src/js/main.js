@@ -30,7 +30,8 @@ $(function () {
         MILITARY: 12,
         STONE: 13,
         EXPORT: 14,
-        FARM: 15
+        FARM: 15,
+        FIELD: 16,
     };
 
     const builds_info = [
@@ -550,9 +551,9 @@ $(function () {
 
         if(build){
             if(level && level > 1){
-                return `url('../images/builds/${build}_${level}.png'), ${color}`;
+                return `url('../images/builds/${build}_${level}.png') center center, ${color}`;
             }else {
-                return `url('../images/builds/${build}.png'), ${color}`;
+                return `url('../images/builds/${build}.png') center center, ${color}`;
             }
         }else {
             return color;
