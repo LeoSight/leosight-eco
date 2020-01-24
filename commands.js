@@ -12,8 +12,8 @@ module.exports = function(io, db, discord, builds) {
         let cmd = line.trim().split(' ');
         switch (cmd[0]) {
             case 'say':
-            	if(cmd.length == 1) {
-                    console.log(`SYNTAX: say [Text]`); 
+                if(cmd.length === 1) {
+                    console.log(`SYNTAX: say [Text]`);
                     break;
                 }
                 cmd.shift();
@@ -21,8 +21,8 @@ module.exports = function(io, db, discord, builds) {
                 console.log('[CHAT] Console: ' + cmd.join(' '));
                 break;
             case 'discord':
-            	if(cmd.length == 1) {
-                    console.log(`SYNTAX: discord [Text]`); 
+                if(cmd.length === 1) {
+                    console.log(`SYNTAX: discord [Text]`);
                     break;
                 }
                 cmd.shift();
@@ -59,20 +59,20 @@ module.exports = function(io, db, discord, builds) {
                         io.emit('cell', x, y, username, color, build, 1);
                         console.log(`Budova "${buildString.toUpperCase()}" postavena na X: ${x}, Y: ${y}`);
                 }else{
-                    let budovy = [];
+                    let buildings = [];
                     Object.keys(builds).forEach((key) => {
-                        budovy.push(`${key} (${builds[key]})`);
+                        buildings.push(`${key} (${builds[key]})`);
                     });
-                    console.log(`SYNTAX: build [Budova] [X] [Y]\nPlatné názvy budov jsou: ${budovy.join(', ')}`);
+                    console.log(`SYNTAX: build [Budova] [X] [Y]\nPlatné názvy budov jsou: ${buildings.join(', ')}`);
                 }
                 break;
             case 'help':
-                console.log('Seznam příkazů:')
-                console.log('say - Zpráva do hry')
-                console.log('discord - Zpráva na discord')
-                console.log('update - Aktualizace hry')
-                console.log('build - Postavení budovy')
-                console.log('exit - Vypne server')
+                console.log('Seznam příkazů:');
+                console.log('say - Odeslat zprávu do chatu');
+                console.log('discord - Odeslat zprávu na Discord');
+                console.log('update - Aktualizovat server');
+                console.log('build - Postavit budovu');
+                console.log('exit - Vypnout server');
                 break;
             case 'exit':
                 rl.close();
