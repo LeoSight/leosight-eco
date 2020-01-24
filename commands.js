@@ -64,14 +64,14 @@ module.exports = function(io, db, discord, builds) {
                         Object.keys(builds).forEach((key) => {
                                 budovy.push(`${key} (${builds[key]})`);
                         });
-                        console.log(`SYNTAX: build [BUDOVA] [X] [Y]\nPlatné názvy materiálů jsou: ${budovy.join(', ')}`); 
+                        console.log(`SYNTAX: build [BUDOVA] [X] [Y]\nPlatné názvy budov jsou: ${budovy.join(', ')}`); 
                     }
                 }else{
                     let budovy = [];
                     Object.keys(builds).forEach((key) => {
                         budovy.push(`${key} (${builds[key]})`);
                     });
-                    console.log(`SYNTAX: build [BUDOVA] [X] [Y]\nPlatné názvy materiálů jsou: ${budovy.join(', ')}`);
+                    console.log(`SYNTAX: build [BUDOVA] [X] [Y]\nPlatné názvy budov jsou: ${budovy.join(', ')}`);
                 }
 
                 break;
