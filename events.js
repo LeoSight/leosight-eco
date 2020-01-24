@@ -107,6 +107,8 @@ function Periodic15s(){
 }
 
 function Periodic60s(){
+    GainResource(builds.FIELD, 'wheat', 1);
+
     global.users.forEach(userData => {
         if(!userData.ammo) userData.ammo = 0;
         userData.cells = utils.countPlayerCells(userData.security);

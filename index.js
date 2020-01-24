@@ -324,8 +324,10 @@ io.on('connection', function(socket){
                     } else if (building === builds.FACTORY) {
                         cost = {energy: 10, stone: 100, iron: 200, bauxite: 300}
                     } else if (building === builds.MILITARY) {
-                        if(!utils.checkAdjacentOwnAll(x, y, userData.security)) return; // Musí vlastnit všechna přilehlá pole
+                        if (!utils.checkAdjacentOwnAll(x, y, userData.security)) return; // Musí vlastnit všechna přilehlá pole
                         cost = {energy: 10, gold: 1000, stone: 1000, iron: 1000, bauxite: 1000}
+                    } else if (building === builds.FIELD) {
+                        cost = {energy: 5, stone: 50}
                     } else {
                         return;
                     }
@@ -388,7 +390,7 @@ io.on('connection', function(socket){
                 if (userData.energy >= 1) {
                     userData.cells = utils.countPlayerCells(userData.security);
                     let cell = global.world.find(d => d.x === x && d.y === y);
-                    if(cell && cell.owner === userData.security && ([builds.FORT, builds.FACTORY, builds.MILITARY].includes(cell.build) || (cell.build === builds.HQ && userData.cells <= 1))){
+                    if(cell && cell.owner === userData.security && ([builds.FORT, builds.FACTORY, builds.MILITARY, builds.FIELD].includes(cell.build) || (cell.build === builds.HQ && userData.cells <= 1))){
                         if(cell.build === builds.HQ){
                             cell.owner = null;
                             cell.build = null;

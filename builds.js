@@ -13,5 +13,6 @@ module.exports = {
     MILITARY: 12,
     STONE: 13,
     EXPORT: 14,
-    FARM: 15
+    FARM: 15,
+    FIELD: 16,
 };

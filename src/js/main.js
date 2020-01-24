@@ -50,6 +50,7 @@ $(function () {
         { title: 'Kamenolom', abbr: 'K' },
         { title: 'Exportní sklad', abbr: 'E' },
         { title: 'Farma', abbr: 'F' },
+        { title: 'Pšeničné pole', abbr: '' },
     ];
 
     const resources = {
@@ -64,6 +65,7 @@ $(function () {
         GUNPOWDER: 'Střelný prach',
         AMMO: 'Munice',
         STONE: 'Kámen',
+        WHEAT: 'Pšenice',
     };
 
     socket.on('pong', function(ms) {
@@ -180,7 +182,7 @@ $(function () {
 
     const map = $('#map');
     const move = $('#main');
-    const w = 30, h = 20;
+    const w = 50, h = 40;
 
     function CreateMap(){
         for (let i = -h; i <= h; i++) {
@@ -302,6 +304,12 @@ $(function () {
                                         return !(info.energy >= 10 && info.gold >= 1000 && info.stone >= 1000 && info.iron >= 1000 && info.bauxite >= 1000 && CheckAdjacentOwnAll(x, y));
                                     }
                                 };
+
+                                items.buildField = {
+                                    name: `Postavit pole (⚡5+${Resource('stone')}50)`, isHtmlName: true, callback: BuildField, disabled: function () {
+                                        return !(info.energy >= 5 && info.stone >= 50);
+                                    }
+                                };
                             }
                         }else if(build === builds.FORT){
                             items.destroy = {
@@ -341,6 +349,14 @@ $(function () {
                         }else if(build === builds.MILITARY){
                             items.destroy = {
                                 name: "Zničit vojenskou základnu (⚡1)",
+                                callback: DestroyBuilding,
+                                disabled: function () {
+                                    return !(info.energy >= 1);
+                                }
+                            };
+                        }else if(build === builds.FIELD){
+                            items.destroy = {
+                                name: "Zničit pole (⚡1)",
                                 callback: DestroyBuilding,
                                 disabled: function () {
                                     return !(info.energy >= 1);
@@ -489,6 +505,10 @@ $(function () {
         socket.emit('build', $(this).data('x'), $(this).data('y'), builds.MILITARY);
     }
 
+    function BuildField(){
+        socket.emit('build', $(this).data('x'), $(this).data('y'), builds.FIELD);
+    }
+
     function UpgradeBuilding(){
         socket.emit('upgrade', $(this).data('x'), $(this).data('y'));
     }
@@ -621,12 +641,6 @@ $(function () {
                 MicroModal.close('modal-menu');
                 $('#modal-menu').fadeOut(1);
             }
-            // if(!menuActive) {
-            //     MicroModal.show('modal-menu', {
-            //         onClose: () => { menuActive = false; }
-            //     });
-            //     menuActive = true;
-            // }
         }
 
         if ( $('input:focus').length > 0 ) {  return; } // Není aktivní psaní do chatu

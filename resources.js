@@ -10,4 +10,5 @@ module.exports = {
     GUNPOWDER: 'Střelný prach',
     AMMO: 'Munice',
     STONE: 'Kámen',
+    WHEAT: 'Pšenice',
 };

@@ -59,7 +59,7 @@ function UpdatePlayerCells(security){
     global.world.forEach(cell => {
         if(cell.owner === security) {
             let owner = global.users.find(x => x.security === security);
-            io.emit('cell', cell.x, cell.y, owner.username, owner.color, cell.build);
+            io.emit('cell', cell.x, cell.y, owner.username, owner.color, cell.build, cell.level);
         }
     });
 }
