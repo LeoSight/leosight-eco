@@ -269,6 +269,15 @@ $(function () {
                             }
                         };
                     }
+                }else if(build === builds.ROCK){
+                    items.destroy = {
+                        name: `Zničit skálu (⚡5)`,
+                        isHtmlName: true,
+                        callback: DestroyRock,
+                        disabled: function () {
+                            return !(info.energy >= 5);
+                        }
+                    };
                 }else{
                     if (owner === info.username && build === builds.ROCK) {
                         items.unclaim = {
@@ -528,6 +537,10 @@ $(function () {
 
     function DestroyBuilding(){
         socket.emit('destroy', $(this).data('x'), $(this).data('y'));
+    }
+
+    function DestroyRock(){
+        socket.emit('destroyRock', $(this).data('x'), $(this).data('y'));
     }
 
     function SwitchFactory(){
