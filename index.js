@@ -299,8 +299,8 @@ io.on('connection', function(socket){
                     let cell = global.world.find(d => d.x === x && d.y === y);
                     if(cell && cell.owner === userData.security && cell.build !== builds.HQ){
                         cell.owner = null;
-                        db.world.cellUpdate(x, y, null, cell.build);
-                        io.emit('cell', x, y, null, null, cell.build);
+                        db.world.cellUpdate(x, y, null, cell.build, cell.level);
+                        io.emit('cell', x, y, null, null, cell.build, cell.level);
 
                         userData.energy -= 1;
                         userData.cells = utils.countPlayerCells(userData.security);
