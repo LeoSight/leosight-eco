@@ -269,17 +269,14 @@ $(function () {
                             }
                         };
                     }
-                }else if(build === builds.ROCK){ // PARADOXX
-                    items.destroy = {
-                        name: `Zničit skálu (⚡5)`,
-                        isHtmlName: true,
-                        callback: DestroyBuilding,
-                        disabled: function () {
-                            return !(info.energy >= 5);
-                        }
-                    }; // PARADOXX
                 }else{
-                    if (owner === info.username) {
+                    if (owner === info.username && build === builds.ROCK) {
+                        items.unclaim = {
+                            name: "Zrušit obsazení (⚡10)", callback: UnclaimCell, disabled: function () {
+                                return !(info.energy >= 10);
+                            }
+                        };
+                    }else if(owner === info.username){
                         items.unclaim = {
                             name: "Zrušit obsazení (⚡1)", callback: UnclaimCell, disabled: function () {
                                 return !(info.energy > 0);
@@ -333,6 +330,14 @@ $(function () {
                                     }
                                 };
                             }
+                        }else if(build === builds.ROCK){
+                            items.destroy = {
+                                name: "Zrušit obsazení (⚡10)",
+                                callback: DestroyBuilding,
+                                disabled: function () {
+                                    return !(info.energy >= 10);
+                                }
+                            };
                         }else if(build === builds.FACTORY){
                             items.destroy = {
                                 name: "Zničit továrnu (⚡1)",
@@ -359,7 +364,15 @@ $(function () {
                             };
                         }
                     } else {
-                        if(owner == null) {
+                        if(owner == null && build === builds.ROCK && info.cells > 0) {
+                            items.capture = {
+                                name: "Obsadit pole (⚡10)",
+                                callback: CaptureCell,
+                                disabled: function () {
+                                    return !(info.energy >= 10 && CheckAdjacent(x, y));
+                                }
+                            };
+                        }else if(owner == null) {
                             items.capture = {
                                 name: (info.cells === 0 ? "Vybudovat základnu (⚡1)" : "Obsadit pole (⚡1)"),
                                 callback: CaptureCell,
@@ -379,6 +392,15 @@ $(function () {
                             }else if(build === builds.MILITARY && info.cells > 0){
                                 items.capture = {
                                     name: `Dobýt vojenskou základnu (⚡10+${Resource('ammo')}500)`,
+                                    isHtmlName: true,
+                                    callback: CaptureCell,
+                                    disabled: function () {
+                                        return !(info.energy >= 10 && CheckAdjacent(x, y));
+                                    }
+                                };
+                            }else if(build === builds.ROCK && info.cells > 0){
+                                items.capture = {
+                                    name: `Obsadit pole (⚡10)`,
                                     isHtmlName: true,
                                     callback: CaptureCell,
                                     disabled: function () {
