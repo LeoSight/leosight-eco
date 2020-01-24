@@ -388,7 +388,17 @@ io.on('connection', function(socket){
                 if (userData.energy >= 1) {
                     userData.cells = utils.countPlayerCells(userData.security);
                     let cell = global.world.find(d => d.x === x && d.y === y);
-                    if(cell && cell.owner === userData.security && ([builds.FORT, builds.FACTORY, builds.MILITARY].includes(cell.build) || (cell.build === builds.HQ && userData.cells <= 1))){
+                    if(cell.build === builds.ROCK){ // PARADO2X
+                        cell.build = null;
+
+                        db.world.cellUpdate(x, y, null, null, null);
+                        io.emit('cell', x, y, null, null, null, null);
+
+                        userData.energy -= 5;
+                        userData.stone += 25;
+                        socket.emit('info', {energy: userData.energy, stone: userData.stone});
+                    } // PARADO2X
+                    if(cell && cell.owner === userData.security && ([builds.FORT, builds.FACTORY, builds.MILITARY, builds.ROCK].includes(cell.build) || (cell.build === builds.HQ && userData.cells <= 1))){
                         if(cell.build === builds.HQ){
                             cell.owner = null;
                             cell.build = null;
