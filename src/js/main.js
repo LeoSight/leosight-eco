@@ -1,4 +1,4 @@
-$(function () {
+//$(function () {
     const socket = io();
     const messages = $('#messages');
     let logged = false;
@@ -448,7 +448,6 @@ $(function () {
     function CheckAdjacentOwnAll(x, y){
         let adjacent = GetAdjacent(x, y);
         let r = true;
-        console.log(adjacent);
         adjacent.forEach(d => {
             if(d.data('owner') !== info.username){
                 r = false;
@@ -520,6 +519,11 @@ $(function () {
 
     function SwitchFactory(){
         socket.emit('switch', $(this).data('x'), $(this).data('y'));
+    }
+
+    function ChangeColor(){
+        let color = $('#newColor').val();
+        socket.emit('chat', '/color ' + color);
     }
 
     /*
@@ -618,6 +622,13 @@ $(function () {
                 $('<p>').html(`${info[key+'Spending'] ? '('+(-info[key+'Spending'])+') ' : ''}${info[key]} ${Resource(key)}`).appendTo(res);
             }
         });
+
+        // Refresh disabled v kontextovém menu
+        let $el = $('.context-menu-root');
+        if($el && $el.data()) {
+            let contextMenuRoot = $el.data().contextMenu;
+            $.contextMenu.op.update.call($el, contextMenuRoot);
+        }
     });
 
     socket.on('capture', function(color, x, y){
@@ -657,4 +668,4 @@ $(function () {
         }
     });
 
-});
+//});
