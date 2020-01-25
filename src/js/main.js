@@ -338,12 +338,6 @@ $(function () {
                                     }
                                 };
                             }
-                        }else if (build === builds.ROCK) {
-                            items.unclaim = {
-                                name: "Zrušit obsazení (⚡10)", callback: UnclaimCell, disabled: function () {
-                                    return !(info.energy >= 10);
-                                }
-                            };
                         }else if(build === builds.FORT){
                             items.destroy = {
                                 name: "Zničit pevnost (⚡1)",
@@ -452,14 +446,6 @@ $(function () {
                                 callback: DestroyBuilding,
                                 disabled: function () {
                                     return !(info.energy >= 1);
-                                }
-                            };
-                        }else if(build === builds.ROCK){
-                            items.destroy = {
-                                name: "Zrušit obsazení (⚡10)",
-                                callback: DestroyBuilding,
-                                disabled: function () {
-                                    return !(info.energy >= 10);
                                 }
                             };
                         }
