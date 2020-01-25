@@ -430,6 +430,10 @@ io.on('connection', function(socket){
                             });
 
                             socket.emit('info', newMaterials);
+
+                            if(cell.build === builds.WAREHOUSE) {
+                                utils.updatePlayerMaxResources(userData);
+                            }
                         }
                     }
                 }
