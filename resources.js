@@ -11,4 +11,5 @@ module.exports = {
     AMMO: 'Munice',
     STONE: 'Kámen',
     WHEAT: 'Pšenice',
+    ALUMINIUM: 'Hliník',
 };

@@ -1,4 +1,6 @@
-//$(function () {
+let gfs = [];
+
+$(function () {
     const socket = io();
     const messages = $('#messages');
     let logged = false;
@@ -32,6 +34,8 @@
         EXPORT: 14,
         FARM: 15,
         FIELD: 16,
+        WAREHOUSE: 17,
+        FOREST: 18,
     };
 
     const builds_info = [
@@ -42,16 +46,18 @@
         { title: 'Ropný vrt', abbr: 'R' },
         { title: 'Železný důl', abbr: 'Ž' },
         { title: 'Bauxitový důl', abbr: 'B' },
-        { title: 'Pevnost', abbr: 'P' },
+        { title: 'Pevnost', abbr: '-' },
         { title: 'Olověný důl', abbr: 'O' },
         { title: 'Sírový důl', abbr: 'S' },
         { title: 'Ledkový důl', abbr: 'L' },
-        { title: 'Továrna', abbr: 'T' },
+        { title: 'Továrna', abbr: '' },
         { title: 'Vojenská základna', abbr: 'V' },
         { title: 'Kamenolom', abbr: 'K' },
         { title: 'Exportní sklad', abbr: 'E' },
         { title: 'Farma', abbr: 'F' },
         { title: 'Pšeničné pole', abbr: '' },
+        { title: 'Sklad', abbr: '-' },
+        { title: 'Les', abbr: '' },
     ];
 
     const resources = {
@@ -67,6 +73,7 @@
         AMMO: 'Munice',
         STONE: 'Kámen',
         WHEAT: 'Pšenice',
+        ALUMINIUM: 'Hliník',
     };
 
     socket.on('pong', function(ms) {
@@ -106,6 +113,7 @@
     socket.on('disconnect', function() {
         $('#ping').html('Spojení ztraceno!');
         AddChatMessage(null, 'Spojení se serverem bylo ztraceno!', '#e1423e');
+        logged = false;
     });
 
     socket.on('announce-update', function() {
@@ -157,6 +165,7 @@
             $('<span class="text">').text(msg).appendTo(newline);
         }else{
             if(isHtml){
+                msg = msg.replace(/\[RES:[A-Z]+]/gi, x => Resource(x.toLowerCase()));
                 $('<span class="text">').html(msg).css('color', color).appendTo(newline);
             }else{
                 $('<span class="text">').text(msg).css('color', color).appendTo(newline);
@@ -206,8 +215,8 @@
         move.mousedown(function(e) { if(e.which === 1){ scroll = true; return false; } });
         move.mouseup(function(e) { if(e.which === 1){ scroll = false; return false; } });
 
-        move.scrollTop( move.height() / 2 );
-        move.scrollLeft( (map.offsetWidth - move.offsetWidth) / 2 );
+        move.scrollTop( map.height() / 2 - move.height() / 2 );
+        move.scrollLeft( map.width() / 2 - move.width() / 2 );
 
         move.oncontextmenu = function(){ return false; };
 
@@ -237,6 +246,7 @@
                 const build = $trigger.data('build');
                 const level = $trigger.data('level') || 1;
                 const working = $trigger.data('working') || false;
+                const type = $trigger.data('type') || null;
 
                 let items = {};
 
@@ -249,7 +259,7 @@
 
                 items.info = { name: "X: " + x + ", Y: " + y, disabled: true };
                 items.owner = { name: "Vlastník: " + (owner || 'Nikdo'), disabled: true };
-                items.type = { name: "Typ: " + (builds_info[build] ? builds_info[build].title : 'Pozemek'), disabled: true };
+                items.type = { name: "Typ: " + (builds_info[build] ? builds_info[build].title : 'Pozemek') + (type ? ' (' + type + ')' : ''), disabled: true };
 
                 if(build === builds.HQ) {
                     if (owner === info.username) {
@@ -288,27 +298,40 @@
                             }
 
                             if(info.cells > 0) {
-                                items.buildFort = {
-                                    name: `Postavit pevnost (⚡10+${Resource('stone')}100)`, isHtmlName: true, callback: BuildFort, disabled: function () {
-                                        return !(info.energy >= 10 && info.stone >= 100);
+                                items.buildArmy = {
+                                    name: 'Vojenské budovy',
+                                    items: {
+                                        buildFort: {
+                                            name: `Pevnost (⚡10+${Resource('stone')}100)`, isHtmlName: true, callback: () => Build(x, y, builds.FORT), disabled: function () {
+                                                return !(info.energy >= 10 && info.stone >= 100);
+                                            }
+                                        },
+                                        buildMilitary: {
+                                            name: `Vojenská základnu (⚡10+${Resource('gold')}1000+${Resource('stone')}1000+${Resource('iron')}1000+${Resource('bauxite')}1000)`, isHtmlName: true, callback: () => Build(x, y, builds.MILITARY), disabled: function () {
+                                                return !(info.energy >= 10 && info.gold >= 1000 && info.stone >= 1000 && info.iron >= 1000 && info.bauxite >= 1000 && CheckAdjacentOwnAll(x, y));
+                                            }
+                                        }
                                     }
                                 };
 
-                                items.buildFactory = {
-                                    name: `Postavit továrnu (⚡10+${Resource('stone')}100+${Resource('iron')}200+${Resource('bauxite')}300)`, isHtmlName: true, callback: BuildFactory, disabled: function () {
-                                        return !(info.energy >= 10 && info.stone >= 100 && info.iron >= 200 && info.bauxite >= 300);
-                                    }
-                                };
-
-                                items.buildMilitary = {
-                                    name: `Postavit vojenskou základnu (⚡10+${Resource('gold')}1000+${Resource('stone')}1000+${Resource('iron')}1000+${Resource('bauxite')}1000)`, isHtmlName: true, callback: BuildMilitary, disabled: function () {
-                                        return !(info.energy >= 10 && info.gold >= 1000 && info.stone >= 1000 && info.iron >= 1000 && info.bauxite >= 1000 && CheckAdjacentOwnAll(x, y));
-                                    }
-                                };
-
-                                items.buildField = {
-                                    name: `Postavit pole (⚡5+${Resource('stone')}50)`, isHtmlName: true, callback: BuildField, disabled: function () {
-                                        return !(info.energy >= 5 && info.stone >= 50);
+                                items.buildCivil = {
+                                    name: 'Civilní stavby',
+                                    items: {
+                                        buildField: {
+                                            name: `Pole (⚡5+${Resource('stone')}50)`, isHtmlName: true, callback: () => Build(x, y, builds.FIELD), disabled: function () {
+                                                return !(info.energy >= 5 && info.stone >= 50);
+                                            }
+                                        },
+                                        buildFactory: {
+                                            name: `Továrna (⚡10+${Resource('stone')}100+${Resource('iron')}200+${Resource('bauxite')}300)`, isHtmlName: true, callback: () => Build(x, y, builds.FACTORY), disabled: function () {
+                                                return !(info.energy >= 10 && info.stone >= 100 && info.iron >= 200 && info.bauxite >= 300);
+                                            }
+                                        },
+                                        buildWarehouse: {
+                                            name: `Sklad (⚡10+${Resource('iron')}800+${Resource('aluminium')}500)`, isHtmlName: true, callback: () => Build(x, y, builds.WAREHOUSE), disabled: function () {
+                                                return !(info.energy >= 10 && info.iron >= 800 && info.aluminium >= 500);
+                                            }
+                                        },
                                     }
                                 };
                             }
@@ -331,6 +354,40 @@
                                     }
                                 };
                             }
+                        }else if(build === builds.WAREHOUSE){
+                            items.destroy = {
+                                name: "Zničit sklad (⚡1)",
+                                callback: DestroyBuilding,
+                                disabled: function () {
+                                    return !(info.energy >= 1);
+                                }
+                            };
+
+                            if(level < 5){
+                                items.upgrade = {
+                                    name: `Vylepšit sklad (⚡10+${Resource('iron')}800+${Resource('aluminium')}500)`,
+                                    isHtmlName: true,
+                                    callback: UpgradeBuilding,
+                                    disabled: function () {
+                                        return !(info.energy >= 10 && info.iron >= 800 && info.aluminium >= 500);
+                                    }
+                                };
+                            }
+
+                            items.retype = {
+                                name: 'Změnit skladovanou surovinu (⚡1)',
+                                disabled: () => { return !(info.energy >= 1); },
+                                items: {}
+                            };
+
+                            Object.keys(resources).forEach(res => {
+                                items.retype.items[res.toLowerCase()] = {
+                                    name: Resource(res.toLowerCase()) + ' ' + resources[res],
+                                    isHtmlName: true,
+                                    callback: () => RetypeBuilding(x, y, res.toLowerCase()),
+                                    disabled: () => { return !(info.energy >= 1); }
+                                }
+                            });
                         }else if(build === builds.FACTORY){
                             items.destroy = {
                                 name: "Zničit továrnu (⚡1)",
@@ -345,6 +402,28 @@
                                 callback: SwitchFactory,
                                 disabled: function () {
                                     return !(info.energy >= 1);
+                                }
+                            };
+
+                            items.retype = {
+                                name: 'Nastavit výrobu (⚡1)',
+                                disabled: () => { return !(info.energy >= 1); },
+                                items: {
+                                    aluminium: {
+                                        name: 'Hliník',
+                                        callback: () => RetypeBuilding(x, y, 'aluminium'),
+                                        disabled: () => { return !(info.energy >= 1); }
+                                    },
+                                    gunpowder: {
+                                        name: 'Střelný prach',
+                                        callback: () => RetypeBuilding(x, y, 'gunpowder'),
+                                        disabled: () => { return !(info.energy >= 1); }
+                                    },
+                                    ammo: {
+                                        name: 'Munice',
+                                        callback: () => RetypeBuilding(x, y, 'ammo'),
+                                        disabled: () => { return !(info.energy >= 1); }
+                                    }
                                 }
                             };
                         }else if(build === builds.MILITARY){
@@ -493,20 +572,8 @@
         socket.emit('movehq', $(this).data('x'), $(this).data('y'));
     }
 
-    function BuildFort(){
-        socket.emit('build', $(this).data('x'), $(this).data('y'), builds.FORT);
-    }
-
-    function BuildFactory(){
-        socket.emit('build', $(this).data('x'), $(this).data('y'), builds.FACTORY);
-    }
-
-    function BuildMilitary(){
-        socket.emit('build', $(this).data('x'), $(this).data('y'), builds.MILITARY);
-    }
-
-    function BuildField(){
-        socket.emit('build', $(this).data('x'), $(this).data('y'), builds.FIELD);
+    function Build(x, y, building){
+        socket.emit('build', x, y, building);
     }
 
     function UpgradeBuilding(){
@@ -521,16 +588,14 @@
         socket.emit('switch', $(this).data('x'), $(this).data('y'));
     }
 
-    function ChangeColor(){
-        let color = $('#newColor').val();
-        socket.emit('chat', '/color ' + color);
+    function RetypeBuilding(x, y, type){
+        socket.emit('retype', x, y, type);
     }
 
-    /*
-    function DrawSelection(){
-        $('#selection').html(`<strong>${selection.country || 'Nepojmenované území'}</strong><br>X: ${selection.x}<br>Y: ${selection.y}<br>Vlastník: ${selection.owner || 'Nikdo'}<br>Typ: ${builds_info[selection.build] ? builds_info[selection.build].title : 'Pozemek'}`);
-    }
-    */
+    gfs.changeColor = function(){
+        let color = $('#newColor').val();
+        socket.emit('chat', '/color ' + color);
+    };
 
     /**
      * @return {string}
@@ -582,8 +647,10 @@
             cell.data('owner', null).data('build', build).data('level', level).css('background', GenerateBackground(null, build, level));
         }
 
-        if(builds_info[build] && builds_info[build].abbr) {
-            if(level && level > 1){
+        if(builds_info[build] && builds_info[build].abbr !== undefined) {
+            if(level && builds_info[build].abbr === '-'){
+                cell.html(level);
+            }else if(level && level > 1){
                 cell.html(`${builds_info[build].abbr}<sub>${level}</sub>`);
             }else{
                 cell.text(builds_info[build].abbr);
@@ -604,6 +671,9 @@
             }else{
                 cell.html(builds_info[build].abbr);
             }
+        }else if(key === 'type' && [builds.FACTORY, builds.WAREHOUSE].includes(build)){
+            value = resources[value.toUpperCase()] || value;
+            cell.data('type', value);
         }
     });
 
@@ -619,7 +689,7 @@
         let res = $('#resources').text('');
         Object.keys(info).forEach((key) => {
             if (key.toUpperCase() in resources) {
-                $('<p>').html(`${info[key+'Spending'] ? '('+(-info[key+'Spending'])+') ' : ''}${info[key]} ${Resource(key)}`).appendTo(res);
+                $('<p>').html(`${info[key+'Spending'] ? '('+(-info[key+'Spending'])+') ' : ''}${info[key]}${info[key+'Max'] ? ' / '+(info[key+'Max']) : ''} ${Resource(key)}`).appendTo(res);
             }
         });
 
@@ -668,4 +738,4 @@
         }
     });
 
-//});
+});

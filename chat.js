@@ -112,8 +112,8 @@ module.exports = function(io, db) {
 	                                            db.users.update(targetData.security, material, targetValue);
 	                                            targetData.socket.emit('info', {[material]: targetValue});
 
-	                                            global.players[index].socket.emit('chat', null, `Poslal jsi ${amount}x ${resources[material.toUpperCase()]} hráči [#${targetIndex}] ${target.username}.`, '#44cee8');
-	                                            target.socket.emit('chat', null, `[#${index}] ${global.players[index].username} ti poslal ${amount}x ${resources[material.toUpperCase()]}.`, '#44cee8');
+	                                            global.players[index].socket.emit('chat', null, `Poslal jsi ${amount}x [RES:${material.toUpperCase()}] hráči [#${targetIndex}] ${target.username}.`, '#44cee8');
+	                                            target.socket.emit('chat', null, `[#${index}] ${global.players[index].username} ti poslal ${amount}x [RES:${material.toUpperCase()}].`, '#44cee8');
 	                                            console.log(`[SEND] [#${index}] ${global.players[index].username} > [#${targetIndex}] ${target.username}: ${amount}x ${material}`);
 
 	                                        } else {

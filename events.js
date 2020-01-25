@@ -14,8 +14,6 @@ module.exports = function(_db, _master) {
     Periodic60s();
 };
 
-//console.log(utils.getDistance(2,1,3,4));
-
 function GainResource(build, res, gain){
     global.world.filter(x => x.build === build).forEach(cell => {
         if(cell.owner){
@@ -23,11 +21,20 @@ function GainResource(build, res, gain){
             if(userData){
                 let value = userData[res] || 0;
                 value += gain;
-                userData[res] = value;
-                db.users.update(userData.security, res, value);
 
-                if(userData.socket){
-                    userData.socket.emit('info', {[res]: value});
+                // Pokud jsou současné zásoby + zisk větší než maximum skladu, nepřičítáme surovinu
+                // TODO: V budoucnu upravit na agresivnější styl (ubírání surovin přes limit) - zatím však dejme hráčům možnost se přizpůsobit novým změnám
+                let max = userData[res+'Max'] || 0;
+                if(value > max && value - gain < max) value = max; // Pokud jsme těsně pod limitem, zafixujeme se na něj
+                if(value < max) {
+
+                    userData[res] = value;
+                    db.users.update(userData.security, res, value);
+
+                    if (userData.socket) {
+                        userData.socket.emit('info', {[res]: value});
+                    }
+
                 }
             }
         }
@@ -40,24 +47,43 @@ function ProcessFactories(){
             let userData = global.users.find(x => x.security === cell.owner);
             if(userData){
                 let newMaterials = {};
+                let current = {};
+                let max = {};
 
-                let niter = userData.niter || 0;
-                let sulfur = userData.sulfur || 0;
-                let gunpowder = userData.gunpowder || 0;
-                let lead = userData.lead || 0;
-                let iron = userData.iron || 0;
-                let ammo = userData.ammo || 0;
+                Object.keys(resources).forEach(res => {
+                    current[res.toLowerCase()] = userData[res.toLowerCase()] || 0;
+                    max[res.toLowerCase()] = userData[res.toLowerCase()+'Max'] || 0;
+                });
 
-                if(niter >= 5 && sulfur >= 2){
-                    newMaterials.niter = niter - 5;
-                    newMaterials.sulfur = sulfur - 2;
-                    newMaterials.gunpowder = gunpowder + 4;
+                if(current.wheat >= 1) {
+                    newMaterials.wheat = current.wheat - 1;
+                }else{
+                    return;
                 }
-                if(gunpowder >= 3 && lead >= 1 && iron >= 3){
-                    newMaterials.gunpowder = gunpowder - 3;
-                    newMaterials.lead = lead - 1;
-                    newMaterials.iron = iron - 3;
-                    newMaterials.ammo = ammo + 3;
+
+                switch(cell.type) {
+                    case 'gunpowder':
+                        if(current.niter >= 5 && current.sulfur >= 2 && max.gunpowder < current.gunpowder){
+                            newMaterials.niter = current.niter - 5;
+                            newMaterials.sulfur = current.sulfur - 2;
+                            newMaterials.gunpowder = current.gunpowder + 4;
+                        }
+                        break;
+                    case 'ammo':
+                        if (current.gunpowder >= 3 && current.lead >= 1 && current.iron >= 3 && max.ammo < current.ammo) {
+                            newMaterials.gunpowder = current.gunpowder - 3;
+                            newMaterials.lead = current.lead - 1;
+                            newMaterials.iron = current.iron - 3;
+                            newMaterials.ammo = current.ammo + 3;
+                        }
+                        break;
+                    case 'aluminium':
+                    default:
+                        if (current.bauxite >= 5 && max.aluminium < current.aluminium){
+                            newMaterials.bauxite = current.bauxite - 5;
+                            newMaterials.aluminium = current.aluminium + 3;
+                        }
+                        break;
                 }
 
                 Object.keys(newMaterials).forEach((key) => {

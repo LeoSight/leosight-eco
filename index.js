@@ -38,7 +38,7 @@ const market = require(__dirname + '/market.js')(db.market);
 const master = require(__dirname + '/master.js');
 const global = require(__dirname + '/global.js');
 const chat = require(__dirname + '/chat.js')(io, db);
-require(__dirname + '/commands.js')(io, db, discord, builds);
+require(__dirname + '/commands.js')(io, db, discord);
 require(__dirname + '/events.js')(db, master);
 
 const serverName = process.env.SERVERNAME;
@@ -56,6 +56,11 @@ mongoWork(function(db, client) {
         global.users = result;
         client.close();
     });
+});
+
+// Propočteme všechny maxima surovin (neukládají se do databáze)
+global.users.forEach(userData => {
+    utils.updatePlayerMaxResources(userData);
 });
 
 console.log('Načítám svět..');
@@ -230,6 +235,9 @@ io.on('connection', function(socket){
                                         cell.working = false;
                                         db.world.update(x, y, 'working', false);
                                         io.emit('cell-data', x, y, 'working', false);
+                                    }else if(cell.build === builds.WAREHOUSE){
+                                        cell.owner = userData.security; // Musíme přepsat již nyní, aby se správně propočetla nová maxima skladu
+                                        utils.updatePlayerMaxResources(oldOwner);
                                     }
 
                                     if(oldOwner.socket) {
@@ -261,6 +269,10 @@ io.on('connection', function(socket){
                         userData.cells += 1;
 
                         socket.emit('info', { energy: userData.energy, cells: userData.cells, ammo: userData.ammo });
+
+                        if(cell.build === builds.WAREHOUSE){
+                            utils.updatePlayerMaxResources(userData);
+                        }
                     }
                 }
             }
@@ -310,6 +322,10 @@ io.on('connection', function(socket){
                         userData.cells = utils.countPlayerCells(userData.security);
 
                         socket.emit('info', { energy: userData.energy, cells: userData.cells });
+
+                        if(cell.build === builds.WAREHOUSE){
+                            utils.updatePlayerMaxResources(userData);
+                        }
                     }
                 }
             }
@@ -332,6 +348,8 @@ io.on('connection', function(socket){
                         cost = {energy: 10, gold: 1000, stone: 1000, iron: 1000, bauxite: 1000}
                     } else if (building === builds.FIELD) {
                         cost = {energy: 5, stone: 50}
+                    } else if (building === builds.WAREHOUSE) {
+                        cost = {energy: 10, iron: 800, aluminium: 500}
                     } else {
                         return;
                     }
@@ -356,6 +374,16 @@ io.on('connection', function(socket){
                         });
 
                         socket.emit('info', newMaterials);
+
+                        // CBs/kontroly po výstavbě
+                        if(building === builds.WAREHOUSE){
+                            utils.updatePlayerMaxResources(userData);
+                        }else if(building === builds.FACTORY){
+                            let type = 'aluminium';
+                            cell.type = type;
+                            db.world.update(x, y, 'type', type);
+                            io.emit('cell-data', x, y, 'type', type);
+                        }
                     }
                 }
             }
@@ -368,18 +396,39 @@ io.on('connection', function(socket){
             if (userData && userData.energy && userData.stone) {
                 if (userData.energy >= 10 && userData.stone >= 500) {
                     let cell = global.world.find(d => d.x === x && d.y === y);
-                    if(cell && cell.owner === userData.security && cell.build === builds.FORT){
+                    if(cell && cell.owner === userData.security && cell.build){
+                        let cost = {};
+                        let maxLevel = 5;
+                        if (cell.build === builds.FORT) {
+                            cost = {energy: 10, stone: 500}
+                        } else if (cell.build === builds.WAREHOUSE) {
+                            cost = {energy: 10, iron: 800, aluminium: 500}
+                        } else {
+                            return;
+                        }
+
+                        let costMet = true;
+                        Object.keys(cost).forEach((key) => {
+                            if (!userData[key] || userData[key] < cost[key]) {
+                                costMet = false;
+                            }
+                        });
+
                         let level = cell.level || 1;
-                        if(level < 5){
+                        if (costMet && level < maxLevel) {
                             level += 1;
                             cell.level = level;
                             db.world.cellUpdate(x, y, userData.security, cell.build, cell.level);
                             io.emit('cell', x, y, userData.username, userData.color, cell.build, cell.level);
 
-                            userData.energy -= 10;
-                            userData.stone -= 500;
+                            let newMaterials = {};
+                            Object.keys(cost).forEach((key) => {
+                                userData[key] -= cost[key];
+                                newMaterials[key] = userData[key];
+                                db.users.update(userData.security, key, userData[key]);
+                            });
 
-                            socket.emit('info', { energy: userData.energy, stone: userData.stone });
+                            socket.emit('info', newMaterials);
                         }
                     }
                 }
@@ -394,7 +443,8 @@ io.on('connection', function(socket){
                 if (userData.energy >= 1) {
                     userData.cells = utils.countPlayerCells(userData.security);
                     let cell = global.world.find(d => d.x === x && d.y === y);
-                    if(cell && cell.owner === userData.security && ([builds.FORT, builds.FACTORY, builds.MILITARY, builds.FIELD].includes(cell.build) || (cell.build === builds.HQ && userData.cells <= 1))){
+                    if(cell && cell.owner === userData.security && ([builds.FORT, builds.FACTORY, builds.MILITARY, builds.FIELD, builds.WAREHOUSE].includes(cell.build) || (cell.build === builds.HQ && userData.cells <= 1))){
+                        let oldBuild = cell.build;
                         if(cell.build === builds.HQ){
                             cell.owner = null;
                             cell.build = null;
@@ -414,6 +464,10 @@ io.on('connection', function(socket){
                             userData.energy -= 1;
 
                             socket.emit('info', {energy: userData.energy});
+
+                            if(oldBuild === builds.WAREHOUSE){
+                                utils.updatePlayerMaxResources(userData);
+                            }
                         }
                     }
                 }
@@ -435,6 +489,38 @@ io.on('connection', function(socket){
                         io.emit('cell-data', x, y, 'working', working);
                         userData.energy -= 1;
                         socket.emit('info', {energy: userData.energy});
+                    }
+                }
+            }
+        }
+    });
+
+    socket.on('retype', function(x, y, type){
+        if (global.players[index] && global.players[index].logged) {
+            let userData = global.users.find(x => x.security === global.players[index].security);
+            if (userData && userData.energy) {
+                if (userData.energy >= 1) {
+                    let cell = global.world.find(d => d.x === x && d.y === y);
+                    if(cell && cell.owner === userData.security && cell.build){
+                        type = type.toLowerCase();
+                        let valid = false;
+                        if(cell.build === builds.FACTORY && ['aluminium','gunpowder','ammo'].includes(type)){
+                            valid = true;
+                        }else if(cell.build === builds.WAREHOUSE && Object.keys(resources).includes(type.toUpperCase())){
+                            valid = true;
+                        }
+
+                        if(valid) {
+                            cell.type = type;
+                            db.world.update(x, y, 'type', type);
+                            io.emit('cell-data', x, y, 'type', type);
+                            userData.energy -= 1;
+                            socket.emit('info', {energy: userData.energy});
+
+                            if(cell.build === builds.WAREHOUSE){
+                                utils.updatePlayerMaxResources(userData);
+                            }
+                        }
                     }
                 }
             }
@@ -471,6 +557,9 @@ function SendMap(socket){
             if(cell.working){
                 socket.emit('cell-data', cell.x, cell.y, 'working', cell.working);
             }
+            if(cell.type){
+                socket.emit('cell-data', cell.x, cell.y, 'type', cell.type);
+            }
         }else{
             socket.emit('cell', cell.x, cell.y, null, null, cell.build);
         }
@@ -496,6 +585,8 @@ function FetchUserData(socket, security){
         info.cells = utils.countPlayerCells(userData.security);
 
         socket.emit('info', info);
+
+        utils.updatePlayerMaxResources(userData);
     }else{
         console.log('[ERROR] Nepodařilo se načíst data hráče "' + security + '"!');
     }

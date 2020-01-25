@@ -1,7 +1,7 @@
 const global = require(__dirname + '/global.js');
-const resources = require(__dirname + '/resources.js');
+const builds = require(__dirname + '/builds.js');
 
-module.exports = function(io, db, discord, builds) {
+module.exports = function(io, db, discord) {
     const readline = require('readline'),
         rl = readline.createInterface({input: process.stdin, output: process.stdout, terminal: false});
 
@@ -59,11 +59,7 @@ module.exports = function(io, db, discord, builds) {
                         io.emit('cell', x, y, username, color, build, 1);
                         console.log(`Budova "${buildString.toUpperCase()}" postavena na X: ${x}, Y: ${y}`);
                 }else{
-                    let buildings = [];
-                    Object.keys(builds).forEach((key) => {
-                        buildings.push(`${key} (${builds[key]})`);
-                    });
-                    console.log(`SYNTAX: build [Budova] [X] [Y]\nPlatné názvy budov jsou: ${buildings.join(', ')}`);
+                    console.log(`SYNTAX: build [Budova] [X] [Y]\nPlatné názvy budov jsou: ${Object.keys(builds).join(', ')}`);
                 }
                 break;
             case 'help':

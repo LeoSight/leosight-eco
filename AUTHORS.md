@@ -4,6 +4,7 @@ Autoři a kontributoři:
 - **[Rataj](https://github.com/RatajVaver)** - Správce projektu, hlavní programátor
 - **Paradox** - Grafik, programátor, tester
 - **Flyer** - Programátor, tester
+- **arciCZ** - Programátor, tester
 
 Poděkování:
 - **SedliX** - Nahlášení chyb, návrhy

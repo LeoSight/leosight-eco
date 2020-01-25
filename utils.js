@@ -1,6 +1,7 @@
 const fs = require('fs');
 const global = require(__dirname + '/global.js');
 const builds = require(__dirname + '/builds.js');
+const resources = require(__dirname + '/resources.js');
 let io;
 
 module.exports = function(_io) {
@@ -22,6 +23,7 @@ module.exports = function(_io) {
         checkAdjacentOwnAll: CheckAdjacentOwnAll,
         checkAdjacentBuilding: CheckAdjacentBuilding,
         canBuildHQ: CanBuildHQ,
+        updatePlayerMaxResources: UpdatePlayerMaxResources,
     }
 };
 
@@ -53,6 +55,22 @@ function CountPlayerCells(security){
         }
     });
     return i;
+}
+
+function UpdatePlayerMaxResources(userData){
+    let newMax = {};
+
+    Object.keys(resources).forEach((key) => {
+        newMax[`${key.toLowerCase()}Max`] = userData[`${key.toLowerCase()}Max`] = 5000;
+    });
+
+    global.world.filter(x => x.owner === userData.security && x.build === builds.WAREHOUSE).forEach(cell => {
+        newMax[`${cell.type}Max`] = userData[`${cell.type}Max`] += cell.level * 10000;
+    });
+
+    if(userData.socket){
+        userData.socket.emit('info', newMax);
+    }
 }
 
 function UpdatePlayerCells(security){
