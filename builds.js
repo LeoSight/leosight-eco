@@ -17,4 +17,5 @@ module.exports = {
     FIELD: 16,
     WAREHOUSE: 17,
     FOREST: 18,
+    ROCK: 19,
 };

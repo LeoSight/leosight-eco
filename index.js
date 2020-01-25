@@ -238,6 +238,15 @@ io.on('connection', function(socket){
                                     }else if(cell.build === builds.WAREHOUSE){
                                         cell.owner = userData.security; // Musíme přepsat již nyní, aby se správně propočetla nová maxima skladu
                                         utils.updatePlayerMaxResources(oldOwner);
+                                    }else if(cell.build === builds.ROCK){
+                                        if(userData.energy < 10) return; // Obsadenie skaly stojí 10 energie
+                                            energyCost = 10;
+
+                                            db.world.cellUpdate(x, y, userData.security, cell.build);
+                                            io.emit('cell', x, y, userData.username, userData.color, cell.build);
+
+                                            userData.energy -= 10;
+                                            socket.emit('info', { energy: userData.energy });
                                     }
 
                                     if(oldOwner.socket) {
@@ -260,6 +269,10 @@ io.on('connection', function(socket){
                             if(discord) {
                                 discord.broadcast(`${userData.username} právě založil nový nezávislý národ.`);
                             }
+                        }
+
+                        if (cell.build === builds.ROCK){ // Musíme odpočítať 10 energie
+                            energyCost = 10
                         }
 
                         db.world.cellUpdate(x, y, userData.security, cell.build, cell.level);
@@ -314,17 +327,27 @@ io.on('connection', function(socket){
                 if (userData.energy > 0) {
                     let cell = global.world.find(d => d.x === x && d.y === y);
                     if(cell && cell.owner === userData.security && cell.build !== builds.HQ){
-                        cell.owner = null;
-                        db.world.cellUpdate(x, y, null, cell.build, cell.level);
-                        io.emit('cell', x, y, null, null, cell.build, cell.level);
+                        if (cell.build !== builds.ROCK){
+                            cell.owner = null;
+                            db.world.cellUpdate(x, y, null, cell.build, cell.level);
+                            io.emit('cell', x, y, null, null, cell.build, cell.level);
 
-                        userData.energy -= 1;
-                        userData.cells = utils.countPlayerCells(userData.security);
+                            userData.energy -= 1;
+                            userData.cells = utils.countPlayerCells(userData.security);
 
-                        socket.emit('info', { energy: userData.energy, cells: userData.cells });
-
+                            socket.emit('info', { energy: userData.energy, cells: userData.cells });
+                        }
                         if(cell.build === builds.WAREHOUSE){
                             utils.updatePlayerMaxResources(userData);
+                        }else if(cell.build === builds.ROCK){
+                            cell.owner = null;
+                            db.world.cellUpdate(x, y, null, cell.build);
+                            io.emit('cell', x, y, null, null, cell.build);
+
+                            userData.energy -= 10;
+                            userData.cells = utils.countPlayerCells(userData.security);
+
+                            socket.emit('info', { energy: userData.energy, cells: userData.cells });
                         }
                     }
                 }

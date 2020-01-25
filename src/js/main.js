@@ -36,6 +36,7 @@ $(function () {
         FIELD: 16,
         WAREHOUSE: 17,
         FOREST: 18,
+        ROCK: 19,
     };
 
     const builds_info = [
@@ -58,6 +59,7 @@ $(function () {
         { title: 'Pšeničné pole', abbr: '' },
         { title: 'Sklad', abbr: '-' },
         { title: 'Les', abbr: '' },
+        { title: 'Skála', abbr: '' },
     ];
 
     const resources = {
@@ -336,6 +338,12 @@ $(function () {
                                     }
                                 };
                             }
+                        }else if (build === builds.ROCK) {
+                            items.unclaim = {
+                                name: "Zrušit obsazení (⚡10)", callback: UnclaimCell, disabled: function () {
+                                    return !(info.energy >= 10);
+                                }
+                            };
                         }else if(build === builds.FORT){
                             items.destroy = {
                                 name: "Zničit pevnost (⚡1)",
@@ -446,9 +454,17 @@ $(function () {
                                     return !(info.energy >= 1);
                                 }
                             };
+                        }else if(build === builds.ROCK){
+                            items.destroy = {
+                                name: "Zrušit obsazení (⚡10)",
+                                callback: DestroyBuilding,
+                                disabled: function () {
+                                    return !(info.energy >= 10);
+                                }
+                            };
                         }
                     } else {
-                        if(owner == null) {
+                        if(owner == null && build !== builds.ROCK) {
                             items.capture = {
                                 name: (info.cells === 0 ? "Vybudovat základnu (⚡1)" : "Obsadit pole (⚡1)"),
                                 callback: CaptureCell,
@@ -469,6 +485,14 @@ $(function () {
                                 items.capture = {
                                     name: `Dobýt vojenskou základnu (⚡10+${Resource('ammo')}500)`,
                                     isHtmlName: true,
+                                    callback: CaptureCell,
+                                    disabled: function () {
+                                        return !(info.energy >= 10 && CheckAdjacent(x, y));
+                                    }
+                                };
+                            }else if(build === builds.ROCK && info.cells > 0) {
+                                items.capture = {
+                                    name: "Obsadit pole (⚡10)",
                                     callback: CaptureCell,
                                     disabled: function () {
                                         return !(info.energy >= 10 && CheckAdjacent(x, y));
@@ -561,7 +585,7 @@ $(function () {
      * @return {boolean}
      */
     function CanBuildHQ(x, y){
-        return !CheckAdjacentBuilding(x, y, [builds.HQ, builds.GOLD, builds.COAL, builds.OIL, builds.IRON, builds.BAUXITE, builds.LEAD, builds.SULFUR, builds.NITER, builds.STONE]);
+        return !CheckAdjacentBuilding(x, y, [builds.HQ, builds.GOLD, builds.COAL, builds.OIL, builds.IRON, builds.BAUXITE, builds.LEAD, builds.SULFUR, builds.NITER, builds.STONE, builds.ROCK]);
     }
 
     function CaptureCell(){
