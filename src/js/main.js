@@ -32,7 +32,7 @@
         EXPORT: 14,
         FARM: 15,
         FIELD: 16,
-        ROCK: 17
+        ROCK: 17,
     };
 
     const builds_info = [
