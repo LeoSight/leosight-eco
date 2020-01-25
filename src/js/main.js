@@ -32,6 +32,7 @@
         EXPORT: 14,
         FARM: 15,
         FIELD: 16,
+        ROCK: 17
     };
 
     const builds_info = [
@@ -52,6 +53,7 @@
         { title: 'Exportní sklad', abbr: 'E' },
         { title: 'Farma', abbr: 'F' },
         { title: 'Pšeničné pole', abbr: '' },
+        { title: 'Skála', abbr: '' },
     ];
 
     const resources = {
@@ -271,12 +273,19 @@
                         };
                     }
                 }else{
-                    if (owner === info.username) {
+                    if (owner === info.username && build === builds.ROCK) {
+                        items.unclaim = {
+                            name: "Zrušit obsazení (⚡10)", callback: UnclaimCell, disabled: function () {
+                                return !(info.energy >= 10);
+                            }
+                        };
+                    }else if(owner === info.username){
                         items.unclaim = {
                             name: "Zrušit obsazení (⚡1)", callback: UnclaimCell, disabled: function () {
                                 return !(info.energy > 0);
                             }
                         };
+
 
                         if(build == null) {
                             if(CanBuildHQ(x, y)) {
@@ -331,6 +340,14 @@
                                     }
                                 };
                             }
+                        }else if(build === builds.ROCK){
+                            items.destroy = {
+                                name: "Zrušit obsazení (⚡10)",
+                                callback: DestroyBuilding,
+                                disabled: function () {
+                                    return !(info.energy >= 10);
+                                }
+                            };
                         }else if(build === builds.FACTORY){
                             items.destroy = {
                                 name: "Zničit továrnu (⚡1)",
@@ -365,7 +382,15 @@
                             };
                         }
                     } else {
-                        if(owner == null) {
+                        if(owner == null && build === builds.ROCK && info.cells > 0) {
+                            items.capture = {
+                                name: "Obsadit pole (⚡10)",
+                                callback: CaptureCell,
+                                disabled: function () {
+                                    return !(info.energy >= 10 && CheckAdjacent(x, y));
+                                }
+                            };
+                        }else if(owner == null) {
                             items.capture = {
                                 name: (info.cells === 0 ? "Vybudovat základnu (⚡1)" : "Obsadit pole (⚡1)"),
                                 callback: CaptureCell,
@@ -385,6 +410,15 @@
                             }else if(build === builds.MILITARY && info.cells > 0){
                                 items.capture = {
                                     name: `Dobýt vojenskou základnu (⚡10+${Resource('ammo')}500)`,
+                                    isHtmlName: true,
+                                    callback: CaptureCell,
+                                    disabled: function () {
+                                        return !(info.energy >= 10 && CheckAdjacent(x, y));
+                                    }
+                                };
+                            }else if(build === builds.ROCK && info.cells > 0){
+                                items.capture = {
+                                    name: `Obsadit pole (⚡10)`,
                                     isHtmlName: true,
                                     callback: CaptureCell,
                                     disabled: function () {
@@ -478,7 +512,7 @@
      * @return {boolean}
      */
     function CanBuildHQ(x, y){
-        return !CheckAdjacentBuilding(x, y, [builds.HQ, builds.GOLD, builds.COAL, builds.OIL, builds.IRON, builds.BAUXITE, builds.LEAD, builds.SULFUR, builds.NITER, builds.STONE]);
+        return !CheckAdjacentBuilding(x, y, [builds.HQ, builds.GOLD, builds.COAL, builds.OIL, builds.IRON, builds.BAUXITE, builds.LEAD, builds.SULFUR, builds.NITER, builds.STONE, builds.FIELD, builds.ROCK]);
     }
 
     function CaptureCell(){

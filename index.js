@@ -198,6 +198,17 @@ io.on('connection', function(socket){
 
                                         energyCost = 10;
                                         cell.build = null;
+                                    }else if(cell.build === builds.ROCK){
+                                        if(userData.energy < 10) return; // Zabranie skaly stojí 10 energie
+                                            energyCost = 10;
+
+                                            db.world.cellUpdate(x, y, userData.security, cell.build);
+                                            io.emit('cell', x, y, userData.username, userData.color, cell.build);
+
+                                            userData.energy -= 10;
+                                            socket.emit('info', { energy: userData.energy });
+
+                                            return; // Neřešit další kód pro obsazení čtverce
                                     }else if(cell.build === builds.MILITARY){
                                         if(userData.energy < 10) return; // Zabrání vojenské základny stojí 10 energie
                                         if(userData.ammo < 500) return; // Zabrání vojenské základny stojí 500 munice
@@ -254,6 +265,10 @@ io.on('connection', function(socket){
                             }
                         }
 
+                        if (cell.build === builds.ROCK){
+                            energyCost = 10
+                        }
+
                         db.world.cellUpdate(x, y, userData.security, cell.build, cell.level);
                         io.emit('cell', x, y, userData.username, userData.color, cell.build, cell.level);
 
@@ -302,14 +317,25 @@ io.on('connection', function(socket){
                 if (userData.energy > 0) {
                     let cell = global.world.find(d => d.x === x && d.y === y);
                     if(cell && cell.owner === userData.security && cell.build !== builds.HQ){
-                        cell.owner = null;
-                        db.world.cellUpdate(x, y, null, cell.build, cell.level);
-                        io.emit('cell', x, y, null, null, cell.build, cell.level);
+                        if(cell.build === builds.ROCK){
+                            cell.owner = null;
+                            db.world.cellUpdate(x, y, null, cell.build);
+                            io.emit('cell', x, y, null, null, cell.build);
 
-                        userData.energy -= 1;
-                        userData.cells = utils.countPlayerCells(userData.security);
+                            userData.energy -= 10;
+                            userData.cells = utils.countPlayerCells(userData.security);
 
-                        socket.emit('info', { energy: userData.energy, cells: userData.cells });
+                            socket.emit('info', { energy: userData.energy, cells: userData.cells });
+                        }else{
+                            cell.owner = null;
+                            db.world.cellUpdate(x, y, null, cell.build, cell.level);
+                            io.emit('cell', x, y, null, null, cell.build, cell.level);
+
+                            userData.energy -= 1;
+                            userData.cells = utils.countPlayerCells(userData.security);
+
+                            socket.emit('info', { energy: userData.energy, cells: userData.cells });
+                        }
                     }
                 }
             }
