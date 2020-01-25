@@ -63,14 +63,14 @@ function ProcessFactories(){
 
                 switch(cell.type) {
                     case 'gunpowder':
-                        if(current.niter >= 5 && current.sulfur >= 2 && max.gunpowder < current.gunpowder){
+                        if(current.niter >= 5 && current.sulfur >= 2 && max.gunpowder > current.gunpowder){
                             newMaterials.niter = current.niter - 5;
                             newMaterials.sulfur = current.sulfur - 2;
                             newMaterials.gunpowder = current.gunpowder + 4;
                         }
                         break;
                     case 'ammo':
-                        if (current.gunpowder >= 3 && current.lead >= 1 && current.iron >= 3 && max.ammo < current.ammo) {
+                        if (current.gunpowder >= 3 && current.lead >= 1 && current.iron >= 3 && max.ammo > current.ammo) {
                             newMaterials.gunpowder = current.gunpowder - 3;
                             newMaterials.lead = current.lead - 1;
                             newMaterials.iron = current.iron - 3;
@@ -79,7 +79,7 @@ function ProcessFactories(){
                         break;
                     case 'aluminium':
                     default:
-                        if (current.bauxite >= 5 && max.aluminium < current.aluminium){
+                        if (current.bauxite >= 5 && max.aluminium > current.aluminium){
                             newMaterials.bauxite = current.bauxite - 5;
                             newMaterials.aluminium = current.aluminium + 3;
                         }
