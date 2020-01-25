@@ -259,7 +259,7 @@ $(function () {
 
                 items.info = { name: "X: " + x + ", Y: " + y, disabled: true };
                 items.owner = { name: "Vlastník: " + (owner || 'Nikdo'), disabled: true };
-                items.type = { name: "Typ: " + (builds_info[build] ? builds_info[build].title : 'Pozemek') + (type ? ' (' + type + ')' : ''), disabled: true };
+                items.type = { name: "Typ: " + (builds_info[build] ? builds_info[build].title : 'Pozemek') + (type ? ' (' + type + ')' : ''), isHtmlName: true, disabled: true };
 
                 if(build === builds.HQ) {
                     if (owner === info.username) {
@@ -410,17 +410,20 @@ $(function () {
                                 disabled: () => { return !(info.energy >= 1); },
                                 items: {
                                     aluminium: {
-                                        name: 'Hliník',
+                                        name: Resource('aluminium') + ' Hliník',
+                                        isHtmlName: true,
                                         callback: () => RetypeBuilding(x, y, 'aluminium'),
                                         disabled: () => { return !(info.energy >= 1); }
                                     },
                                     gunpowder: {
-                                        name: 'Střelný prach',
+                                        name: Resource('gunpowder') + ' Střelný prach',
+                                        isHtmlName: true,
                                         callback: () => RetypeBuilding(x, y, 'gunpowder'),
                                         disabled: () => { return !(info.energy >= 1); }
                                     },
                                     ammo: {
-                                        name: 'Munice',
+                                        name: Resource('ammo') + ' Munice',
+                                        isHtmlName: true,
                                         callback: () => RetypeBuilding(x, y, 'ammo'),
                                         disabled: () => { return !(info.energy >= 1); }
                                     }
@@ -620,7 +623,7 @@ $(function () {
 
         if(build){
             if(level && level > 1 && build !== builds.WAREHOUSE){
-                return `url('../images/builds/${build}_${level}.png') center center, ${color}`; // fix
+                return `url('../images/builds/${build}_${level}.png') center center, ${color}`;
             }else {
                 return `url('../images/builds/${build}.png') center center, ${color}`;
             }
@@ -635,7 +638,7 @@ $(function () {
 
     socket.on('cell', function(x, y, username, color, build, level){
         let cell = $('#map .row').eq(h + y).find('.cell').eq(w + x);
-        level = level || 1;
+        level = level || 1
 
         if(username) {
             cell.data('owner', username).data('build', build).data('level', level).css('background', GenerateBackground(color, build, level));
@@ -672,7 +675,7 @@ $(function () {
                 cell.html(builds_info[build].abbr);
             }
         }else if(key === 'type' && [builds.FACTORY, builds.WAREHOUSE].includes(build)){
-            value = resources[value.toUpperCase()] || value;
+            value = resources[value.toUpperCase()] ? Resource(value) + ' ' + resources[value.toUpperCase()] : value;
             cell.data('type', value);
         }
     });
