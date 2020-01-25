@@ -76,7 +76,7 @@ app.get('/stats', (req, res) => {
     }
     res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
 
-    res.json({ online: global.players.filter(x => x.socket).length, servername: serverName });
+    res.json({ online: global.players.filter(x => x.logged).length, servername: serverName });
 });
 
 app.get('/', (req, res) => {

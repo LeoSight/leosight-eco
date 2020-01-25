@@ -127,7 +127,7 @@ function Periodic60s(){
     });
 
     // Odeslání aktuálních dat pro master server
-    master.update(process.env.SERVERNAME, global.players.filter(x => x.socket).length, process.env.LOGIN !== 'API', utils.version, utils.codebase);
+    master.update(process.env.SERVERNAME, global.players.filter(x => x.logged).length, process.env.LOGIN !== 'API', utils.version, utils.codebase);
 
     return Promise.delay(60000).then(() => Periodic60s());
 }
