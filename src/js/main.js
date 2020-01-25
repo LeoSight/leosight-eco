@@ -165,7 +165,7 @@ $(function () {
             $('<span class="text">').text(msg).appendTo(newline);
         }else{
             if(isHtml){
-                msg = msg.replace(/\[RES:[A-Z]+]/gi, x => Resource(x.toLowerCase()));
+                msg = msg.replace(/\[RES:([A-Z]+)]/gi, (_, res) => Resource(res.toLowerCase()));
                 $('<span class="text">').html(msg).css('color', color).appendTo(newline);
             }else{
                 $('<span class="text">').text(msg).css('color', color).appendTo(newline);

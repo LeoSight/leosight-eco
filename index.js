@@ -363,8 +363,9 @@ io.on('connection', function(socket){
 
                     if (costMet) {
                         cell.build = building;
-                        db.world.cellUpdate(x, y, userData.security, cell.build, 1);
-                        io.emit('cell', x, y, userData.username, userData.color, cell.build, 1);
+                        cell.level = 1;
+                        db.world.cellUpdate(x, y, userData.security, cell.build, cell.level);
+                        io.emit('cell', x, y, userData.username, userData.color, cell.build, cell.level);
 
                         let newMaterials = {};
                         Object.keys(cost).forEach((key) => {
