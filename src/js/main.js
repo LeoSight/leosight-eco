@@ -110,9 +110,10 @@ $(function () {
         window.location.href = $(this).val() + ':3005';
     });
 
-    socket.on('disconnect', function() {
+    socket.on('disconnect', function(reason) {
         $('#ping').html('Spojení ztraceno!');
         AddChatMessage(null, 'Spojení se serverem bylo ztraceno!', '#e1423e');
+        console.log('❗❗ ' + reason);
         logged = false;
     });
 
