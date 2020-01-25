@@ -49,6 +49,7 @@
                 </header>
                 <main class="modal__content" id="modal-menu-content">
                     <button class="modal__btn" onClick="MicroModal.close('modal-menu'); MicroModal.show('modal-trade'); $('#modal-menu').fadeOut(1);">Veřejný trh</button>
+                    <button class="modal__btn" onClick="MicroModal.close('modal-menu'); MicroModal.show('modal-help'); $('#modal-menu').fadeOut(1);">Nápověda</button>
                     <button class="modal__btn" onClick="MicroModal.close('modal-menu'); MicroModal.show('modal-color'); $('#modal-menu').fadeOut(1);">Změnit barvu</button>
                 </main>
                 <footer class="modal__footer">
@@ -68,6 +69,23 @@
                 </header>
                 <main class="modal__content" id="modal-trade-content">
 
+                </main>
+                <footer class="modal__footer">
+                    <button class="modal__btn modal__btn-primary" data-micromodal-close aria-label="Zavřít">Zavřít</button>
+                </footer>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal micromodal-slide" id="modal-help" aria-hidden="true">
+        <div class="modal__overlay" tabindex="-1" data-micromodal-close>
+            <div class="modal__container" role="dialog" aria-modal="true" aria-labelledby="modal-menu-title">
+                <header class="modal__header">
+                    <h2 class="modal__title" id="modal-help-title">Nápověda</h2>
+                    <button class="modal__close" aria-label="Zavřít menu" data-micromodal-close></button>
+                </header>
+                <main class="modal__content" id="modal-help-content">
+                    <button class="modal__btn" onClick="window.open('https://github.com/LeoSight/leosight-eco/wiki/Tov%C3%A1rna'); MicroModal.close('modal-help'); $('#modal-help').fadeOut(1);">Továrna</button>
                 </main>
                 <footer class="modal__footer">
                     <button class="modal__btn modal__btn-primary" data-micromodal-close aria-label="Zavřít">Zavřít</button>
