@@ -307,7 +307,7 @@ $(function () {
                                             }
                                         },
                                         buildMilitary: {
-                                            name: `Vojenská základnu (⚡10+${Resource('gold')}1000+${Resource('stone')}1000+${Resource('iron')}1000+${Resource('bauxite')}1000)`, isHtmlName: true, callback: () => Build(x, y, builds.MILITARY), disabled: function () {
+                                            name: `Vojenská základna (⚡10+${Resource('gold')}1000+${Resource('stone')}1000+${Resource('iron')}1000+${Resource('bauxite')}1000)`, isHtmlName: true, callback: () => Build(x, y, builds.MILITARY), disabled: function () {
                                                 return !(info.energy >= 10 && info.gold >= 1000 && info.stone >= 1000 && info.iron >= 1000 && info.bauxite >= 1000 && CheckAdjacentOwnAll(x, y));
                                             }
                                         }
@@ -619,8 +619,8 @@ $(function () {
         }
 
         if(build){
-            if(level && level > 1){
-                return `url('../images/builds/${build}_${level}.png') center center, ${color}`;
+            if(level && level > 1 && build !== builds.WAREHOUSE){
+                return `url('../images/builds/${build}_${level}.png') center center, ${color}`; // fix
             }else {
                 return `url('../images/builds/${build}.png') center center, ${color}`;
             }
