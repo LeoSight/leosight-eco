@@ -176,6 +176,10 @@ io.on('connection', function(socket){
                                             socket.emit('chat', null, `Armáda z "${oldOwner.country || 'Bez názvu'}" odrazila tvůj útok! Odhadovaná palebná převaha nepřítele je v řádech ${estimate} munice.`, '#e1423e');
                                             return;
                                         }
+
+                                        if(oldOwner.socket){ // Zatím duplicitní, ale je potřeba opravit bug s odčítáním na klientu
+                                            oldOwner.socket.emit('info', { ammo: oldOwner.ammo });
+                                        }
                                     }
 
                                     if(cell.build === builds.FORT){
