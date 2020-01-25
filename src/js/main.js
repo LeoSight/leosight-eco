@@ -693,7 +693,7 @@ $(function () {
         let res = $('#resources').text('');
         Object.keys(info).forEach((key) => {
             if (key.toUpperCase() in resources) {
-                $('<p>').html(`${info[key+'Spending'] ? '('+(-info[key+'Spending'])+') ' : ''}${info[key]}${info[key+'Max'] ? ' / '+(info[key+'Max']) : ''} ${Resource(key)}`).appendTo(res);
+                $('<p>').html(`${info[key+'Spending'] ? '('+(-info[key+'Spending'])+') ' : ''}<span${(info[key+'Max'] && info[key+'Max'] <= info[key]) ? ' class="full"' : ''}>${info[key]}</span>${info[key+'Max'] ? ' / '+(info[key+'Max']) : ''} ${Resource(key)}`).appendTo(res);
             }
         });
 

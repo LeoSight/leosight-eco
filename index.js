@@ -7,7 +7,7 @@ const http = (process.env.HTTPS === 'true' ?
         key: fs.readFileSync(process.env.SSL_KEY),
         cert: fs.readFileSync(process.env.SSL_CERT)
     }, app) : require('http').createServer(app));
-const io = require('socket.io')(http, { pingTimeout: 5000, pingInterval: 10000 });
+const io = require('socket.io')(http, { pingTimeout: 60000, pingInterval: 25000 });
 const mongo = require('mongodb').MongoClient;
 const database = process.env.DB_URL;
 const mgOpts = { "useUnifiedTopology": true };
