@@ -39,7 +39,7 @@ const master = require(__dirname + '/master.js');
 const global = require(__dirname + '/global.js');
 const chat = require(__dirname + '/chat.js')(io, db);
 require(__dirname + '/commands.js')(io, db, discord);
-require(__dirname + '/events.js')(db, master);
+require(__dirname + '/events.js')(io, db, master);
 
 const serverName = process.env.SERVERNAME;
 const version = utils.version;
@@ -238,6 +238,22 @@ io.on('connection', function(socket){
                                     }else if(cell.build === builds.WAREHOUSE){
                                         cell.owner = userData.security; // Musíme přepsat již nyní, aby se správně propočetla nová maxima skladu
                                         utils.updatePlayerMaxResources(oldOwner);
+
+                                        if(oldOwner[cell.type+'Max'] && oldOwner[cell.type+'Max'] < oldOwner[cell.type]){
+                                            let gain = Math.min(10000 * cell.level, oldOwner[cell.type] - oldOwner[cell.type+'Max']);
+                                            if(gain && gain > 0) {
+                                                oldOwner[cell.type] = Math.max(0, (oldOwner[cell.type] || 0) - gain);
+                                                userData[cell.type] = (userData[cell.type] || 0) + gain;
+
+                                                socket.emit('info', {[cell.type]: userData[cell.type]});
+                                                socket.emit('chat', null, `Ukořistil jsi ${gain}x [RES:${cell.type.toUpperCase()}]!`, '#44cee8', true);
+
+                                                if (oldOwner.socket) {
+                                                    oldOwner.socket.emit('info', {[cell.type]: oldOwner[cell.type]});
+                                                    oldOwner.socket.emit('chat', null, `[#${index}] ${userData.username} dobyl tvůj sklad a ukradl ti ${gain}x [RES:${cell.type.toUpperCase()}]!`, '#44cee8', true);
+                                                }
+                                            }
+                                        }
                                     }
 
                                     if(oldOwner.socket) {
@@ -269,6 +285,11 @@ io.on('connection', function(socket){
                         userData.cells += 1;
 
                         socket.emit('info', { energy: userData.energy, cells: userData.cells, ammo: userData.ammo });
+
+                        if(cell.type) {
+                            db.world.update(x, y, 'type', cell.type);
+                            io.emit('cell-data', x, y, 'type', cell.type);
+                        }
 
                         if(cell.build === builds.WAREHOUSE){
                             utils.updatePlayerMaxResources(userData);
@@ -323,6 +344,11 @@ io.on('connection', function(socket){
 
                         socket.emit('info', { energy: userData.energy, cells: userData.cells });
 
+                        if(cell.type) {
+                            db.world.update(x, y, 'type', cell.type);
+                            io.emit('cell-data', x, y, 'type', cell.type);
+                        }
+
                         if(cell.build === builds.WAREHOUSE){
                             utils.updatePlayerMaxResources(userData);
                         }
@@ -347,9 +373,13 @@ io.on('connection', function(socket){
                         if (!utils.checkAdjacentOwnAll(x, y, userData.security)) return; // Musí vlastnit všechna přilehlá pole
                         cost = {energy: 10, gold: 1000, stone: 1000, iron: 1000, bauxite: 1000}
                     } else if (building === builds.FIELD) {
-                        cost = {energy: 5, stone: 50}
+                        cost = {energy: 5, wood: 10}
                     } else if (building === builds.WAREHOUSE) {
                         cost = {energy: 10, iron: 800, aluminium: 500}
+                    } else if (building === builds.FOREST) {
+                        cost = {energy: 10}
+                    } else if (building === builds.MINT){
+                        cost = {energy: 10, gold: 2000, iron: 500, aluminium: 500}
                     } else {
                         return;
                     }
@@ -431,6 +461,11 @@ io.on('connection', function(socket){
 
                             socket.emit('info', newMaterials);
 
+                            if(cell.type) {
+                                db.world.update(x, y, 'type', cell.type);
+                                io.emit('cell-data', x, y, 'type', cell.type);
+                            }
+
                             if(cell.build === builds.WAREHOUSE) {
                                 utils.updatePlayerMaxResources(userData);
                             }
@@ -448,7 +483,7 @@ io.on('connection', function(socket){
                 if (userData.energy >= 1) {
                     userData.cells = utils.countPlayerCells(userData.security);
                     let cell = global.world.find(d => d.x === x && d.y === y);
-                    if(cell && cell.owner === userData.security && ([builds.FORT, builds.FACTORY, builds.MILITARY, builds.FIELD, builds.WAREHOUSE].includes(cell.build) || (cell.build === builds.HQ && userData.cells <= 1))){
+                    if(cell && cell.owner === userData.security && ([builds.FORT, builds.FACTORY, builds.MILITARY, builds.FIELD, builds.WAREHOUSE, builds.FOREST].includes(cell.build) || (cell.build === builds.HQ && userData.cells <= 1))){
                         let oldBuild = cell.build;
                         if(cell.build === builds.HQ){
                             cell.owner = null;
@@ -469,6 +504,12 @@ io.on('connection', function(socket){
 
                             socket.emit('info', {energy: userData.energy, cells: userData.cells});
                         }else{
+                            if(cell.build === builds.FOREST && cell.level === 5){
+                                userData.wood = (userData.wood || 0) + 20;
+                                db.users.update(userData.security, 'wood', userData.wood);
+                                socket.emit('info', {wood: userData.wood});
+                            }
+
                             cell.build = null;
                             db.world.cellUpdate(x, y, userData.security, null, null);
                             io.emit('cell', x, y, userData.username, userData.color, null, null);
@@ -493,7 +534,7 @@ io.on('connection', function(socket){
             if (userData && userData.energy) {
                 if (userData.energy >= 1) {
                     let cell = global.world.find(d => d.x === x && d.y === y);
-                    if(cell && cell.owner === userData.security && cell.build === builds.FACTORY){
+                    if(cell && cell.owner === userData.security && [builds.FACTORY, builds.MINT].includes(cell.build)){
                         let working = cell.working || false;
                         working = !working;
                         cell.working = working;
@@ -516,7 +557,7 @@ io.on('connection', function(socket){
                     if(cell && cell.owner === userData.security && cell.build){
                         type = type.toLowerCase();
                         let valid = false;
-                        if(cell.build === builds.FACTORY && ['aluminium','gunpowder','ammo'].includes(type)){
+                        if(cell.build === builds.FACTORY && ['aluminium','gunpowder','ammo','coal'].includes(type)){
                             valid = true;
                         }else if(cell.build === builds.WAREHOUSE && Object.keys(resources).includes(type.toUpperCase())){
                             valid = true;

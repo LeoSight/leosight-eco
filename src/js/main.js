@@ -36,6 +36,8 @@ $(function () {
         FIELD: 16,
         WAREHOUSE: 17,
         FOREST: 18,
+        MINT: 19,
+        LABORATORY: 20,
     };
 
     const builds_info = [
@@ -56,8 +58,10 @@ $(function () {
         { title: 'Exportní sklad', abbr: 'E' },
         { title: 'Farma', abbr: 'F' },
         { title: 'Pšeničné pole', abbr: '' },
-        { title: 'Sklad', abbr: '-' },
-        { title: 'Les', abbr: '' },
+        { title: 'Sklad', abbr: ',' },
+        { title: 'Les', abbr: '%' },
+        { title: 'Mincovna', abbr: '' },
+        { title: 'Laboratoř', abbr: '' },
     ];
 
     const resources = {
@@ -74,6 +78,7 @@ $(function () {
         STONE: 'Kámen',
         WHEAT: 'Pšenice',
         ALUMINIUM: 'Hliník',
+        WOOD: 'Dřevo',
     };
 
     socket.on('pong', function(ms) {
@@ -318,9 +323,14 @@ $(function () {
                                 items.buildCivil = {
                                     name: 'Civilní stavby',
                                     items: {
+                                        buildForest: {
+                                            name: `Les (⚡10)`, isHtmlName: true, callback: () => Build(x, y, builds.FOREST), disabled: function () {
+                                                return !(info.energy >= 10);
+                                            }
+                                        },
                                         buildField: {
-                                            name: `Pole (⚡5+${Resource('stone')}50)`, isHtmlName: true, callback: () => Build(x, y, builds.FIELD), disabled: function () {
-                                                return !(info.energy >= 5 && info.stone >= 50);
+                                            name: `Pole (⚡5+${Resource('wood')}10)`, isHtmlName: true, callback: () => Build(x, y, builds.FIELD), disabled: function () {
+                                                return !(info.energy >= 5 && info.wood >= 10);
                                             }
                                         },
                                         buildFactory: {
@@ -331,6 +341,11 @@ $(function () {
                                         buildWarehouse: {
                                             name: `Sklad (⚡10+${Resource('iron')}800+${Resource('aluminium')}500)`, isHtmlName: true, callback: () => Build(x, y, builds.WAREHOUSE), disabled: function () {
                                                 return !(info.energy >= 10 && info.iron >= 800 && info.aluminium >= 500);
+                                            }
+                                        },
+                                        buildMint: {
+                                            name: `Mincovna (⚡10+${Resource('gold')}2000+${Resource('iron')}500+${Resource('aluminium')}500)`, isHtmlName: true, callback: () => Build(x, y, builds.MINT), disabled: function () {
+                                                return !(info.energy >= 10 && info.gold >= 2000 && info.iron >= 500 && info.aluminium >= 500);
                                             }
                                         },
                                     }
@@ -410,6 +425,12 @@ $(function () {
                                 name: 'Nastavit výrobu (⚡1)',
                                 disabled: () => { return !(info.energy >= 1); },
                                 items: {
+                                    coal: {
+                                        name: Resource('coal') + ' Dřevěné uhlí',
+                                        isHtmlName: true,
+                                        callback: () => RetypeBuilding(x, y, 'coal'),
+                                        disabled: () => { return !(info.energy >= 1); }
+                                    },
                                     aluminium: {
                                         name: Resource('aluminium') + ' Hliník',
                                         isHtmlName: true,
@@ -442,6 +463,30 @@ $(function () {
                             items.destroy = {
                                 name: "Zničit pole (⚡1)",
                                 callback: DestroyBuilding,
+                                disabled: function () {
+                                    return !(info.energy >= 1);
+                                }
+                            };
+                        }else if(build === builds.FOREST){
+                            items.destroy = {
+                                name: (level === 5 ? "Pokácet stromy (⚡1)" : "Zničit les (⚡1)"),
+                                callback: DestroyBuilding,
+                                disabled: function () {
+                                    return !(info.energy >= 1);
+                                }
+                            };
+                        }else if(build === builds.MINT){
+                            items.destroy = {
+                                name: "Zničit mincovnu (⚡1)",
+                                callback: DestroyBuilding,
+                                disabled: function () {
+                                    return !(info.energy >= 1);
+                                }
+                            };
+
+                            items.switch = {
+                                name: (working ? "Vypnout mincovnu (⚡1)" : "Zapnout mincovnu (⚡1)"),
+                                callback: SwitchFactory,
                                 disabled: function () {
                                     return !(info.energy >= 1);
                                 }
@@ -639,7 +684,7 @@ $(function () {
 
     socket.on('cell', function(x, y, username, color, build, level){
         let cell = $('#map .row').eq(h + y).find('.cell').eq(w + x);
-        level = level || 1
+        level = level || 1;
 
         if(username) {
             cell.data('owner', username).data('build', build).data('level', level).css('background', GenerateBackground(color, build, level));
@@ -652,8 +697,14 @@ $(function () {
         }
 
         if(builds_info[build] && builds_info[build].abbr !== undefined) {
-            if(level && builds_info[build].abbr === '-'){
+            if(level && builds_info[build].abbr === '-') {
                 cell.html(level);
+            }else if(level && builds_info[build].abbr === ',') {
+                cell.css({'justify-content': 'flex-end', 'align-items': 'flex-start'}).html(`<sub style="padding-right:3px;">${level}</sub>`);
+            }else if(level && builds_info[build].abbr === '.'){
+                cell.html(`<sub>${level}</sub>`);
+            }else if(level && builds_info[build].abbr === '%'){
+                cell.html(`<sub style="font-size:9px;padding-top:8px;">${(level-1)*25}%</sub>`);
             }else if(level && level > 1){
                 cell.html(`${builds_info[build].abbr}<sub>${level}</sub>`);
             }else{
@@ -668,16 +719,21 @@ $(function () {
         let cell = $('#map .row').eq(h + y).find('.cell').eq(w + x);
         let build = cell.data('build') || null;
 
-        if(key === 'working' && build === builds.FACTORY){
+        if(key === 'working' && [builds.FACTORY, builds.MINT].includes(build)){
             cell.data('working', value);
+            cell.find('.smoke').remove();
+            cell.append('<span class="smoke"></span>');
+            /*
             if(value){
                 cell.html(builds_info[build].abbr + '<span class="smoke"></span>');
             }else{
                 cell.html(builds_info[build].abbr);
-            }
+            }*/
         }else if(key === 'type' && [builds.FACTORY, builds.WAREHOUSE].includes(build)){
-            value = resources[value.toUpperCase()] ? Resource(value) + ' ' + resources[value.toUpperCase()] : value;
-            cell.data('type', value);
+            let typeText = resources[value.toUpperCase()] ? Resource(value) + ' ' + resources[value.toUpperCase()] : value;
+            cell.data('type', typeText);
+            cell.find('.type').remove();
+            cell.append(`<span class="type" style="background:url('../images/resources/${value}.png');"></span>`);
         }
     });
 

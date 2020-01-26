@@ -78,6 +78,9 @@ function UpdatePlayerCells(security){
         if(cell.owner === security) {
             let owner = global.users.find(x => x.security === security);
             io.emit('cell', cell.x, cell.y, owner.username, owner.color, cell.build, cell.level);
+
+            if(cell.working) io.emit('cell-data', cell.x, cell.y, 'working', cell.working);
+            if(cell.type) io.emit('cell-data', cell.x, cell.y, 'type', cell.type);
         }
     });
 }
