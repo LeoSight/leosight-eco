@@ -453,9 +453,16 @@ io.on('connection', function(socket){
                         if(cell.build === builds.HQ){
                             cell.owner = null;
                             cell.build = null;
+                            if(cell.level) cell.level = null;
 
                             db.world.cellUpdate(x, y, null, null, null);
                             io.emit('cell', x, y, null, null, null, null);
+
+                            if(cell.type) {
+                                cell.type = null;
+                                db.world.update(x, y, 'type', null);
+                                io.emit('cell-data', x, y, 'type', null);
+                            }
 
                             userData.energy -= 1;
                             userData.cells -= 1;

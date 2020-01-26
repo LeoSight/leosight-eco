@@ -26,7 +26,7 @@ function GainResource(build, res, gain){
                 // TODO: V budoucnu upravit na agresivnější styl (ubírání surovin přes limit) - zatím však dejme hráčům možnost se přizpůsobit novým změnám
                 let max = userData[res+'Max'] || 0;
                 if(value > max && value - gain < max) value = max; // Pokud jsme těsně pod limitem, zafixujeme se na něj
-                if(value < max) {
+                if(value <= max) {
 
                     userData[res] = value;
                     db.users.update(userData.security, res, value);
