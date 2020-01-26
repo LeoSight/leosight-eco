@@ -8,6 +8,7 @@ const http = (process.env.HTTPS === 'true' ?
         cert: fs.readFileSync(process.env.SSL_CERT)
     }, app) : require('http').createServer(app));
 const io = require('socket.io')(http, { pingTimeout: 60000, pingInterval: 25000 });
+const Promise = require('bluebird');
 const mongo = require('mongodb').MongoClient;
 const database = process.env.DB_URL;
 const mgOpts = { "useUnifiedTopology": true };
@@ -257,7 +258,7 @@ io.on('connection', function(socket){
                                     }
 
                                     if(oldOwner.socket) {
-                                        oldOwner.cells = utils.countPlayerCells(oldOwner.security);
+                                        oldOwner.cells = utils.countPlayerCells(oldOwner.security) - 1;
                                         oldOwner.socket.emit('info', {cells: oldOwner.cells});
                                     }
                                 }
@@ -622,21 +623,33 @@ function ProcessFight(x, y, userData, targetData){
 
 function SendMap(socket){
     socket.emit('mapload', global.world.length);
-    global.world.forEach(cell => {
-        let owner = global.users.find(x => x.security === cell.owner);
-        if(owner) {
-            socket.emit('cell', cell.x, cell.y, owner.username, (owner.color || '#fff'), cell.build, cell.level);
 
-            if(cell.working){
-                socket.emit('cell-data', cell.x, cell.y, 'working', cell.working);
+    let map = global.world.slice();
+    const sendTile = () => {
+        const cell = map[0];
+        if(cell){
+            let owner = global.users.find(x => x.security === cell.owner);
+            if (owner) {
+                socket.emit('cell', cell.x, cell.y, owner.username, (owner.color || '#fff'), cell.build, cell.level);
+
+                if (cell.working) {
+                    socket.emit('cell-data', cell.x, cell.y, 'working', cell.working);
+                }
+                if (cell.type) {
+                    socket.emit('cell-data', cell.x, cell.y, 'type', cell.type);
+                }
+            } else {
+                socket.emit('cell', cell.x, cell.y, null, null, cell.build);
             }
-            if(cell.type){
-                socket.emit('cell-data', cell.x, cell.y, 'type', cell.type);
-            }
+
+            map.shift();
+            return Promise.delay(5).then(() => sendTile());
         }else{
-            socket.emit('cell', cell.x, cell.y, null, null, cell.build);
+            socket.emit('mapload', 'done');
+            return true;
         }
-    });
+    };
+    sendTile();
 }
 
 function FetchUserData(socket, security){

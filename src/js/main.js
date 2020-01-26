@@ -5,6 +5,8 @@ $(function () {
     const messages = $('#messages');
     let logged = false;
     let menuActive = false;
+    let mapLoaded = false;
+    let loadProgress = 0;
     let latency = 0;
     let info = {
         username: '',
@@ -225,6 +227,7 @@ $(function () {
         move.scrollLeft( map.width() / 2 - move.width() / 2 );
 
         move.oncontextmenu = function(){ return false; };
+        $('#loading').oncontextmenu = function(){ return false; };
 
         /*
         let zoom = 1.0;
@@ -246,6 +249,7 @@ $(function () {
         $.contextMenu({
             selector: ".cell",
             build: function($trigger, e) {
+                if(!mapLoaded) return { items: { warning: { name: 'Mapa se ještě načítá, měj prosím strpení!', disabled: true } } };
                 const x = $trigger.data('x');
                 const y = $trigger.data('y');
                 const owner = $trigger.data('owner');
@@ -691,7 +695,21 @@ $(function () {
     }
 
     socket.on('mapload', function(size){
-        console.log('Načítám svět: ' + size);
+        if(size === 'done') {
+            console.log('Svět načten!');
+            mapLoaded = true;
+            $('#loading').fadeOut(1);
+        }else{
+            console.log('Načítám svět: ' + size);
+            mapLoaded = false;
+            loadProgress = 0;
+            $('#loading').fadeIn(1);
+            $('#loading > span').html(`Načítám svět.. (<strong>0</strong>/${size})`);
+
+            setInterval(function(){
+                $('#loading > span > strong').text(loadProgress);
+            }, 100);
+        }
     });
 
     socket.on('cell', function(x, y, username, color, build, level){
@@ -725,6 +743,8 @@ $(function () {
         }else{
             cell.text('');
         }
+
+        if(!mapLoaded) loadProgress++;
     });
 
     socket.on('cell-data', function(x, y, key, value){
@@ -786,7 +806,7 @@ $(function () {
     // KLÁVESOVÉ ZKRATKY
 
     $(window).keyup(function(e) {
-        if(!logged) return;
+        if(!logged || !mapLoaded) return;
         if (e.which === 27) {
             if($('#modal-menu').is(':hidden')){
                 $('#modal-menu').fadeIn(1);
