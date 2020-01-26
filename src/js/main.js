@@ -1,4 +1,5 @@
 let gfs = [];
+let alertOnOff = 0;
 
 $(function () {
     const socket = io();
@@ -697,6 +698,14 @@ $(function () {
             }
         });
 
+        let energyAlert = new Audio('sounds/energyAlert.mp3');
+            energyAlert.volume = 0.1;
+            if (info.energy === 10) {
+                if (alertOnOff === 1) {
+                    energyAlert.play();
+                }
+            }
+
         // Refresh disabled v kontextovém menu
         let $el = $('.context-menu-root');
         if($el && $el.data()) {
@@ -740,6 +749,17 @@ $(function () {
                 $('#tip').html('');
             }
         }
+
+        if (e.which === 66) {
+            if (alertOnOff === 0) {
+                alertOnOff++
+                $('#tip').html('Energetické upozornění bylo zapnuto').fadeIn(100).delay(2000).fadeOut(100); //Tohle se později bude psát do chatu
+            } else {
+                alertOnOff--
+                $('#tip').html('Energetické upozornění bylo vypnuto').fadeIn(100).delay(2000).fadeOut(100); //Tohle se později bude psát do chatu
+              }
+        }
+
     });
 
 });
