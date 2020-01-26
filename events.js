@@ -62,9 +62,9 @@ function ProcessFactories(){
                     return;
                 }
 
-                if(current.coal >= 1 && cell.type !== 'coal') {
+                if(current.coal >= 1) {
                     newMaterials.coal = current.coal - 1;
-                }else{
+                }else if(cell.type !== 'coal'){
                     return;
                 }
 
