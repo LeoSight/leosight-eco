@@ -113,29 +113,37 @@ function ProcessFactories(){
 }
 
 function GrowTrees(){
-    global.world.filter(x => x.build === builds.FOREST).forEach(cell => {
-        if (cell.level) {
-            cell.level += 1;
+    let forests = global.world.filter(x => x.build === builds.FOREST).slice();
+    const processOne = () => {
+        const cell = forests[0];
+        if (cell) {
+            if (cell.level) {
+                cell.level += 1;
 
-            let userData = global.users.find(x => x.security === cell.owner);
-            if(userData) {
-                if(cell.level > 5){
-                    cell.level = 1;
-                    userData.wood = (userData.wood || 0) + 2;
-                    db.users.update(userData.security, 'wood', userData.wood);
-                    if(userData.socket) {
-                        userData.socket.emit('info', {wood: userData.wood});
+                let userData = global.users.find(x => x.security === cell.owner);
+                if(userData) {
+                    if(cell.level > 5){
+                        cell.level = 1;
+                        userData.wood = (userData.wood || 0) + 2;
+                        db.users.update(userData.security, 'wood', userData.wood);
+                        if(userData.socket) {
+                            userData.socket.emit('info', {wood: userData.wood});
+                        }
                     }
-                }
 
-                db.world.cellUpdate(cell.x, cell.y, userData.security, cell.build, cell.level);
-                io.emit('cell', cell.x, cell.y, userData.username, userData.color, cell.build, cell.level);
-            }else{
-                db.world.cellUpdate(cell.x, cell.y, null, cell.build, cell.level);
-                io.emit('cell', cell.x, cell.y, null, null, cell.build, cell.level);
+                    db.world.cellUpdate(cell.x, cell.y, userData.security, cell.build, cell.level);
+                    io.emit('cell', cell.x, cell.y, userData.username, userData.color, cell.build, cell.level);
+                }else{
+                    db.world.cellUpdate(cell.x, cell.y, null, cell.build, cell.level);
+                    io.emit('cell', cell.x, cell.y, null, null, cell.build, cell.level);
+                }
             }
         }
-    });
+
+        forests.shift();
+        return Promise.delay(200).then(() => processOne());
+    };
+    processOne();
 }
 
 function MakeMoney(){
