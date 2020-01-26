@@ -477,10 +477,10 @@ $(function () {
                             };
 
                             items.cutTrees = {
-                                name: "Pokácet stromy (⚡3)",
+                                name: "Pokácet stromy (⚡2)",
                                 callback: CutTrees,
                                 disabled: function () {
-                                    return !(info.energy >= 3 && level === 5);
+                                    return !(info.energy >= 2 && level === 5);
                                 }
                             };
                         }else if(build === builds.MINT){

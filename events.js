@@ -114,11 +114,20 @@ function ProcessFactories(){
 
 function GrowTrees(){
     global.world.filter(x => x.build === builds.FOREST).forEach(cell => {
-        if (cell.level && cell.level < 5) {
+        if (cell.level) {
             cell.level += 1;
 
             let userData = global.users.find(x => x.security === cell.owner);
             if(userData) {
+                if(cell.level > 5){
+                    cell.level = 1;
+                    userData.wood = (userData.wood || 0) + 2;
+                    db.users.update(userData.security, 'wood', userData.wood);
+                    if(userData.socket) {
+                        userData.socket.emit('info', {wood: userData.wood});
+                    }
+                }
+
                 db.world.cellUpdate(cell.x, cell.y, userData.security, cell.build, cell.level);
                 io.emit('cell', cell.x, cell.y, userData.username, userData.color, cell.build, cell.level);
             }else{

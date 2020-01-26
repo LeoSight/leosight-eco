@@ -578,12 +578,12 @@ io.on('connection', function(socket){
         if (global.players[index] && global.players[index].logged) {
             let userData = global.users.find(x => x.security === global.players[index].security);
             if (userData && userData.energy) {
-                if (userData.energy >= 3) {
+                if (userData.energy >= 2) {
                     let cell = global.world.find(d => d.x === x && d.y === y);
                     if(cell && cell.owner === userData.security && cell.build) {
                         if (cell.build === builds.FOREST && cell.level === 5) {
-                            userData.energy -= 3;
-                            userData.wood = (userData.wood || 0) + 20;
+                            userData.energy -= 2;
+                            userData.wood = (userData.wood || 0) + 10;
 
                             db.users.update(userData.security, 'energy', userData.energy);
                             db.users.update(userData.security, 'wood', userData.wood);
