@@ -62,7 +62,7 @@ function ProcessFactories(){
                     return;
                 }
 
-                if(current.coal >= 1) {
+                if(current.coal >= 1 && cell.type !== 'coal') {
                     newMaterials.coal = current.coal - 1;
                 }else{
                     return;
@@ -72,7 +72,7 @@ function ProcessFactories(){
                     case 'coal':
                         if(current.wood >= 5 && max.coal > current.coal){
                             newMaterials.wood = current.wood - 5;
-                            newMaterials.coal = current.coal + 5;
+                            newMaterials.coal = current.coal + 4;
                         }
                         break;
                     case 'gunpowder':

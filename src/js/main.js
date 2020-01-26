@@ -469,10 +469,18 @@ $(function () {
                             };
                         }else if(build === builds.FOREST){
                             items.destroy = {
-                                name: (level === 5 ? "Pokácet stromy (⚡1)" : "Zničit les (⚡1)"),
+                                name: "Zničit les (⚡1)",
                                 callback: DestroyBuilding,
                                 disabled: function () {
                                     return !(info.energy >= 1);
+                                }
+                            };
+
+                            items.cutTrees = {
+                                name: "Pokácet stromy (⚡3)",
+                                callback: CutTrees,
+                                disabled: function () {
+                                    return !(info.energy >= 3 && level === 5);
                                 }
                             };
                         }else if(build === builds.MINT){
@@ -641,6 +649,10 @@ $(function () {
         socket.emit('retype', x, y, type);
     }
 
+    function CutTrees(){
+        socket.emit('cut', $(this).data('x'), $(this).data('y'));
+    }
+
     gfs.changeColor = function(){
         let color = $('#newColor').val();
         socket.emit('chat', '/color ' + color);
@@ -722,7 +734,9 @@ $(function () {
         if(key === 'working' && [builds.FACTORY, builds.MINT].includes(build)){
             cell.data('working', value);
             cell.find('.smoke').remove();
-            cell.append('<span class="smoke"></span>');
+            if(value) {
+                cell.append('<span class="smoke"></span>');
+            }
             /*
             if(value){
                 cell.html(builds_info[build].abbr + '<span class="smoke"></span>');

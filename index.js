@@ -504,12 +504,6 @@ io.on('connection', function(socket){
 
                             socket.emit('info', {energy: userData.energy, cells: userData.cells});
                         }else{
-                            if(cell.build === builds.FOREST && cell.level === 5){
-                                userData.wood = (userData.wood || 0) + 20;
-                                db.users.update(userData.security, 'wood', userData.wood);
-                                socket.emit('info', {wood: userData.wood});
-                            }
-
                             cell.build = null;
                             db.world.cellUpdate(x, y, userData.security, null, null);
                             io.emit('cell', x, y, userData.username, userData.color, null, null);
@@ -573,6 +567,32 @@ io.on('connection', function(socket){
                             if(cell.build === builds.WAREHOUSE){
                                 utils.updatePlayerMaxResources(userData);
                             }
+                        }
+                    }
+                }
+            }
+        }
+    });
+
+    socket.on('cut', function(x, y){
+        if (global.players[index] && global.players[index].logged) {
+            let userData = global.users.find(x => x.security === global.players[index].security);
+            if (userData && userData.energy) {
+                if (userData.energy >= 3) {
+                    let cell = global.world.find(d => d.x === x && d.y === y);
+                    if(cell && cell.owner === userData.security && cell.build) {
+                        if (cell.build === builds.FOREST && cell.level === 5) {
+                            userData.energy -= 3;
+                            userData.wood = (userData.wood || 0) + 20;
+
+                            db.users.update(userData.security, 'energy', userData.energy);
+                            db.users.update(userData.security, 'wood', userData.wood);
+
+                            socket.emit('info', {energy: userData.energy, wood: userData.wood});
+
+                            cell.level = 1;
+                            db.world.cellUpdate(x, y, cell.owner, cell.build, 1);
+                            io.emit('cell', x, y, userData.username, userData.color, cell.build, 1);
                         }
                     }
                 }
