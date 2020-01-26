@@ -626,7 +626,7 @@ function SendMap(socket){
 
     let map = global.world.slice();
     const sendTile = () => {
-        for(let i = 0; i < 50; i++) {
+        for(let i = 0; i < 5; i++) {
             const cell = map[0];
             if (cell) {
                 let owner = global.users.find(x => x.security === cell.owner);
