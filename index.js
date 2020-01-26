@@ -626,28 +626,31 @@ function SendMap(socket){
 
     let map = global.world.slice();
     const sendTile = () => {
-        const cell = map[0];
-        if(cell){
-            let owner = global.users.find(x => x.security === cell.owner);
-            if (owner) {
-                socket.emit('cell', cell.x, cell.y, owner.username, (owner.color || '#fff'), cell.build, cell.level);
+        for(let i = 0; i < 50; i++) {
+            const cell = map[0];
+            if (cell) {
+                let owner = global.users.find(x => x.security === cell.owner);
+                if (owner) {
+                    socket.emit('cell', cell.x, cell.y, owner.username, (owner.color || '#fff'), cell.build, cell.level);
 
-                if (cell.working) {
-                    socket.emit('cell-data', cell.x, cell.y, 'working', cell.working);
+                    if (cell.working) {
+                        socket.emit('cell-data', cell.x, cell.y, 'working', cell.working);
+                    }
+                    if (cell.type) {
+                        socket.emit('cell-data', cell.x, cell.y, 'type', cell.type);
+                    }
+                } else {
+                    socket.emit('cell', cell.x, cell.y, null, null, cell.build);
                 }
-                if (cell.type) {
-                    socket.emit('cell-data', cell.x, cell.y, 'type', cell.type);
-                }
+
+                map.shift();
             } else {
-                socket.emit('cell', cell.x, cell.y, null, null, cell.build);
+                socket.emit('mapload', 'done');
+                return true;
             }
-
-            map.shift();
-            return Promise.delay(5).then(() => sendTile());
-        }else{
-            socket.emit('mapload', 'done');
-            return true;
         }
+
+        return Promise.delay(10).then(() => sendTile());
     };
     sendTile();
 }
