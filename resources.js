@@ -12,4 +12,5 @@ module.exports = {
     STONE: 'Kámen',
     WHEAT: 'Pšenice',
     ALUMINIUM: 'Hliník',
+    WOOD: 'Dřevo',
 };

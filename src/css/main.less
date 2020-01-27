@@ -96,6 +96,27 @@ html, body, #wrapper{
     }
 }
 
+#loading{
+    position: absolute;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(29, 17, 15, 0.2);
+    z-index: 999;
+    user-select: none;
+
+    span{
+        padding: 1rem;
+        font-size: 1.5rem;
+        color: #fff;
+        text-shadow: 1px 1px 0 #000, -1px 1px 0 #000, 1px -1px 0 #000, -1px -1px 0 #000;
+    }
+}
+
 #chat, #serverinfo, #playerinfo, #players, #selection{
     background: #111;
     color: #fff;
@@ -241,7 +262,7 @@ html, body, #wrapper{
         top: 0;
         background: #202020;
         white-space: nowrap;
-        padding: 15rem;
+        padding: 20rem 30rem;
         transform-origin: 0 0;
         transition: transform .1s ease-in-out;
 
@@ -270,6 +291,14 @@ html, body, #wrapper{
                     right: 8px;
                     height: 20px;
                     background: url('../images/smoke.gif') no-repeat center center/auto 100%;
+                }
+
+                .type{
+                    position: absolute;
+                    right: 0;
+                    bottom: 0;
+                    width: 16px;
+                    height: 16px;
                 }
 
                 &.context-menu-active{
