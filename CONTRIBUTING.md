@@ -29,3 +29,19 @@ git add .revision
 Správce projektu zkontroluje tvůj pull request a udělá tzv. code review. Pokud je všechno v pořádku, přidá tvůj kód do hlavního repositáře (této akci se říká merge).
 
 A s příští aktualizací serveru se tebou vytvořené změny projeví ve hře.
+
+## Jak si aktualizovat vlastní Fork?
+
+1. Klikněte pravým tlačítkem na složku ve které máte nainstalován repositár a v TortoiseGit zvolte **Fetch**
+
+2. V okně **Fetch** nastavte Remote na **upstream** a stiskněte OK
+
+3. Následně klikněte znovu na složku s repositářem a v TortoiseGit zvolte **Merge**
+
+4. V okně **Merge** nastavte Branch na **remotes / upstream / master**
+
+5. Následně klikněte znovu na složku s repositářem a v TortoiseGit zvolte **Push**
+
+6. V okně **Push** a v oblasti Ref nastavte Local a Remote na **master**, v oblasti Destination nastavte Remote na **origin**
+
+7. Zkontrolujte váš Fork a měli byste najít informaci **This branch is even with LeoSight:master**, pokud tuto informaci najdete, znamená to že váš Fork byl úspěšně aktualizován
