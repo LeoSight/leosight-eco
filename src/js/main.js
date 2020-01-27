@@ -40,6 +40,7 @@ $(function () {
         FOREST: 18,
         MINT: 19,
         LABORATORY: 20,
+        ROCK: 21,
     };
 
     const builds_info = [
@@ -64,6 +65,7 @@ $(function () {
         { title: 'Les', abbr: '%' },
         { title: 'Mincovna', abbr: '' },
         { title: 'Laboratoř', abbr: '' },
+        { title: 'Skála', abbr: '' },
     ];
 
     const resources = {
@@ -513,6 +515,15 @@ $(function () {
                                     return !(info.energy >= 1 && (CheckAdjacent(x, y) || (info.cells === 0 && build == null && CanBuildHQ(x, y))));
                                 }
                             };
+                            if(build === builds.ROCK && info.cells > 0) {
+                                items.capture = {
+                                    name: "Obsadit pole (⚡10)",
+                                    callback: CaptureCell,
+                                    disabled: function () {
+                                        return !(info.energy >= 10 && CheckAdjacent(x, y));
+                                    }
+                                };
+                            }
                         }else{
                             if(build === builds.FORT && info.cells > 0) {
                                 items.capture = {
@@ -618,7 +629,7 @@ $(function () {
      * @return {boolean}
      */
     function CanBuildHQ(x, y){
-        return !CheckAdjacentBuilding(x, y, [builds.HQ, builds.GOLD, builds.COAL, builds.OIL, builds.IRON, builds.BAUXITE, builds.LEAD, builds.SULFUR, builds.NITER, builds.STONE]);
+        return !CheckAdjacentBuilding(x, y, [builds.HQ, builds.GOLD, builds.COAL, builds.OIL, builds.IRON, builds.BAUXITE, builds.LEAD, builds.SULFUR, builds.NITER, builds.STONE, builds.ROCK]);
     }
 
     function CaptureCell(){

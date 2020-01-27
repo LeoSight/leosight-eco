@@ -19,4 +19,5 @@ module.exports = {
     FOREST: 18,
     MINT: 19,
     LABORATORY: 20,
+    ROCK: 21,
 };

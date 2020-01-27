@@ -279,6 +279,10 @@ io.on('connection', function(socket){
                             }
                         }
 
+                        if(cell.build === builds.ROCK){ // Musíme odobrať 10 energie tu, keďže hore je podmienka if (cell.owner) a 10 energie by bolo odobraných len keby to niekto vlastnil    
+                            energyCost = 10 
+                        }
+
                         db.world.cellUpdate(x, y, userData.security, cell.build, cell.level);
                         io.emit('cell', x, y, userData.username, userData.color, cell.build, cell.level);
 
