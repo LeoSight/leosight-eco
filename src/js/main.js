@@ -19,7 +19,7 @@ $(function () {
     let myHQ = {};
     let playerData = [];
     
-    console.log('Copak tu hledáš? 🤨');
+    energyAlert.volume = 0.1;
 
     const builds = {
         HQ: 1,
@@ -774,6 +774,10 @@ $(function () {
     });
 
     socket.on('info', function(newInfo){
+        if (buzz && info.energy < 10 && newInfo.energy >= 10) {
+            energyAlert.play();
+        }
+        
         Object.keys(newInfo).forEach((key) => {
             info[key] = newInfo[key];
         });
@@ -788,11 +792,6 @@ $(function () {
                 $('<p>').html(`${info[key+'Spending'] ? '('+(-info[key+'Spending'])+') ' : ''}<span${(info[key+'Max'] && info[key+'Max'] <= info[key]) ? ' class="full"' : ''}>${info[key]}</span>${info[key+'Max'] ? ' / '+(info[key+'Max']) : ''} ${Resource(key)}`).appendTo(res);
             }
         });
-
-        if (buzz && info.energy >= 10) {
-            energyAlert.volume = 0.1;
-            energyAlert.play();
-        }
 
         // Refresh disabled v kontextovém menu
         let $el = $('.context-menu-root');
