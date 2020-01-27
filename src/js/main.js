@@ -843,11 +843,11 @@ $(function () {
         }
 
         if (e.which === 66) {
-            buzz = !buzz
+            buzz = !buzz;
             if (buzz) {
-                $('#tip').html('Energetické upozornění bylo zapnuto').fadeIn(100).delay(2000).fadeOut(100); //Tohle se později bude psát do chatu
+                $('#tip').html('Energetické upozornění bylo zapnuto').fadeIn(100).delay(2000).fadeOut(100);
             } else {
-                $('#tip').html('Energetické upozornění bylo vypnuto').fadeIn(100).delay(2000).fadeOut(100); //Tohle se později bude psát do chatu
+                $('#tip').html('Energetické upozornění bylo vypnuto').fadeIn(100).delay(2000).fadeOut(100);
               }
         }
 
