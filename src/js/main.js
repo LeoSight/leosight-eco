@@ -7,6 +7,7 @@ $(function () {
     let logged = false;
     let menuActive = false;
     let mapLoaded = false;
+    let buzz = false;
     let loadProgress = 0;
     let latency = 0;
     let info = {
@@ -17,7 +18,7 @@ $(function () {
     };
     let myHQ = {};
     let playerData = [];
-    let buzz = false;
+    
     console.log('Copak tu hledáš? 🤨');
 
     const builds = {
@@ -788,11 +789,9 @@ $(function () {
             }
         });
 
-        if (info.energy === 10) {
-            if (buzz === true) {
-                energyAlert.volume = 0.1;
-                energyAlert.play();
-            }
+        if (buzz && info.energy >= 10) {
+            energyAlert.volume = 0.1;
+            energyAlert.play();
         }
 
         // Refresh disabled v kontextovém menu
@@ -840,11 +839,10 @@ $(function () {
         }
 
         if (e.which === 66) {
-            if (buzz === false) {
-                buzz = !buzz
+            buzz = !buzz
+            if (buzz) {
                 $('#tip').html('Energetické upozornění bylo zapnuto').fadeIn(100).delay(2000).fadeOut(100); //Tohle se později bude psát do chatu
             } else {
-                buzz = !buzz
                 $('#tip').html('Energetické upozornění bylo vypnuto').fadeIn(100).delay(2000).fadeOut(100); //Tohle se později bude psát do chatu
               }
         }
