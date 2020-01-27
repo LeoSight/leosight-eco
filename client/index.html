@@ -52,6 +52,7 @@
                     <button class="modal__btn" onClick="MicroModal.close('modal-menu'); MicroModal.show('modal-trade'); $('#modal-menu').fadeOut(1);">Veřejný trh</button>
                     <button class="modal__btn" onClick="MicroModal.close('modal-menu'); MicroModal.show('modal-help'); $('#modal-menu').fadeOut(1);">Nápověda</button>
                     <button class="modal__btn" onClick="MicroModal.close('modal-menu'); MicroModal.show('modal-color'); $('#modal-menu').fadeOut(1);">Změnit barvu</button>
+                    <button class="modal__btn" onClick="MicroModal.close('modal-menu'); MicroModal.show('modal-country'); $('#modal-menu').fadeOut(1);">Změnit název</button>
                 </main>
                 <footer class="modal__footer">
                     <button class="modal__btn modal__btn-primary" onClick="$('#modal-menu').fadeOut(1);" data-micromodal-close aria-label="Zavřít">Pokračovat</button>
@@ -87,6 +88,7 @@
                 </header>
                 <main class="modal__content" id="modal-help-content">
                     <button class="modal__btn" onClick="window.open('https://github.com/LeoSight/leosight-eco/wiki/Tov%C3%A1rna'); MicroModal.close('modal-help'); $('#modal-help').fadeOut(1);">Továrna</button>
+                    <button class="modal__btn" onClick="window.open('https://github.com/LeoSight/leosight-eco/wiki/Suroviny'); MicroModal.close('modal-help'); $('#modal-help').fadeOut(1);">Suroviny</button>
                     <button class="modal__btn" onClick="window.open('https://github.com/LeoSight/leosight-eco/wiki/Pevnost'); MicroModal.close('modal-help'); $('#modal-help').fadeOut(1);">Pevnost</button>
                 </main>
                 <footer class="modal__footer">
@@ -106,6 +108,24 @@
                 <main class="modal__content" id="modal-color-content">
                     <input type="color" id="newColor" value="#fff">
                     <button class="modal__btn" onClick="MicroModal.close('modal-color'); gfs.changeColor(); $('#modal-color').fadeOut(1);">Uložit barvu</button>
+                </main>
+                <footer class="modal__footer">
+                    <button class="modal__btn modal__btn-primary" data-micromodal-close aria-label="Zavřít">Zavřít</button>
+                </footer>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal micromodal-slide" id="modal-country" aria-hidden="true">
+        <div class="modal__overlay" tabindex="-1" data-micromodal-close>
+            <div class="modal__container" role="dialog" aria-modal="true" aria-labelledby="modal-menu-title">
+                <header class="modal__header">
+                    <h2 class="modal__title" id="modal-country-title">Změnit název</h2>
+                    <button class="modal__close" aria-label="Zavřít menu" data-micromodal-close></button>
+                </header>
+                <main class="modal__content" id="modal-country-content">
+                    <input type="country" id="newCountry" value="">
+                    <button class="modal__btn" onClick="MicroModal.close('modal-country'); gfs.changeCountry(); $('#modal-country').fadeOut(1);">Uložit název</button>
                 </main>
                 <footer class="modal__footer">
                     <button class="modal__btn modal__btn-primary" data-micromodal-close aria-label="Zavřít">Zavřít</button>

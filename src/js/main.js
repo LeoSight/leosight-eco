@@ -662,6 +662,11 @@ $(function () {
         socket.emit('chat', '/color ' + color);
     };
 
+    gfs.changeCountry = function(){
+        let country = $('#newCountry').val();
+        socket.emit('chat', '/country ' + country);
+    };
+
     /**
      * @return {string}
      */
