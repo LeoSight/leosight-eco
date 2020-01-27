@@ -100,22 +100,25 @@ module.exports = function(io, db) {
                                     if (amount > 0) {
                                         if (index !== targetIndex) {
 	                                        if (userData[material] && userData[material] >= amount) {
-	                                            let playerValue = userData[material] || 0;
-	                                            playerValue -= amount;
-	                                            userData[material] = playerValue;
-	                                            db.users.update(userData.security, material, playerValue);
-	                                            userData.socket.emit('info', {[material]: playerValue});
+                                                if((targetData[material] || 0) + amount <= targetData[material+'Max']) {
+                                                    let playerValue = userData[material] || 0;
+                                                    playerValue -= amount;
+                                                    userData[material] = playerValue;
+                                                    db.users.update(userData.security, material, playerValue);
+                                                    userData.socket.emit('info', {[material]: playerValue});
 
-	                                            let targetValue = targetData[material] || 0;
-	                                            targetValue += amount;
-	                                            targetData[material] = targetValue;
-	                                            db.users.update(targetData.security, material, targetValue);
-	                                            targetData.socket.emit('info', {[material]: targetValue});
+                                                    let targetValue = targetData[material] || 0;
+                                                    targetValue += amount;
+                                                    targetData[material] = targetValue;
+                                                    db.users.update(targetData.security, material, targetValue);
+                                                    targetData.socket.emit('info', {[material]: targetValue});
 
-	                                            global.players[index].socket.emit('chat', null, `Poslal jsi ${amount}x [RES:${material.toUpperCase()}] hráči [#${targetIndex}] ${target.username}.`, '#44cee8', true);
-	                                            target.socket.emit('chat', null, `[#${index}] ${global.players[index].username} ti poslal ${amount}x [RES:${material.toUpperCase()}].`, '#44cee8', true);
-	                                            console.log(`[SEND] [#${index}] ${global.players[index].username} > [#${targetIndex}] ${target.username}: ${amount}x ${material}`);
-
+                                                    global.players[index].socket.emit('chat', null, `Poslal jsi ${amount}x [RES:${material.toUpperCase()}] hráči [#${targetIndex}] ${target.username}.`, '#44cee8', true);
+                                                    target.socket.emit('chat', null, `[#${index}] ${global.players[index].username} ti poslal ${amount}x [RES:${material.toUpperCase()}].`, '#44cee8', true);
+                                                    console.log(`[SEND] [#${index}] ${global.players[index].username} > [#${targetIndex}] ${target.username}: ${amount}x ${material}`);
+                                                }else{
+                                                    global.players[index].socket.emit('chat', null, `Hráč [#${targetIndex}] ${target.username} nemůže uskladnit tolik materiálu!`, '#e1423e');
+                                                }
 	                                        } else {
 	                                            global.players[index].socket.emit('chat', null, `Nemáš dostatek tohoto materiálu!`, '#e1423e');
 	                                        }
@@ -138,6 +141,33 @@ module.exports = function(io, db) {
                             });
                             global.players[index].socket.emit('chat', null, `SYNTAX: /send [ID] [Materiál] [Počet]<br>Platné názvy materiálů jsou: ${materials.join(', ')}`, '#e8b412', true);
                         }
+                    } else if (cmd === 'destroy') {
+                        if (args[1] && args[1].toUpperCase() in resources && !isNaN(args[2])) {
+                            let amount = parseInt(args[2]);
+                            let material = args[1].toLowerCase();
+                            if (amount > 0) {
+                                if (userData[material] && userData[material] >= amount) {
+                                    let playerValue = userData[material] || 0;
+                                    playerValue -= amount;
+                                    userData[material] = playerValue;
+                                    db.users.update(userData.security, material, playerValue);
+                                    userData.socket.emit('info', {[material]: playerValue});
+
+                                    global.players[index].socket.emit('chat', null, `Zničil jsi ${amount}x [RES:${material.toUpperCase()}]`, '#44cee8', true);
+                                    console.log(`[DESTROY] [#${index}] ${global.players[index].username}: ${amount}x ${material}`);
+                                } else {
+                                    global.players[index].socket.emit('chat', null, `Nemáš dostatek tohoto materiálu!`, '#e1423e');
+                                }
+                            } else {
+                                global.players[index].socket.emit('chat', null, `Počet musí být kladné číslo!`, '#e1423e');
+                            }
+                        } else {
+                            let materials = [];
+                            Object.keys(resources).forEach((key) => {
+                                materials.push(`${key} (${resources[key]})`);
+                            });
+                            global.players[index].socket.emit('chat', null, `SYNTAX: /destroy [Materiál] [Počet]<br>Platné názvy materiálů jsou: ${materials.join(', ')}`, '#e8b412', true);
+                        }
                     } else if (cmd === 'country') {
                         if (args[1]) {
                             args.shift();
@@ -152,7 +182,7 @@ module.exports = function(io, db) {
                     } else if (cmd === 'players') {
                         utils.sendPlayerList();
                     } else if (cmd === 'help') {
-                        global.players[index].socket.emit('chat', null, `Seznam příkazu:<br>/color - Změna barvy<br>/pm /w - Šeptání hráči<br>/pay - Poslat peníze<br>/send - Poslat materiál<br>/country - Nastavit název státu`, '#e8b412', true);
+                        global.players[index].socket.emit('chat', null, `Seznam příkazu:<br>/color - Změna barvy<br>/pm /w - Šeptání hráči<br>/pay - Poslat peníze<br>/send - Poslat materiál<br>/destroy - Zničit materiál<br>/country - Nastavit název státu`, '#e8b412', true);
                     } else {
                         global.players[index].socket.emit('chat', null, `Neznámý příkaz! Seznam příkazů najdeš pod příkazem /help`, '#e1423e');
                     }

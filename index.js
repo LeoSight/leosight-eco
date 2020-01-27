@@ -505,6 +505,14 @@ io.on('connection', function(socket){
 
                             socket.emit('info', {energy: userData.energy, cells: userData.cells});
                         }else{
+                            if(cell.build === builds.WAREHOUSE){
+                                let capacity = 10000 * cell.level;
+                                if(userData[cell.type+'Max'] - capacity < userData[cell.type]){
+                                    socket.emit('chat', null, `Tento sklad nelze zničit, obsahuje ještě ${Math.min(capacity, userData[cell.type] - (userData[cell.type+'Max'] - capacity))}x [RES:${cell.type.toUpperCase()}]`, '#e1423e', true);
+                                    return;
+                                }
+                            }
+
                             cell.build = null;
                             db.world.cellUpdate(x, y, userData.security, null, null);
                             io.emit('cell', x, y, userData.username, userData.color, null, null);
@@ -555,6 +563,11 @@ io.on('connection', function(socket){
                         if(cell.build === builds.FACTORY && ['aluminium','gunpowder','ammo','coal'].includes(type)){
                             valid = true;
                         }else if(cell.build === builds.WAREHOUSE && Object.keys(resources).includes(type.toUpperCase())){
+                            let capacity = 10000 * cell.level;
+                            if(userData[cell.type+'Max'] - capacity < userData[cell.type]){
+                                socket.emit('chat', null, `Nelze změnit typ skladu. Tento sklad obsahuje ještě ${Math.min(capacity, userData[cell.type] - (userData[cell.type+'Max'] - capacity))}x [RES:${cell.type.toUpperCase()}]`, '#e1423e', true);
+                                return;
+                            }
                             valid = true;
                         }
 
