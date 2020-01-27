@@ -653,7 +653,7 @@ function SendMap(socket){
                         socket.emit('cell-data', cell.x, cell.y, 'type', cell.type);
                     }
                 } else {
-                    socket.emit('cell', cell.x, cell.y, null, null, cell.build);
+                    socket.emit('cell', cell.x, cell.y, null, null, cell.build, cell.level);
                 }
 
                 map.shift();
