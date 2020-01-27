@@ -3,9 +3,11 @@ let gfs = [];
 $(function () {
     const socket = io();
     const messages = $('#messages');
+    const energyAlert = new Audio('sounds/energyAlert.mp3');
     let logged = false;
     let menuActive = false;
     let mapLoaded = false;
+    let buzz = false;
     let loadProgress = 0;
     let latency = 0;
     let info = {
@@ -16,8 +18,8 @@ $(function () {
     };
     let myHQ = {};
     let playerData = [];
-
-    console.log('Copak tu hledáš? 🤨');
+    
+    energyAlert.volume = 0.1;
 
     const builds = {
         HQ: 1,
@@ -772,6 +774,10 @@ $(function () {
     });
 
     socket.on('info', function(newInfo){
+        if (buzz && info.energy < 10 && newInfo.energy >= 10) {
+            energyAlert.play();
+        }
+        
         Object.keys(newInfo).forEach((key) => {
             info[key] = newInfo[key];
         });
@@ -830,6 +836,16 @@ $(function () {
                 $('#tip').html('');
             }
         }
+
+        if (e.which === 66) {
+            buzz = !buzz
+            if (buzz) {
+                $('#tip').html('Energetické upozornění bylo zapnuto').fadeIn(100).delay(2000).fadeOut(100); //Tohle se později bude psát do chatu
+            } else {
+                $('#tip').html('Energetické upozornění bylo vypnuto').fadeIn(100).delay(2000).fadeOut(100); //Tohle se později bude psát do chatu
+              }
+        }
+
     });
 
 });
