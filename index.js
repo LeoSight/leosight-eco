@@ -232,7 +232,7 @@ io.on('connection', function(socket){
                                         if(oldOwner.socket){
                                             oldOwner.socket.emit('info', { ammo: oldOwner.ammo });
                                         }
-                                    }else if(cell.build === builds.FACTORY){
+                                    }else if(cell.build === builds.FACTORY || cell.build === builds.MINT){
                                         cell.working = false;
                                         db.world.update(x, y, 'working', false);
                                         io.emit('cell-data', x, y, 'working', false);
@@ -494,12 +494,6 @@ io.on('connection', function(socket){
                             db.world.cellUpdate(x, y, null, null, null);
                             io.emit('cell', x, y, null, null, null, null);
 
-                            if(cell.type) {
-                                cell.type = null;
-                                db.world.update(x, y, 'type', null);
-                                io.emit('cell-data', x, y, 'type', null);
-                            }
-
                             userData.energy -= 1;
                             userData.cells -= 1;
 
@@ -516,6 +510,12 @@ io.on('connection', function(socket){
                             cell.build = null;
                             db.world.cellUpdate(x, y, userData.security, null, null);
                             io.emit('cell', x, y, userData.username, userData.color, null, null);
+
+                            if(cell.type) {
+                                cell.type = null;
+                                db.world.update(x, y, 'type', null);
+                                io.emit('cell-data', x, y, 'type', null);
+                            }
 
                             userData.energy -= 1;
 
