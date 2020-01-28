@@ -24,7 +24,12 @@ img {
 }
 
 a{
-    color: #68e8ed;
+    color: #afcee0;
+    transition: opacity .2s;
+
+    &:hover{
+        opacity: 0.9;
+    }
 }
 
 body{
@@ -50,6 +55,7 @@ html, body, #wrapper{
     z-index: 9999;
 
     form{
+        border-radius: 4px;
         padding: 1rem;
         background: #111;
         color: #fff;
@@ -58,23 +64,37 @@ html, body, #wrapper{
         align-items: center;
 
         input,button{
-            border: 1px solid #333;
-            background: #222;
+            border-radius: .25rem;
+            border-style: none;
+            border-width: 0;
+            background: #292929;
             color: #fff;
             outline: 0;
-            width: 270px;
+            width: 300px;
+            line-height: 1.5;
             padding: .2rem .4rem;
             font-size: 1.1rem;
             margin: .2rem 0;
+
+            transition: opacity .2s;
+
+            &:hover{
+                opacity: 0.9;
+
+            }
         }
 
         button{
-            border: 1px solid #712819;
+            cursor: pointer;
             margin-bottom: .5rem;
+            background: #172840;
         }
 
         .title{
+            font-weight: 600;
             font-size: 1.25rem;
+            line-height: 1.25;
+            color: #e6f7f9;
             margin-bottom: .5rem;
         }
     }
@@ -85,14 +105,23 @@ html, body, #wrapper{
     }
 
     #serverlist{
-        border: 1px solid #333;
+        cursor: pointer;
+        border-radius: .25rem;
+        border-style: none;
+        border-width: 0;
         background: #222;
         color: #fff;
         outline: 0;
-        width: 270px;
+        width: 300px;
         padding: .2rem .4rem;
         font-size: 1.1rem;
         margin: .2rem 0;
+
+        transition: opacity .2s;
+
+        &:hover{
+            opacity: 0.9;
+        }
     }
 }
 
