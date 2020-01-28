@@ -710,6 +710,10 @@ function LoginCallback(socket, index, username, success, response){
 
         let userData = global.users.find(x => x.security === response);
         if (userData) {
+            if(userData.ban){
+                socket.emit('kick', 'Jsi zabanován!');
+                return;
+            }
             socket.emit('chat', null, `Vítej, naposledy jsi se přihlásil ${utils.date(userData.lastlogin)}`, '#44cee8');
             userData.lastlogin = new Date().valueOf();
             userData.socket = socket;

@@ -8,6 +8,7 @@ $(function () {
     let menuActive = false;
     let mapLoaded = false;
     let buzz = false;
+    let lastMessage = "";
     let loadProgress = 0;
     let latency = 0;
     let info = {
@@ -134,6 +135,12 @@ $(function () {
         socket.off();
     });
 
+    socket.on('kick', function(reason) {
+        $('#login').html('<h2>' + (reason ? reason : 'Byl jsi vyhozen ze hry!') + '</h2>').show();
+        socket.disconnect();
+        socket.off();
+    });
+
     socket.on('players', function(playerList) {
         playerData = playerList;
         $('#players').html('<p>Hráči online:</p><ul></ul>');
@@ -190,6 +197,7 @@ $(function () {
     $('#chat form').submit(function(e){
         e.preventDefault();
         if($('#msg').val().length > 0) {
+            lastMessage = $('#msg').val();
             socket.emit('chat', $('#msg').val());
             $('#msg').val('');
             return false;
@@ -669,6 +677,10 @@ $(function () {
         socket.emit('chat', '/country ' + country);
     };
 
+    gfs.nightMode = function(){
+        $('#main').toggleClass('night');
+    };
+
     /**
      * @return {string}
      */
@@ -830,7 +842,11 @@ $(function () {
             }
         }
 
-        if ( $('input:focus').length > 0 ) {  return; } // Není aktivní psaní do chatu
+        if (e.which === 38 && $('#msg:focus').length > 0 ) {
+            $('#msg').val(lastMessage);
+        }
+
+        if ( $('input:focus').length > 0 ) return; // Další zkratky nezaznamenávat při psaní
 
         if (e.which === 32) {
             if($('#chat').is(':visible')) {
@@ -848,7 +864,7 @@ $(function () {
                 $('#tip').html('Energetické upozornění bylo zapnuto').fadeIn(100).delay(2000).fadeOut(100);
             } else {
                 $('#tip').html('Energetické upozornění bylo vypnuto').fadeIn(100).delay(2000).fadeOut(100);
-              }
+            }
         }
 
     });

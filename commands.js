@@ -40,26 +40,93 @@ module.exports = function(io, db, discord) {
                 let y = parseInt(cmd[3]);
 
                 if(buildString && buildString.toUpperCase() in builds && !isNaN(x) && !isNaN(y)){
-                        let build = builds[buildString.toUpperCase()];
-                        let owner, username, color = null;
-                        let cell = global.world.find(d => d.x === x && d.y === y);
-                        if(cell){
-                            cell.build = build;
-                            owner = cell.owner;
-                            let ownerData = global.users.find(x => x.security === owner);
-                            if(ownerData) {
-                                username = ownerData.username;
-                                color = ownerData.color;
-                            }
-                        }else{
-                            global.world.push({ x: x, y: y, owner: null, build: build });
+                    let build = builds[buildString.toUpperCase()];
+                    let owner, username, color = null;
+                    let cell = global.world.find(d => d.x === x && d.y === y);
+                    if(cell){
+                        cell.build = build;
+                        owner = cell.owner;
+                        let ownerData = global.users.find(x => x.security === owner);
+                        if(ownerData) {
+                            username = ownerData.username;
+                            color = ownerData.color;
                         }
+                    }else{
+                        global.world.push({ x: x, y: y, owner: null, build: build });
+                    }
 
-                        db.world.cellUpdate(x, y, owner, build, 1);
-                        io.emit('cell', x, y, username, color, build, 1);
-                        console.log(`Budova "${buildString.toUpperCase()}" postavena na X: ${x}, Y: ${y}`);
+                    db.world.cellUpdate(x, y, owner, build, 1);
+                    io.emit('cell', x, y, username, color, build, 1);
+                    console.log(`Budova "${buildString.toUpperCase()}" postavena na X: ${x}, Y: ${y}`);
                 }else{
                     console.log(`SYNTAX: build [Budova] [X] [Y]\nPlatné názvy budov jsou: ${Object.keys(builds).join(', ')}`);
+                }
+                break;
+            case 'players':
+                Object.keys(global.players).forEach((key) => {
+                    console.log(`[#${key}] ${global.players[key].username}`);
+                });
+                break;
+            case 'kick':
+                if(cmd.length === 1 || isNaN(parseInt(cmd[1]))) {
+                    console.log(`SYNTAX: kick [ID]`);
+                    break;
+                }
+                const kickPlayer = global.players[cmd[1]];
+                if(kickPlayer) {
+                    kickPlayer.socket.emit('kick');
+                    kickPlayer.socket.disconnect();
+                    console.log('[KICK] Hráč [#'+cmd[1]+'] byl vyhozen!');
+                }else{
+                    console.log('[KICK] Hráč s tímto ID nebyl nalezen!');
+                }
+                break;
+            case 'ban':
+                if(cmd.length === 1) {
+                    console.log(`SYNTAX: ban [Jméno]`);
+                    break;
+                }
+                const banPlayer = global.users.find(x => x.username === cmd[1]);
+                if(banPlayer){
+                    banPlayer.ban = true;
+                    db.users.update(banPlayer.security, 'ban', true);
+                    if(banPlayer.socket){
+                        banPlayer.socket.emit('kick', 'Byl jsi zabanován!');
+                        banPlayer.socket.disconnect();
+                    }
+                    console.log('[BAN] Hráč "' + cmd[1] + '" byl zabanován!');
+                }else{
+                    console.log('[BAN] Hráč s tímto jménem nebyl nalezen!');
+                }
+                break;
+            case 'unban':
+                if(cmd.length === 1) {
+                    console.log(`SYNTAX: unban [Jméno]`);
+                    break;
+                }
+                const unbanPlayer = global.users.find(x => x.username === cmd[1]);
+                if(unbanPlayer){
+                    unbanPlayer.ban = undefined;
+                    db.users.update(unbanPlayer.security, 'ban', undefined);
+                    if(unbanPlayer.socket){
+                        unbanPlayer.socket.emit('kick').close();
+                    }
+                    console.log('[UNBAN] Hráč "' + cmd[1] + '" byl odbanován!');
+                }else{
+                    console.log('[UNBAN] Hráč s tímto jménem nebyl nalezen!');
+                }
+                break;
+            case 'mute':
+                if(cmd.length === 1) {
+                    console.log(`SYNTAX: mute [Jméno]`);
+                    break;
+                }
+                const mutePlayer = global.users.find(x => x.username === cmd[1]);
+                if(mutePlayer){
+                    mutePlayer.mute = true;
+                    console.log('[MUTE] Hráč "' + cmd[1] + '" byl ztlumen!');
+                }else{
+                    console.log('[MUTE] Hráč s tímto jménem nebyl nalezen!');
                 }
                 break;
             case 'help':
@@ -68,6 +135,11 @@ module.exports = function(io, db, discord) {
                 console.log('discord - Odeslat zprávu na Discord');
                 console.log('update - Aktualizovat server');
                 console.log('build - Postavit budovu');
+                console.log('players - Seznam aktuálně připojených hráčů');
+                console.log('kick - Vykopnutí hráče ze serveru');
+                console.log('ban - Zabanování hráče');
+                console.log('unban - Zrušení banu');
+                console.log('mute - Zablokování chatu');
                 console.log('exit - Vypnout server');
                 break;
             case 'exit':

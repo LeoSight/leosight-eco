@@ -15,10 +15,14 @@ module.exports = function(io, db) {
                     if (cmd === 'color') {
                         let hex = msg.replace('/color ', '');
                         if (/^#([0-9A-F]{3}){1,2}$/i.test(hex)) {
-                            db.users.update(userData.security, 'color', hex);
-                            userData.color = hex;
-                            utils.sendPlayerList();
-                            utils.updatePlayerCells(userData.security);
+                            if(utils.checkColors(hex)) {
+                                db.users.update(userData.security, 'color', hex);
+                                userData.color = hex;
+                                utils.sendPlayerList();
+                                utils.updatePlayerCells(userData.security);
+                            }else{
+                                global.players[index].socket.emit('chat', null, `Někdo již používá velice podobnou barvu, zvol si prosím jinou.`, '#e1423e');
+                            }
                         } else {
                             global.players[index].socket.emit('chat', null, `SYNTAX: /color [Barva v HEX kódu]`, '#e8b412');
                         }
@@ -187,6 +191,11 @@ module.exports = function(io, db) {
                         global.players[index].socket.emit('chat', null, `Neznámý příkaz! Seznam příkazů najdeš pod příkazem /help`, '#e1423e');
                     }
                 } else {
+                    if(userData.mute){
+                        global.players[index].socket.emit('chat', null, `Jsi ztlumen!`, '#e1423e');
+                        return;
+                    }
+
                     let color = '#fff';
                     if (userData && userData.color) {
                         color = userData.color;

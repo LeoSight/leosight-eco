@@ -24,6 +24,8 @@ module.exports = function(_io) {
         checkAdjacentBuilding: CheckAdjacentBuilding,
         canBuildHQ: CanBuildHQ,
         updatePlayerMaxResources: UpdatePlayerMaxResources,
+        hexColorDelta: HexColorDelta,
+        checkColors: CheckColors,
     }
 };
 
@@ -177,4 +179,42 @@ function CheckAdjacentBuilding(x, y, building){
  */
 function CanBuildHQ(x, y){
     return !CheckAdjacentBuilding(x, y, [builds.HQ, builds.GOLD, builds.COAL, builds.OIL, builds.IRON, builds.BAUXITE, builds.LEAD, builds.SULFUR, builds.NITER, builds.STONE]);
+}
+
+/**
+ * @return {number}
+ */
+function HexColorDelta(hex1, hex2) {
+    hex1 = hex1.replace('#','');
+    hex2 = hex2.replace('#','');
+    if (hex1.length === 3) hex1 = `${hex1}${hex1}`;
+    if (hex2.length === 3) hex2 = `${hex2}${hex2}`;
+    const r1 = parseInt(hex1.substring(0, 2), 16);
+    const g1 = parseInt(hex1.substring(2, 4), 16);
+    const b1 = parseInt(hex1.substring(4, 6), 16);
+    const r2 = parseInt(hex2.substring(0, 2), 16);
+    const g2 = parseInt(hex2.substring(2, 4), 16);
+    const b2 = parseInt(hex2.substring(4, 6), 16);
+    let r = 255 - Math.abs(r1 - r2);
+    let g = 255 - Math.abs(g1 - g2);
+    let b = 255 - Math.abs(b1 - b2);
+    r /= 255;
+    g /= 255;
+    b /= 255;
+    return (r + g + b) / 3;
+}
+
+/**
+ * @return {boolean}
+ */
+function CheckColors(hex){
+    let result = true;
+    global.users.forEach(x => {
+        if(x.color) {
+            if (HexColorDelta(hex, x.color) > 0.92) {
+                result = false;
+            }
+        }
+    });
+    return result;
 }
