@@ -484,7 +484,7 @@ io.on('connection', function(socket){
                 if (userData.energy >= 1) {
                     userData.cells = utils.countPlayerCells(userData.security);
                     let cell = global.world.find(d => d.x === x && d.y === y);
-                    if(cell && cell.owner === userData.security && ([builds.FORT, builds.FACTORY, builds.MILITARY, builds.FIELD, builds.WAREHOUSE, builds.FOREST].includes(cell.build) || (cell.build === builds.HQ && userData.cells <= 1))){
+                    if(cell && cell.owner === userData.security && ([builds.FORT, builds.FACTORY, builds.MILITARY, builds.FIELD, builds.WAREHOUSE, builds.FOREST, builds.MINT].includes(cell.build) || (cell.build === builds.HQ && userData.cells <= 1))){
                         let oldBuild = cell.build;
                         if(cell.build === builds.HQ){
                             cell.owner = null;
