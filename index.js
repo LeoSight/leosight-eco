@@ -336,13 +336,13 @@ io.on('connection', function(socket){
                 if (userData.energy > 0) {
                     let cell = global.world.find(d => d.x === x && d.y === y);
                     if(cell && cell.owner === userData.security && cell.build !== builds.HQ){
-                    	if(cell.build === builds.WAREHOUSE){
-                    		let capacity = 10000 * cell.level;
-                    		if(userData[cell.type+'Max'] - capacity < userData[cell.type]){
-                                socket.emit('chat', null, `Tento sklad nelze odobsadit, obsahuje ještě ${Math.min(capacity, userData[cell.type] - (userData[cell.type+'Max'] - capacity))}x [RES:${cell.type.toUpperCase()}]`, '#e1423e', true);
+                        if(cell.build === builds.WAREHOUSE){
+                            let capacity = 10000 * cell.level;
+                            if(userData[cell.type+'Max'] - capacity < userData[cell.type]){
+                                socket.emit('chat', null, `Nelze zrušit obsazení tohoto skladu, obsahuje ještě ${Math.min(capacity, userData[cell.type] - (userData[cell.type+'Max'] - capacity))}x [RES:${cell.type.toUpperCase()}]`, '#e1423e', true);
                                 return;
                             }
-                    	}
+                        }
 
                         cell.owner = null;
                         db.world.cellUpdate(x, y, null, cell.build, cell.level);
