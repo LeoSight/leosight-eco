@@ -26,6 +26,7 @@ module.exports = function(_io) {
         updatePlayerMaxResources: UpdatePlayerMaxResources,
         hexColorDelta: HexColorDelta,
         checkColors: CheckColors,
+        shortestTradePath: ShortestTradePath,
     }
 };
 
@@ -97,9 +98,10 @@ function GetDistance(x1, y1, x2, y2){
 /**
  * @return {null|Object}
  */
-function NearestBuilding(x, y, build, owner, maxDistance){
+function NearestBuilding(x, y, build, owner, maxDistance, returnDistance){
     let nearest = null;
     maxDistance = maxDistance || 1000;
+    returnDistance = returnDistance || false;
 
     global.world.filter(x => (Array.isArray(build) ? build.includes(x.build) : x.build === build)).forEach(cell => {
         if(!owner || cell.owner === owner){
@@ -111,7 +113,7 @@ function NearestBuilding(x, y, build, owner, maxDistance){
         }
     });
 
-    return nearest;
+    return (returnDistance ? (nearest ? maxDistance : null) : nearest);
 }
 
 function GetAdjacent(x, y){
@@ -217,4 +219,19 @@ function CheckColors(hex){
         }
     });
     return result;
+}
+
+function ShortestTradePath(player1, player2){
+    let distance = 1000;
+
+    global.world.filter(x => [builds.MARKET, builds.EXPORT].includes(x.build)).forEach(cell => {
+        if(cell.owner === player1){
+            const dist = NearestBuilding(cell.x, cell.y, [builds.MARKET, builds.EXPORT], player2, (cell.build === builds.MARKET ? 5 : 1000), true);
+            if(dist && dist < distance){
+                distance = dist;
+            }
+        }
+    });
+
+    return distance < 1000 ? distance : null;
 }

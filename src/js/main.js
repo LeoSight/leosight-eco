@@ -43,6 +43,7 @@ $(function () {
         FOREST: 18,
         MINT: 19,
         LABORATORY: 20,
+        MARKET: 21,
     };
 
     const builds_info = [
@@ -60,13 +61,14 @@ $(function () {
         { title: 'Továrna', abbr: '' },
         { title: 'Vojenská základna', abbr: 'V' },
         { title: 'Kamenolom', abbr: 'K' },
-        { title: 'Exportní sklad', abbr: 'E' },
+        { title: 'Exportní sklad', abbr: '' },
         { title: 'Farma', abbr: 'F' },
-        { title: 'Pšeničné pole', abbr: '' },
+        { title: 'Pšeničné pole' },
         { title: 'Sklad', abbr: ',' },
-        { title: 'Les', abbr: '%' },
+        { title: 'Les' },
         { title: 'Mincovna', abbr: '' },
         { title: 'Laboratoř', abbr: '' },
+        { title: 'Tržiště', abbr: '' },
     ];
 
     const resources = {
@@ -84,6 +86,7 @@ $(function () {
         WHEAT: 'Pšenice',
         ALUMINIUM: 'Hliník',
         WOOD: 'Dřevo',
+        FUEL: 'Nafta',
     };
 
     socket.on('pong', function(ms) {
@@ -352,14 +355,24 @@ $(function () {
                                                 return !(info.energy >= 10 && info.stone >= 100 && info.iron >= 200 && info.bauxite >= 300);
                                             }
                                         },
+                                        buildMint: {
+                                            name: `Mincovna (⚡10+${Resource('gold')}2000+${Resource('iron')}500+${Resource('aluminium')}500)`, isHtmlName: true, callback: () => Build(x, y, builds.MINT), disabled: function () {
+                                                return !(info.energy >= 10 && info.gold >= 2000 && info.iron >= 500 && info.aluminium >= 500);
+                                            }
+                                        },
                                         buildWarehouse: {
                                             name: `Sklad (⚡10+${Resource('iron')}800+${Resource('aluminium')}500)`, isHtmlName: true, callback: () => Build(x, y, builds.WAREHOUSE), disabled: function () {
                                                 return !(info.energy >= 10 && info.iron >= 800 && info.aluminium >= 500);
                                             }
                                         },
-                                        buildMint: {
-                                            name: `Mincovna (⚡10+${Resource('gold')}2000+${Resource('iron')}500+${Resource('aluminium')}500)`, isHtmlName: true, callback: () => Build(x, y, builds.MINT), disabled: function () {
-                                                return !(info.energy >= 10 && info.gold >= 2000 && info.iron >= 500 && info.aluminium >= 500);
+                                        buildExport: {
+                                            name: `Exportní sklad (⚡10+${Resource('iron')}1000+${Resource('aluminium')}5000)`, isHtmlName: true, callback: () => Build(x, y, builds.EXPORT), disabled: function () {
+                                                return !(info.energy >= 10 && info.iron >= 1000 && info.aluminium >= 5000 && CheckAdjacentOwnAll(x, y));
+                                            }
+                                        },
+                                        buildMarket: {
+                                            name: `Tržiště (⚡10+${Resource('wood')}100)`, isHtmlName: true, callback: () => Build(x, y, builds.MARKET), disabled: function () {
+                                                return !(info.energy >= 10 && info.wood >= 100);
                                             }
                                         },
                                     }
@@ -462,6 +475,12 @@ $(function () {
                                         isHtmlName: true,
                                         callback: () => RetypeBuilding(x, y, 'ammo'),
                                         disabled: () => { return !(info.energy >= 1); }
+                                    },
+                                    fuel: {
+                                        name: Resource('fuel') + ' Nafta',
+                                        isHtmlName: true,
+                                        callback: () => RetypeBuilding(x, y, 'fuel'),
+                                        disabled: () => { return !(info.energy >= 1); }
                                     }
                                 }
                             };
@@ -513,6 +532,22 @@ $(function () {
                                     return !(info.energy >= 1);
                                 }
                             };
+                        }else if(build === builds.EXPORT){
+                            items.destroy = {
+                                name: "Zničit exportní sklad (⚡1)",
+                                callback: DestroyBuilding,
+                                disabled: function () {
+                                    return !(info.energy >= 1);
+                                }
+                            }
+                        }else if(build === builds.MARKET){
+                            items.destroy = {
+                                name: "Zničit tržiště (⚡1)",
+                                callback: DestroyBuilding,
+                                disabled: function () {
+                                    return !(info.energy >= 1);
+                                }
+                            }
                         }
                     } else {
                         if(owner == null) {
@@ -735,6 +770,8 @@ $(function () {
         let cell = $('#map .row').eq(h + y).find('.cell').eq(w + x);
         level = level || 1;
 
+        cell.removeAttr('style');
+
         if(username) {
             cell.data('owner', username).data('build', build).data('level', level).css('background', GenerateBackground(color, build, level));
 
@@ -776,12 +813,6 @@ $(function () {
             if(value) {
                 cell.append('<span class="smoke"></span>');
             }
-            /*
-            if(value){
-                cell.html(builds_info[build].abbr + '<span class="smoke"></span>');
-            }else{
-                cell.html(builds_info[build].abbr);
-            }*/
         }else if(key === 'type' && [builds.FACTORY, builds.WAREHOUSE].includes(build)){
             let typeText = resources[value.toUpperCase()] ? Resource(value) + ' ' + resources[value.toUpperCase()] : value;
             cell.data('type', typeText);

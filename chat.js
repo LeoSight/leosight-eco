@@ -104,24 +104,43 @@ module.exports = function(io, db) {
                                     if (amount > 0) {
                                         if (index !== targetIndex) {
 	                                        if (userData[material] && userData[material] >= amount) {
-                                                if((targetData[material] || 0) + amount <= targetData[material+'Max']) {
-                                                    let playerValue = userData[material] || 0;
-                                                    playerValue -= amount;
-                                                    userData[material] = playerValue;
-                                                    db.users.update(userData.security, material, playerValue);
-                                                    userData.socket.emit('info', {[material]: playerValue});
+                                                let distance = utils.shortestTradePath(userData.security, target.security);
+                                                if(distance) {
+                                                    let transportFuel = Math.ceil(amount / 1000 * distance);
+                                                    let currentFuel = userData.fuel || 0;
+                                                    if(distance <= 5 || currentFuel >= transportFuel) {
+                                                        if ((targetData[material] || 0) + amount <= targetData[material + 'Max']) {
+                                                            let playerValue = userData[material] || 0;
+                                                            playerValue -= amount;
+                                                            userData[material] = playerValue;
+                                                            db.users.update(userData.security, material, playerValue);
+                                                            userData.socket.emit('info', {[material]: playerValue});
 
-                                                    let targetValue = targetData[material] || 0;
-                                                    targetValue += amount;
-                                                    targetData[material] = targetValue;
-                                                    db.users.update(targetData.security, material, targetValue);
-                                                    targetData.socket.emit('info', {[material]: targetValue});
+                                                            let targetValue = targetData[material] || 0;
+                                                            targetValue += amount;
+                                                            targetData[material] = targetValue;
+                                                            db.users.update(targetData.security, material, targetValue);
+                                                            targetData.socket.emit('info', {[material]: targetValue});
 
-                                                    global.players[index].socket.emit('chat', null, `Poslal jsi ${amount}x [RES:${material.toUpperCase()}] hráči [#${targetIndex}] ${target.username}.`, '#44cee8', true);
-                                                    target.socket.emit('chat', null, `[#${index}] ${global.players[index].username} ti poslal ${amount}x [RES:${material.toUpperCase()}].`, '#44cee8', true);
-                                                    console.log(`[SEND] [#${index}] ${global.players[index].username} > [#${targetIndex}] ${target.username}: ${amount}x ${material}`);
+                                                            global.players[index].socket.emit('chat', null, `Poslal jsi ${amount}x [RES:${material.toUpperCase()}] hráči [#${targetIndex}] ${target.username}.`, '#44cee8', true);
+                                                            target.socket.emit('chat', null, `[#${index}] ${global.players[index].username} ti poslal ${amount}x [RES:${material.toUpperCase()}].`, '#44cee8', true);
+                                                            console.log(`[SEND] [#${index}] ${global.players[index].username} > [#${targetIndex}] ${target.username}: ${amount}x ${material}`);
+
+                                                            if(distance > 5){
+                                                                userData.fuel = currentFuel - transportFuel;
+                                                                db.users.update(userData.security, 'fuel', userData.fuel);
+                                                                userData.socket.emit('info', {fuel: userData.fuel});
+
+                                                                global.players[index].socket.emit('chat', null, `Přeprava surovin na vzdálenost ${distance} polí tě stála ${transportFuel}x [RES:FUEL]`, '#44cee8', true);
+                                                            }
+                                                        } else {
+                                                            global.players[index].socket.emit('chat', null, `Hráč [#${targetIndex}] ${target.username} nemůže uskladnit tolik materiálu!`, '#e1423e');
+                                                        }
+                                                    }else{
+                                                        global.players[index].socket.emit('chat', null, `Nemáš dostatek paliva! Tento obchod tě budě stát ${transportFuel}x [RES:FUEL]`, '#e1423e', true);
+                                                    }
                                                 }else{
-                                                    global.players[index].socket.emit('chat', null, `Hráč [#${targetIndex}] ${target.username} nemůže uskladnit tolik materiálu!`, '#e1423e');
+                                                    global.players[index].socket.emit('chat', null, `Nemáš s hráčem žádnou možnou obchodní cestu! Vybudujte si blízko sebe tržiště, nebo použijte exportní sklady.`, '#e1423e');
                                                 }
 	                                        } else {
 	                                            global.players[index].socket.emit('chat', null, `Nemáš dostatek tohoto materiálu!`, '#e1423e');

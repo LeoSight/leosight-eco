@@ -13,4 +13,5 @@ module.exports = {
     WHEAT: 'Pšenice',
     ALUMINIUM: 'Hliník',
     WOOD: 'Dřevo',
+    FUEL: 'Nafta',
 };

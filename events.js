@@ -90,6 +90,12 @@ function ProcessFactories(){
                             newMaterials.ammo = current.ammo + 3;
                         }
                         break;
+                    case 'fuel':
+                        if (current.oil >= 3 && max.fuel > current.fuel) {
+                            newMaterials.oil = current.oil - 3;
+                            newMaterials.fuel = current.fuel + 2;
+                        }
+                        break;
                     case 'aluminium':
                     default:
                         if (current.bauxite >= 5 && max.aluminium > current.aluminium){
@@ -123,11 +129,11 @@ function GrowTrees(){
                 let userData = global.users.find(x => x.security === cell.owner);
                 if(userData) {
                     if(cell.level > 5){
-                        if(userData.wood + 2 > userData.woodMax){
+                        if(userData.wood > userData.woodMax){
                             cell.level = 5;
                         }else {
                             cell.level = 1;
-                            userData.wood = (userData.wood || 0) + 2;
+                            userData.wood = (userData.wood || 0) + (userData.wood + 2 > userData.woodMax ? userData.woodMax - userData.wood : 2);
 
                             db.users.update(userData.security, 'wood', userData.wood);
                             if(userData.socket) {
@@ -144,12 +150,57 @@ function GrowTrees(){
                     io.emit('cell', cell.x, cell.y, null, null, cell.build, cell.level);
                 }
             }
-        }
 
-        forests.shift();
-        return Promise.delay(100).then(() => processOne());
+            forests.shift();
+            return Promise.delay(100).then(() => processOne());
+        }
     };
     processOne();
+}
+
+function GrowWheat(){
+    let fields = global.world.filter(x => x.build === builds.FIELD).slice();
+    const processFew = () => {
+        for(let i = 0; i < 5; i++) {
+            const cell = fields[0];
+            if (cell) {
+                if (cell.level) {
+                    cell.level += 1;
+
+                    let userData = global.users.find(x => x.security === cell.owner);
+                    if (userData) {
+                        if (cell.level > 5) {
+                            if (userData.wheat > userData.wheatMax) {
+                                cell.level = 5;
+                            } else {
+                                cell.level = 1;
+                                userData.wheat = (userData.wheat || 0) + (userData.wheat + 5 > userData.wheatMax ? userData.wheatMax - userData.wheat : 5);
+
+                                db.users.update(userData.security, 'wheat', userData.wheat);
+                                if (userData.socket) {
+                                    userData.socket.emit('info', {wheat: userData.wheat});
+                                }
+                            }
+                        }
+
+                        db.world.cellUpdate(cell.x, cell.y, userData.security, cell.build, cell.level);
+                        io.emit('cell', cell.x, cell.y, userData.username, userData.color, cell.build, cell.level);
+                    } else {
+                        if (cell.level >= 5) cell.level = 5;
+                        db.world.cellUpdate(cell.x, cell.y, null, cell.build, cell.level);
+                        io.emit('cell', cell.x, cell.y, null, null, cell.build, cell.level);
+                    }
+                }
+
+                fields.shift();
+            }else{
+                return true;
+            }
+        }
+
+        return Promise.delay(300).then(() => processFew());
+    };
+    processFew();
 }
 
 function MakeMoney(){
@@ -210,8 +261,8 @@ function Periodic15s(){
 }
 
 function Periodic60s(){
-    GainResource(builds.FIELD, 'wheat', 1);
     GrowTrees();
+    Promise.delay(20000).then(GrowWheat);
 
     global.users.forEach(userData => {
         if(!userData.ammo) userData.ammo = 0;

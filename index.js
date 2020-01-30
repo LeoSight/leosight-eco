@@ -385,6 +385,11 @@ io.on('connection', function(socket){
                         cost = {energy: 5, wood: 10}
                     } else if (building === builds.WAREHOUSE) {
                         cost = {energy: 10, iron: 800, aluminium: 500}
+                    } else if (building === builds.EXPORT) {
+                        if (!utils.checkAdjacentOwnAll(x, y, userData.security)) return; // Musí vlastnit všechna přilehlá pole
+                        cost = {energy: 10, iron: 1000, aluminium: 5000}
+                    } else if (building === builds.MARKET) {
+                        cost = {energy: 10, wood: 100}
                     } else if (building === builds.FOREST) {
                         cost = {energy: 10}
                     } else if (building === builds.MINT){
@@ -417,6 +422,11 @@ io.on('connection', function(socket){
 
                         // CBs/kontroly po výstavbě
                         if(building === builds.WAREHOUSE){
+                            if(cell.type){
+                                cell.type = null;
+                                db.world.update(x, y, 'type', null);
+                                io.emit('cell-data', x, y, 'type', null);
+                            }
                             utils.updatePlayerMaxResources(userData);
                         }else if(building === builds.FACTORY){
                             let type = 'aluminium';
@@ -492,7 +502,7 @@ io.on('connection', function(socket){
                 if (userData.energy >= 1) {
                     userData.cells = utils.countPlayerCells(userData.security);
                     let cell = global.world.find(d => d.x === x && d.y === y);
-                    if(cell && cell.owner === userData.security && ([builds.FORT, builds.FACTORY, builds.MILITARY, builds.FIELD, builds.WAREHOUSE, builds.FOREST, builds.MINT].includes(cell.build) || (cell.build === builds.HQ && userData.cells <= 1))){
+                    if(cell && cell.owner === userData.security && ([builds.FORT, builds.FACTORY, builds.MILITARY, builds.FIELD, builds.WAREHOUSE, builds.FOREST, builds.MINT, builds.EXPORT, builds.MARKET].includes(cell.build) || (cell.build === builds.HQ && userData.cells <= 1))){
                         let oldBuild = cell.build;
                         if(cell.build === builds.HQ){
                             cell.owner = null;
@@ -568,7 +578,7 @@ io.on('connection', function(socket){
                     if(cell && cell.owner === userData.security && cell.build){
                         type = type.toLowerCase();
                         let valid = false;
-                        if(cell.build === builds.FACTORY && ['aluminium','gunpowder','ammo','coal'].includes(type)){
+                        if(cell.build === builds.FACTORY && ['aluminium','gunpowder','ammo','coal','fuel'].includes(type)){
                             valid = true;
                         }else if(cell.build === builds.WAREHOUSE && Object.keys(resources).includes(type.toUpperCase())){
                             let capacity = 10000 * cell.level;
@@ -647,7 +657,7 @@ function SendMap(socket){
 
     let map = global.world.slice();
     const sendTile = () => {
-        for(let i = 0; i < 5; i++) {
+        for(let i = 0; i < 7; i++) {
             const cell = map[0];
             if (cell) {
                 let owner = global.users.find(x => x.security === cell.owner);
