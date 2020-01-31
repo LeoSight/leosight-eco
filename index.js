@@ -68,6 +68,10 @@ console.log('Načítám svět..');
 
 db.world.loadWorld((result) => {
     global.world = result;
+
+    global.users.forEach(userData => {
+        utils.updatePlayerMaxResources(userData);
+    });
 });
 
 market.init();

@@ -44,8 +44,8 @@ module.exports = function(_db) {
                                     let targetGainMaterial = targetData[sell] || 0;
                                     if (playerValue >= sendAmount) {
                                         if (targetValue >= amount) {
-                                            let playerMax = userData[buy+'Max'] || 0;
-                                            let targetMax = targetData[sell+'Max'] || 0;
+                                            let playerMax = userData[buy+'Max'] || 5000;
+                                            let targetMax = targetData[sell+'Max'] || 5000;
                                             if(playerGainMaterial + amount <= playerMax || buy === 'money'){
                                                 if(targetGainMaterial + sendAmount <= targetMax || sell === 'money'){
                                                     userData.fuel = currentFuel - transportFuel;
