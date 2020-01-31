@@ -207,7 +207,7 @@ module.exports = function(io, db, market) {
                     } else if (cmd === 'offer') { // /offer [Nabízím] [Poptávám] [1:X] [Maximum]
                         if (args[1] && (args[1].toUpperCase() in resources || args[1].toUpperCase() === "MONEY") && args[2] && (args[2].toUpperCase() in resources || args[2].toUpperCase() === "MONEY") && !isNaN(args[3]) && !isNaN(args[4])) {
                             if(args[1].toUpperCase() !== args[2].toUpperCase()) {
-                                if (market.updateOffer(userData.security, args[1], args[2], parseFloat(args[3]), parseInt(args[4]), 0)) {
+                                if (market.updateOffer(userData.security, args[1].toLowerCase(), args[2].toLowerCase(), parseFloat(args[3]), parseInt(args[4]), 0)) {
                                     global.players[index].socket.emit('chat', null, `Nabídka úspěšně přidána na veřejný trh.`, '#44cee8');
                                 } else {
                                     global.players[index].socket.emit('chat', null, `Nabídku se nepodařilo přidat na veřejný trh!`, '#e1423e');
@@ -232,12 +232,12 @@ module.exports = function(io, db, market) {
                                 }
                             }
 
-                            list += `<br>[RES:${d.sell.toUpperCase()}] 1 : <strong>${d.ratio}</strong> [RES:${d.buy.toUpperCase()}] | ${d.username} (/buy ${d.username} [Počet] ${d.sell} ${d.buy})`;
+                            list += `<br>[RES:${d.sell.toUpperCase()}] 1 : <strong>${d.ratio}</strong> [RES:${d.buy.toUpperCase()}] | ${d.username} | Max: ${d.max - d.sold} (/buy ${d.username} [Počet] ${d.sell} ${d.buy})`;
                         });
                         global.players[index].socket.emit('chat', null, list, '#d8e871', true);
                     } else if (cmd === 'deloffer') { // /deloffer [Nabídka] [Poptávka]
                         if (args[1] && (args[1].toUpperCase() in resources || args[1].toUpperCase() === "MONEY") && args[2] && (args[2].toUpperCase() in resources || args[2].toUpperCase() === "MONEY")) {
-                            if (market.deleteOffer(userData.security, args[1], args[2])) {
+                            if (market.deleteOffer(userData.security, args[1].toLowerCase(), args[2].toLowerCase())) {
                                 global.players[index].socket.emit('chat', null, `Nabídka úspěšně stažena z veřejného trhu.`, '#44cee8');
                             } else {
                                 global.players[index].socket.emit('chat', null, `Taková nabídka nebyla na veřejném trhu nalezena!`, '#e1423e');
