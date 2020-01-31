@@ -2,7 +2,7 @@ const global = require(__dirname + '/global.js');
 const utils = require(__dirname + '/utils.js')();
 const resources = require(__dirname + '/resources.js');
 
-module.exports = function(io, db) {
+module.exports = function(io, db, market) {
     return {
         process: (msg, index) => {
             if (global.players[index] && global.players[index].logged && msg.length <= 255) {
@@ -204,8 +204,67 @@ module.exports = function(io, db) {
                         }
                     } else if (cmd === 'players') {
                         utils.sendPlayerList();
+                    } else if (cmd === 'offer') { // /offer [Nabízím] [Poptávám] [1:X] [Maximum]
+                        if (args[1] && (args[1].toUpperCase() in resources || args[1].toUpperCase() === "MONEY") && args[2] && (args[2].toUpperCase() in resources || args[2].toUpperCase() === "MONEY") && !isNaN(args[3]) && !isNaN(args[4])) {
+                            if(args[1].toUpperCase() !== args[2].toUpperCase()) {
+                                if (market.updateOffer(userData.security, args[1], args[2], parseFloat(args[3]), parseInt(args[4]), 0)) {
+                                    global.players[index].socket.emit('chat', null, `Nabídka úspěšně přidána na veřejný trh.`, '#44cee8');
+                                } else {
+                                    global.players[index].socket.emit('chat', null, `Nabídku se nepodařilo přidat na veřejný trh!`, '#e1423e');
+                                }
+                            }else{
+                                global.players[index].socket.emit('chat', null, `Nemůžeš nabízet i poptávat stejnou surovinu!`, '#e1423e');
+                            }
+                        } else {
+                            let materials = [];
+                            Object.keys(resources).forEach((key) => {
+                                materials.push(`${key} (${resources[key]})`);
+                            });
+                            global.players[index].socket.emit('chat', null, `SYNTAX: /offer [Nabízím] [Poptávám] [Poměr] [Maximum]<br>Do polí nabídky a poptávky vypiš názvy materiálů, do poměru napiš číslo reprezentující násobek poptávaného materiálu vůči 1 kusu nabízeného materiálu, do maxima pak celkové maximum, které chceš pro obchod vymezit.<br>Platné názvy materiálů jsou: ${materials.join(', ')}`, '#e8b412', true);
+                        }
+                    } else if (cmd === 'offers') {
+                        let list = "Platné obchodní nabídky:";
+                        market.getData().forEach(d => {
+                            if(!d.username) {
+                                const sellerData = global.users.find(e => e.security === d.user);
+                                if (sellerData) {
+                                    d.username = sellerData.username;
+                                }
+                            }
+
+                            list += `<br>[RES:${d.sell.toUpperCase()}] 1 : <strong>${d.ratio}</strong> [RES:${d.buy.toUpperCase()}] | ${d.username} (/buy ${d.username} [Počet] ${d.sell} ${d.buy})`;
+                        });
+                        global.players[index].socket.emit('chat', null, list, '#d8e871', true);
+                    } else if (cmd === 'deloffer') { // /deloffer [Nabídka] [Poptávka]
+                        if (args[1] && (args[1].toUpperCase() in resources || args[1].toUpperCase() === "MONEY") && args[2] && (args[2].toUpperCase() in resources || args[2].toUpperCase() === "MONEY")) {
+                            if (market.deleteOffer(userData.security, args[1], args[2])) {
+                                global.players[index].socket.emit('chat', null, `Nabídka úspěšně stažena z veřejného trhu.`, '#44cee8');
+                            } else {
+                                global.players[index].socket.emit('chat', null, `Taková nabídka nebyla na veřejném trhu nalezena!`, '#e1423e');
+                            }
+                        } else {
+                            let materials = [];
+                            Object.keys(resources).forEach((key) => {
+                                materials.push(`${key} (${resources[key]})`);
+                            });
+                            global.players[index].socket.emit('chat', null, `SYNTAX: /deloffer [Nabídka] [Poptávka]<br>Platné názvy materiálů jsou: ${materials.join(', ')}`, '#e8b412', true);
+                        }
+                    } else if (cmd === 'buy') { // /buy [Hráč] [Poptávaný počet] [Poptávka] [Nabídka]
+                        if (args[1] && args[2] && !isNaN(args[2]) && args[3] && (args[3].toUpperCase() in resources || args[3].toUpperCase() === "MONEY") && args[4] && (args[4].toUpperCase() in resources || args[4].toUpperCase() === "MONEY")) {
+                            if(args[1] !== userData.username) {
+                                market.acceptOffer(userData, args[1], args[3].toLowerCase(), args[4].toLowerCase(), parseInt(args[2]));
+                            }else{
+                                global.players[index].socket.emit('chat', null, `Nemůžeš uzavřít obchod sám se sebou!`, '#e1423e');
+                            }
+                        } else {
+                            let materials = [];
+                            Object.keys(resources).forEach((key) => {
+                                materials.push(`${key} (${resources[key]})`);
+                            });
+                            global.players[index].socket.emit('chat', null, `SYNTAX: /buy [Hráč] [Poptávaný počet] [Poptávka] [Nabídka]<br>Platné názvy materiálů jsou: ${materials.join(', ')}`, '#e8b412', true);
+                        }
                     } else if (cmd === 'help') {
-                        global.players[index].socket.emit('chat', null, `Seznam příkazu:<br>/color - Změna barvy<br>/pm /w - Šeptání hráči<br>/pay - Poslat peníze<br>/send - Poslat materiál<br>/destroy - Zničit materiál<br>/country - Nastavit název státu`, '#e8b412', true);
+                        global.players[index].socket.emit('chat', null, `Seznam příkazu:<br>/color - Změna barvy<br>/pm /w - Šeptání hráči<br>/pay - Poslat peníze<br>/send - Poslat materiál<br>/offer - Přidat obchodní nabídku<br>/offers - Seznam obchodních nabídek<br>/deloffer - Odstranit obchodní nabídku<br>/buy - Přijmout obchodní nabídku<br>/destroy - Zničit materiál<br>/country - Nastavit název státu`, '#e8b412', true);
                     } else {
                         global.players[index].socket.emit('chat', null, `Neznámý příkaz! Seznam příkazů najdeš pod příkazem /help`, '#e1423e');
                     }

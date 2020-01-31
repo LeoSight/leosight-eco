@@ -372,7 +372,7 @@ $(function () {
                                         },
                                         buildMarket: {
                                             name: `Tržiště (⚡10+${Resource('wood')}100)`, isHtmlName: true, callback: () => Build(x, y, builds.MARKET), disabled: function () {
-                                                return !(info.energy >= 10 && info.wood >= 100);
+                                                return !(info.energy >= 10 && info.wood >= 100 && CheckAdjacentOwnAll(x, y));
                                             }
                                         },
                                     }
@@ -720,6 +720,7 @@ $(function () {
      * @return {string}
      */
     function Resource(key){
+        if(key.toLowerCase() === 'money') return '💰';
         return `<img src="../images/resources/${key}.png" alt="${resources[key.toUpperCase()]}" title="${resources[key.toUpperCase()]}">`;
     }
 

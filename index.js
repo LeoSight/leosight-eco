@@ -35,10 +35,10 @@ const db = {
     world: require(__dirname + '/db/world.js')(mongoWork),
     market: require(__dirname + '/db/market.js')(mongoWork)
 };
-const market = require(__dirname + '/market.js')(db.market);
+const market = require(__dirname + '/market.js')(db);
 const master = require(__dirname + '/master.js');
 const global = require(__dirname + '/global.js');
-const chat = require(__dirname + '/chat.js')(io, db);
+const chat = require(__dirname + '/chat.js')(io, db, market);
 require(__dirname + '/commands.js')(io, db, discord);
 require(__dirname + '/events.js')(io, db, master);
 
@@ -389,6 +389,7 @@ io.on('connection', function(socket){
                         if (!utils.checkAdjacentOwnAll(x, y, userData.security)) return; // Musí vlastnit všechna přilehlá pole
                         cost = {energy: 10, iron: 1000, aluminium: 5000}
                     } else if (building === builds.MARKET) {
+                        if (!utils.checkAdjacentOwnAll(x, y, userData.security)) return; // Musí vlastnit všechna přilehlá pole
                         cost = {energy: 10, wood: 100}
                     } else if (building === builds.FOREST) {
                         cost = {energy: 10}
