@@ -31,7 +31,7 @@ module.exports = function(_db) {
                 if (offer) {
                     if (offer.sold + amount <= offer.max) {
                         let sendAmount = Math.ceil(amount * offer.ratio);
-                        let distance = utils.shortestTradePath(userData.security, seller);
+                        let distance = utils.shortestTradePath(userData.security, targetData.security);
                         if (distance) {
                             let transportFuel = Math.ceil(amount / 1000 * distance);
                             let currentFuel = userData.fuel || 0;

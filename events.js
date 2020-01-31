@@ -53,7 +53,7 @@ function ProcessFactories(){
 
                 Object.keys(resources).forEach(res => {
                     current[res.toLowerCase()] = userData[res.toLowerCase()] || 0;
-                    max[res.toLowerCase()] = userData[res.toLowerCase()+'Max'] || 0;
+                    max[res.toLowerCase()] = userData[res.toLowerCase()+'Max'] || 5000;
                 });
 
                 if(current.wheat >= 1) {
@@ -128,12 +128,13 @@ function GrowTrees(){
 
                 let userData = global.users.find(x => x.security === cell.owner);
                 if(userData) {
+                    const woodMax = userData.woodMax || 5000;
                     if(cell.level > 5){
-                        if(userData.wood > userData.woodMax){
+                        if(userData.wood > woodMax){
                             cell.level = 5;
                         }else {
                             cell.level = 1;
-                            userData.wood = (userData.wood || 0) + (userData.wood + 2 > userData.woodMax ? userData.woodMax - userData.wood : 2);
+                            userData.wood = (userData.wood || 0) + (userData.wood + 2 > woodMax ? woodMax - userData.wood : 2);
 
                             db.users.update(userData.security, 'wood', userData.wood);
                             if(userData.socket) {
@@ -169,12 +170,13 @@ function GrowWheat(){
 
                     let userData = global.users.find(x => x.security === cell.owner);
                     if (userData) {
+                        const wheatMax = userData.wheatMax || 5000;
                         if (cell.level > 5) {
-                            if (userData.wheat > userData.wheatMax) {
+                            if (userData.wheat > wheatMax) {
                                 cell.level = 5;
                             } else {
                                 cell.level = 1;
-                                userData.wheat = (userData.wheat || 0) + (userData.wheat + 5 > userData.wheatMax ? userData.wheatMax - userData.wheat : 5);
+                                userData.wheat = (userData.wheat || 0) + (userData.wheat + 5 > wheatMax ? wheatMax - userData.wheat : 5);
 
                                 db.users.update(userData.security, 'wheat', userData.wheat);
                                 if (userData.socket) {
