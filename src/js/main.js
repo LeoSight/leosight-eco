@@ -219,9 +219,24 @@ $(function () {
         for (let i = -h; i <= h; i++) {
             let row = $('<div class="row"></div>').appendTo(map);
             for (let j = -w; j <= w; j++) {
-                $(`<div class="cell" onmouseover="gfs.getCellData(${j},${i});">`).data('x', j).data('y', i).appendTo(row);
+                $('<div class="cell">').data('x', j).data('y', i).appendTo(row);
             }
         }
+
+        $('.cell').mouseover(function(e){
+            let x = $(this).data('x')
+            let y = $(this).data('y')
+            if(x >= -w && x <= w && y >= -h && y <= h){ // kontrola aby se uživatel skrze konzoli nedostal nad limity mapy.
+                let ownerData = playerData.find(x => x.username === $(this).data('owner'));
+                $('#cellXY').html('X: ' + x + ' Y: ' + y);
+                if(ownerData) {
+                    $('#cellCountry').html('Stát: ' + (ownerData.country || 'Bez názvu'));
+                }else{
+                    $('#cellCountry').html('');
+                }
+                $('#cellOwner').html('Vlastník: ' + ($(this).data('owner') || 'Nikdo') + '<br>&nbsp');
+            }
+        });
 
         let x, y;
         let scroll = false;
@@ -714,20 +729,6 @@ $(function () {
 
     gfs.nightMode = function(){
         $('#main').toggleClass('night');
-    };
-
-    gfs.getCellData = function(x, y){
-    	if(x >= -w && x <= w && y >= -h && y <= h){ // kontrola aby se uživatel skrze konzoli nedostal nad limity mapy.
-	        let cell = $('#map .row').eq(h + y).find('.cell').eq(w + x);
-	        let ownerData = playerData.find(x => x.username === cell.data('owner'));
-	        $('#cellXY').html('X: ' + x + ' Y: ' + y);
-	        if(ownerData) {
-	        	$('#cellCountry').html('Stát: ' + (ownerData.country || 'Bez názvu'));
-	        }else{
-	        	$('#cellCountry').html('');
-	        }
-	        $('#cellOwner').html('Vlastník: ' + (cell.data('owner') || 'Nikdo') + '<br>&nbsp');
-	    }
     };
 
     /**
