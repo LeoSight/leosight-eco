@@ -223,6 +223,21 @@ $(function () {
             }
         }
 
+        $('.cell').mouseover(function(e){
+            let x = $(this).data('x')
+            let y = $(this).data('y')
+            if(x >= -w && x <= w && y >= -h && y <= h){ // kontrola aby se uživatel skrze konzoli nedostal nad limity mapy.
+                let ownerData = playerData.find(x => x.username === $(this).data('owner'));
+                $('#cellXY').html('X: ' + x + ' Y: ' + y);
+                if(ownerData) {
+                    $('#cellCountry').html('Stát: ' + (ownerData.country || 'Bez názvu'));
+                }else{
+                    $('#cellCountry').html('');
+                }
+                $('#cellOwner').html('Vlastník: ' + ($(this).data('owner') || 'Nikdo') + '<br>&nbsp');
+            }
+        });
+
         let x, y;
         let scroll = false;
         move.mousemove(function(event) {
