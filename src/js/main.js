@@ -234,7 +234,7 @@ $(function () {
                 }else{
                     $('#cellCountry').html('');
                 }
-                $('#cellOwner').html('Vlastník: ' + ($(this).data('owner') || 'Nikdo') + '<br>&nbsp');
+                $('#cellOwner').html('Vlastník: ' + ($(this).data('owner') || 'Nikdo'));
             }
         });
 
