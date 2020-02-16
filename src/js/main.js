@@ -238,8 +238,8 @@ $(function () {
 
                 // Zvýraznění okruhu HQ & Základny
                 if($(this).data('build') === builds.HQ || $(this).data('build') === builds.MILITARY){
-                    for (var i = -w; i <= w; i = i + 1){
-                        for (var i2 = -h; i2 <= h; i2 = i2 + 1){
+                    for (var i = x-4; i <= x+4; i = i + 1){
+                        for (var i2 = y-4; i2 <= y+4; i2 = i2 + 1){
                             let dist = GetDistance(x, y, i, i2)
                             if(dist < 5){
                                 let cell = $('#map .row').eq(h + i2).find('.cell').eq(w + i);
@@ -256,8 +256,8 @@ $(function () {
             let y = $(this).data('y')
             if(x >= -w && x <= w && y >= -h && y <= h){
                 if($(this).data('build') === builds.HQ || $(this).data('build') === builds.MILITARY){ // ODZVÝRAZNĚNÍ okruhu HQ & Základny
-                    for (var i = -w; i <= w; i = i + 1){
-                        for (var i2 = -h; i2 <= h; i2 = i2 + 1){
+                    for (var i = x-4; i <= x+4; i = i + 1){
+                        for (var i2 = y-4; i2 <= y+4; i2 = i2 + 1){
                             let dist = GetDistance(x, y, i, i2)
                             if(dist < 5){
                                 let cell = $('#map .row').eq(h + i2).find('.cell').eq(w + i);
