@@ -223,7 +223,7 @@ $(function () {
             }
         }
 
-        $('.cell').mouseover(function(e){
+        $('.cell').mouseover(function(){
             let x = $(this).data('x')
             let y = $(this).data('y')
             if(x >= -w && x <= w && y >= -h && y <= h){ // kontrola aby se uživatel skrze konzoli nedostal nad limity mapy.
@@ -235,6 +235,37 @@ $(function () {
                     $('#cellCountry').html('');
                 }
                 $('#cellOwner').html('Vlastník: ' + ($(this).data('owner') || 'Nikdo'));
+
+                // Zvýraznění okruhu HQ & Základny
+                if($(this).data('build') === builds.HQ || $(this).data('build') === builds.MILITARY){
+                    for (var i = -w; i <= w; i = i + 1){
+                        for (var i2 = -h; i2 <= h; i2 = i2 + 1){
+                            let dist = GetDistance(x, y, i, i2)
+                            if(dist < 5){
+                                let cell = $('#map .row').eq(h + i2).find('.cell').eq(w + i);
+                                cell.css('filter', 'opacity(65%)')
+                            }
+                        }
+                    }
+                }
+            }
+        });
+
+        $('.cell').mouseout(function(){
+            let x = $(this).data('x')
+            let y = $(this).data('y')
+            if(x >= -w && x <= w && y >= -h && y <= h){
+                if($(this).data('build') === builds.HQ || $(this).data('build') === builds.MILITARY){ // ODZVÝRAZNĚNÍ okruhu HQ & Základny
+                    for (var i = -w; i <= w; i = i + 1){
+                        for (var i2 = -h; i2 <= h; i2 = i2 + 1){
+                            let dist = GetDistance(x, y, i, i2)
+                            if(dist < 5){
+                                let cell = $('#map .row').eq(h + i2).find('.cell').eq(w + i);
+                                cell.css('filter', '')
+                            }
+                        }
+                    }
+                }
             }
         });
 
@@ -730,6 +761,10 @@ $(function () {
     gfs.nightMode = function(){
         $('#main').toggleClass('night');
     };
+
+    function GetDistance(x1, y1, x2, y2){
+        return Math.round(Math.sqrt(Math.pow(x1 - x2, 2) + Math.pow(y1 - y2, 2)));
+    }
 
     /**
      * @return {string}
