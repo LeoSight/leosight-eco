@@ -83,7 +83,7 @@ module.exports = function(_db) {
                                                             targetData.socket.emit('chat', null, `Hráč ${userData.username} s tebou právě uzavřel obchod!<br>Obdržel jsi ${sendAmount}x [RES:${sell.toUpperCase()}]<br>Odeslal jsi ${amount}x [RES:${buy.toUpperCase()}]<br>Přeprava tě stála ${transportFuel}x [RES:FUEL]`, '#44cee8', true);
                                                         }
                                                     }else{
-                                                        userData.socket.emit('chat', null, `Druhá strana bohužel nemá dostatek místa k uskladnění tohoto množství materiálu. O této skutečnosti byl hráč upozorněn.`, '#e1423e');
+                                                        userData.socket.emit('chat', null, `Druhá strana bohužel nemá dostatek místa k uskladnění tohoto množství materiálu.${targetData.socket ? ' O této skutečnosti byl hráč upozorněn.' : ''}`, '#e1423e');
 
                                                         if(targetData.socket){
                                                             targetData.socket.emit('chat', null, `Hráč ${userData.username} chtěl s tebou uzavřít obchod, nemáš však místo k uskladnění materiálu! Bylo by potřeba uskladnit ${sendAmount}x [RES:${sell.toUpperCase()}]`, '#e1423e', true);
@@ -93,7 +93,7 @@ module.exports = function(_db) {
                                                     userData.socket.emit('chat', null, `Nemáš dostatek místa pro uskladnění tohoto množství materiálu!`, '#e1423e');
                                                 }
                                             }else{
-                                                userData.socket.emit('chat', null, `Druhá strana bohužel nemá dostatek materiálu k uzavření tohoto obchodu. O této skutečnosti byl hráč upozorněn.`, '#e1423e');
+                                                userData.socket.emit('chat', null, `Druhá strana bohužel nemá dostatek materiálu k uzavření tohoto obchodu.${targetData.socket ? ' O této skutečnosti byl hráč upozorněn.' : ''}`, '#e1423e');
 
                                                 if(targetData.socket){
                                                     targetData.socket.emit('chat', null, `Hráč ${userData.username} chtěl s tebou uzavřít obchod, nemáš však dostatek materiálu! Tento obchod by tě stál ${amount}x [RES:${buy.toUpperCase()}]`, '#e1423e', true);
@@ -106,7 +106,7 @@ module.exports = function(_db) {
                                         userData.socket.emit('chat', null, `Nelze nakupovat záporný počet surovin.`, '#e1423e', true);     
                                     }
                                 }else{
-                                    userData.socket.emit('chat', null, `Druhá strana bohužel nemá dostatek paliva na uzavření obchodu. O této skutečnosti byl hráč upozorněn.`, '#e1423e', true);
+                                    userData.socket.emit('chat', null, `Druhá strana bohužel nemá dostatek paliva na uzavření obchodu.${targetData.socket ? ' O této skutečnosti byl hráč upozorněn.' : ''}`, '#e1423e', true);
 
                                     if(targetData.socket){
                                         targetData.socket.emit('chat', null, `Hráč ${userData.username} chtěl s tebou uzavřít obchod, nemáš však dostatek paliva! Tento obchod by tě stál ${transportFuel}x [RES:FUEL]`, '#e1423e', true);
@@ -136,7 +136,7 @@ module.exports = function(_db) {
  */
 function UpdateOffer(user, sell, buy, ratio, max, sold) {
     const userData = global.users.find(e => e.security === user);
-    if(userData) {
+    if(userData && ratio > 0) {
         const offer = data.find(d => d.user === user && d.sell === sell && d.buy === buy);
         if (offer) {
             offer.ratio = ratio;

@@ -647,15 +647,15 @@ $(function () {
     function GetAdjacent(x, y){
         let adjacent = [];
         const mapRows = $('#map .row');
-        const adj_left = mapRows.eq(h + y).find('.cell').eq(w + x - 1);
-        const adj_right = mapRows.eq(h + y).find('.cell').eq(w + x + 1);
-        const adj_top = mapRows.eq(h + y - 1).find('.cell').eq(w + x);
-        const adj_bottom = mapRows.eq(h + y + 1).find('.cell').eq(w + x);
+        const adj_left = (w + x - 1) >= 0 && mapRows.eq(h + y).find('.cell').eq(w + x - 1);
+        const adj_right = (w + x + 1) >= 0 && mapRows.eq(h + y).find('.cell').eq(w + x + 1);
+        const adj_top = (h + y - 1) >= 0 && mapRows.eq(h + y - 1).find('.cell').eq(w + x);
+        const adj_bottom = (h + y + 1) >= 0 && mapRows.eq(h + y + 1).find('.cell').eq(w + x);
 
-        adj_left.length > 0 && adjacent.push(adj_left);
-        adj_right.length > 0 && adjacent.push(adj_right);
-        adj_top.length > 0 && adjacent.push(adj_top);
-        adj_bottom.length > 0 && adjacent.push(adj_bottom);
+        adj_left.length && adjacent.push(adj_left);
+        adj_right.length && adjacent.push(adj_right);
+        adj_top.length && adjacent.push(adj_top);
+        adj_bottom.length && adjacent.push(adj_bottom);
         return adjacent;
     }
 
@@ -888,7 +888,7 @@ $(function () {
         let res = $('#resources').text('');
         Object.keys(info).forEach((key) => {
             if (key.toUpperCase() in resources) {
-                $('<p>').html(`${info[key+'Spending'] ? '('+(-info[key+'Spending'])+') ' : ''}<span${(info[key+'Max'] && info[key+'Max'] <= info[key]) ? ' class="full"' : ''}>${info[key]}</span>${info[key+'Max'] ? ' / '+(info[key+'Max']) : ''} ${Resource(key)}`).appendTo(res);
+                $('<p>').html(`${info[key+'Spending'] ? '('+(-info[key+'Spending'])+') ' : ''}<span${(info[key+'Max'] && info[key+'Max'] <= info[key]) ? ' class="full"' : ((info[key+'Max'] && info[key+'Max'] * 0.9 <= info[key]) ? ' class="stuffed"' : '')}>${info[key]}</span>${info[key+'Max'] ? ' / '+(info[key+'Max']) : ''} ${Resource(key)}`).appendTo(res);
             }
         });
 

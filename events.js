@@ -23,19 +23,14 @@ function GainResource(build, res, gain){
                 let value = userData[res] || 0;
                 value += gain;
 
-                // Pokud jsou současné zásoby + zisk větší než maximum skladu, nepřičítáme surovinu
-                // TODO: V budoucnu upravit na agresivnější styl (ubírání surovin přes limit) - zatím však dejme hráčům možnost se přizpůsobit novým změnám
                 let max = userData[res+'Max'] || 0;
-                if(value > max && value - gain < max) value = max; // Pokud jsme těsně pod limitem, zafixujeme se na něj
-                if(value <= max) {
+                value = Math.min(value, max);
 
-                    userData[res] = value;
-                    db.users.update(userData.security, res, value);
+                userData[res] = value;
+                db.users.update(userData.security, res, value);
 
-                    if (userData.socket) {
-                        userData.socket.emit('info', {[res]: value});
-                    }
-
+                if (userData.socket) {
+                    userData.socket.emit('info', {[res]: value});
                 }
             }
         }
@@ -72,14 +67,14 @@ function ProcessFactories(){
                     case 'coal':
                         if(current.wood >= 5 && max.coal > current.coal){
                             newMaterials.wood = current.wood - 5;
-                            newMaterials.coal = current.coal + 4;
+                            newMaterials.coal = Math.min(max.coal, current.coal + 4);
                         }
                         break;
                     case 'gunpowder':
                         if(current.niter >= 5 && current.sulfur >= 2 && max.gunpowder > current.gunpowder){
                             newMaterials.niter = current.niter - 5;
                             newMaterials.sulfur = current.sulfur - 2;
-                            newMaterials.gunpowder = current.gunpowder + 4;
+                            newMaterials.gunpowder = Math.min(max.gunpowder, current.gunpowder + 4);
                         }
                         break;
                     case 'ammo':
@@ -87,20 +82,20 @@ function ProcessFactories(){
                             newMaterials.gunpowder = current.gunpowder - 3;
                             newMaterials.lead = current.lead - 1;
                             newMaterials.iron = current.iron - 3;
-                            newMaterials.ammo = current.ammo + 3;
+                            newMaterials.ammo = Math.min(max.ammo, current.ammo + 3);
                         }
                         break;
                     case 'fuel':
                         if (current.oil >= 3 && max.fuel > current.fuel) {
                             newMaterials.oil = current.oil - 3;
-                            newMaterials.fuel = current.fuel + 2;
+                            newMaterials.fuel = Math.min(max.fuel, current.fuel + 2);
                         }
                         break;
                     case 'aluminium':
                     default:
                         if (current.bauxite >= 5 && max.aluminium > current.aluminium){
                             newMaterials.bauxite = current.bauxite - 5;
-                            newMaterials.aluminium = current.aluminium + 3;
+                            newMaterials.aluminium = Math.min(max.aluminium, current.aluminium + 3);
                         }
                         break;
                 }
@@ -130,11 +125,11 @@ function GrowTrees(){
                 if(userData) {
                     const woodMax = userData.woodMax || 5000;
                     if(cell.level > 5){
-                        if(userData.wood > woodMax){
+                        if(userData.wood >= woodMax){
                             cell.level = 5;
-                        }else {
+                        }else{
                             cell.level = 1;
-                            userData.wood = (userData.wood || 0) + (userData.wood + 2 > woodMax ? woodMax - userData.wood : 2);
+                            userData.wood = Math.min(woodMax, (userData.wood || 0) + 2);
 
                             db.users.update(userData.security, 'wood', userData.wood);
                             if(userData.socket) {
@@ -172,11 +167,11 @@ function GrowWheat(){
                     if (userData) {
                         const wheatMax = userData.wheatMax || 5000;
                         if (cell.level > 5) {
-                            if (userData.wheat > wheatMax) {
+                            if (userData.wheat >= wheatMax) {
                                 cell.level = 5;
                             } else {
                                 cell.level = 1;
-                                userData.wheat = (userData.wheat || 0) + (userData.wheat + 5 > wheatMax ? wheatMax - userData.wheat : 5);
+                                userData.wheat = Math.min(wheatMax, (userData.wheat || 0) + 5);
 
                                 db.users.update(userData.security, 'wheat', userData.wheat);
                                 if (userData.socket) {

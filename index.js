@@ -232,6 +232,9 @@ io.on('connection', function(socket){
                                         oldOwner.ammo = oldOwner.ammo || 0;
                                         socket.emit('chat', null, `Ukořistil jsi ${oldOwner.ammo} munice.`, '#44cee8');
                                         userData.ammo += oldOwner.ammo;
+                                        if(userData.ammoMax) {
+                                            userData.ammo = Math.min(userData.ammoMax, userData.ammo);
+                                        }
                                         oldOwner.ammo = 0;
                                         if(oldOwner.socket){
                                             oldOwner.socket.emit('info', { ammo: oldOwner.ammo });
@@ -375,6 +378,12 @@ io.on('connection', function(socket){
         if (global.players[index] && global.players[index].logged) {
             let userData = global.users.find(x => x.security === global.players[index].security);
             if (userData) {
+                let hasHQ = global.world.find(d => d.build === builds.HQ && d.owner === userData.security);
+                if (!hasHQ) {
+                    socket.emit('chat', null, `Nemůžeš stavět budovy, když nemáš HQ!`, '#e1423e', true);
+                    return;
+                }
+
                 let cell = global.world.find(d => d.x === x && d.y === y);
                 if(cell && cell.owner === userData.security && cell.build == null) {
                     let cost = {};
@@ -531,6 +540,7 @@ io.on('connection', function(socket){
                             }
 
                             cell.build = null;
+                            if(cell.level) cell.level = null;
                             db.world.cellUpdate(x, y, userData.security, null, null);
                             io.emit('cell', x, y, userData.username, userData.color, null, null);
 
@@ -621,6 +631,10 @@ io.on('connection', function(socket){
                         if (cell.build === builds.FOREST && cell.level === 5) {
                             userData.energy -= 2;
                             userData.wood = (userData.wood || 0) + 10;
+
+                            if(userData.woodMax){
+                                userData.wood = Math.min(userData.wood, userData.woodMax);
+                            }
 
                             db.users.update(userData.security, 'energy', userData.energy);
                             db.users.update(userData.security, 'wood', userData.wood);
