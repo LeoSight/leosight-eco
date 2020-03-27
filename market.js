@@ -38,68 +38,72 @@ module.exports = function(_db) {
                             let targetFuel = targetData.fuel || 0;
                             if (currentFuel >= transportFuel) {
                                 if(targetFuel >= transportFuel) {
-                                    let playerValue = userData[sell] || 0;
-                                    let targetValue = targetData[buy] || 0;
-                                    let playerGainMaterial = userData[buy] || 0;
-                                    let targetGainMaterial = targetData[sell] || 0;
-                                    if (playerValue >= sendAmount) {
-                                        if (targetValue >= amount) {
-                                            let playerMax = userData[buy+'Max'] || 5000;
-                                            let targetMax = targetData[sell+'Max'] || 5000;
-                                            if(playerGainMaterial + amount <= playerMax || buy === 'money'){
-                                                if(targetGainMaterial + sendAmount <= targetMax || sell === 'money'){
-                                                    userData.fuel = currentFuel - transportFuel;
-                                                    db.users.update(userData.security, 'fuel', userData.fuel);
+                                    if(amount > 0){
+                                        let playerValue = userData[sell] || 0;
+                                        let targetValue = targetData[buy] || 0;
+                                        let playerGainMaterial = userData[buy] || 0;
+                                        let targetGainMaterial = targetData[sell] || 0;
+                                        if (playerValue >= sendAmount) {
+                                            if (targetValue >= amount) {
+                                                let playerMax = userData[buy+'Max'] || 5000;
+                                                let targetMax = targetData[sell+'Max'] || 5000;
+                                                if(playerGainMaterial + amount <= playerMax || buy === 'money'){
+                                                    if(targetGainMaterial + sendAmount <= targetMax || sell === 'money'){
+                                                        userData.fuel = currentFuel - transportFuel;
+                                                        db.users.update(userData.security, 'fuel', userData.fuel);
 
-                                                    targetData.fuel = targetFuel - transportFuel;
-                                                    db.users.update(targetData.security, 'fuel', targetData.fuel);
+                                                        targetData.fuel = targetFuel - transportFuel;
+                                                        db.users.update(targetData.security, 'fuel', targetData.fuel);
 
-                                                    playerValue -= sendAmount;
-                                                    playerGainMaterial += amount;
-                                                    userData[sell] = playerValue;
-                                                    userData[buy] = playerGainMaterial;
-                                                    db.users.update(userData.security, sell, playerValue);
-                                                    db.users.update(userData.security, buy, playerValue);
+                                                        playerValue -= sendAmount;
+                                                        playerGainMaterial += amount;
+                                                        userData[sell] = playerValue;
+                                                        userData[buy] = playerGainMaterial;
+                                                        db.users.update(userData.security, sell, playerValue);
+                                                        db.users.update(userData.security, buy, playerValue);
 
-                                                    targetValue -= amount;
-                                                    targetGainMaterial += sendAmount;
-                                                    targetData[buy] = targetValue;
-                                                    targetData[sell] = targetGainMaterial;
-                                                    db.users.update(targetData.security, buy, targetValue);
-                                                    db.users.update(targetData.security, sell, targetValue);
+                                                        targetValue -= amount;
+                                                        targetGainMaterial += sendAmount;
+                                                        targetData[buy] = targetValue;
+                                                        targetData[sell] = targetGainMaterial;
+                                                        db.users.update(targetData.security, buy, targetValue);
+                                                        db.users.update(targetData.security, sell, targetValue);
 
-                                                    if(offer.sold + amount >= offer.max){
-                                                        DeleteOffer(offer.user, offer.sell, offer.buy);
-                                                    }else {
-                                                        UpdateOffer(offer.user, offer.sell, offer.buy, offer.ratio, offer.max, offer.sold + amount);
-                                                    }
+                                                        if(offer.sold + amount >= offer.max){
+                                                            DeleteOffer(offer.user, offer.sell, offer.buy);
+                                                        }else {
+                                                            UpdateOffer(offer.user, offer.sell, offer.buy, offer.ratio, offer.max, offer.sold + amount);
+                                                        }
 
-                                                    userData.socket.emit('info', {[buy]: playerGainMaterial, [sell]: playerValue, fuel: userData.fuel});
-                                                    userData.socket.emit('chat', null, `Obchod s hráčem ${seller} úspěšně uzavřen!<br>Obdržel jsi ${amount}x [RES:${buy.toUpperCase()}]<br>Odeslal jsi ${sendAmount}x [RES:${sell.toUpperCase()}]<br>Přeprava tě stála ${transportFuel}x [RES:FUEL]`, '#44cee8', true);
+                                                        userData.socket.emit('info', {[buy]: playerGainMaterial, [sell]: playerValue, fuel: userData.fuel});
+                                                        userData.socket.emit('chat', null, `Obchod s hráčem ${seller} úspěšně uzavřen!<br>Obdržel jsi ${amount}x [RES:${buy.toUpperCase()}]<br>Odeslal jsi ${sendAmount}x [RES:${sell.toUpperCase()}]<br>Přeprava tě stála ${transportFuel}x [RES:FUEL]`, '#44cee8', true);
 
-                                                    if (targetData.socket) {
-                                                        targetData.socket.emit('info', {[buy]: targetValue, [sell]: targetGainMaterial, fuel: userData.fuel});
-                                                        targetData.socket.emit('chat', null, `Hráč ${userData.username} s tebou právě uzavřel obchod!<br>Obdržel jsi ${sendAmount}x [RES:${sell.toUpperCase()}]<br>Odeslal jsi ${amount}x [RES:${buy.toUpperCase()}]<br>Přeprava tě stála ${transportFuel}x [RES:FUEL]`, '#44cee8', true);
+                                                        if (targetData.socket) {
+                                                            targetData.socket.emit('info', {[buy]: targetValue, [sell]: targetGainMaterial, fuel: userData.fuel});
+                                                            targetData.socket.emit('chat', null, `Hráč ${userData.username} s tebou právě uzavřel obchod!<br>Obdržel jsi ${sendAmount}x [RES:${sell.toUpperCase()}]<br>Odeslal jsi ${amount}x [RES:${buy.toUpperCase()}]<br>Přeprava tě stála ${transportFuel}x [RES:FUEL]`, '#44cee8', true);
+                                                        }
+                                                    }else{
+                                                        userData.socket.emit('chat', null, `Druhá strana bohužel nemá dostatek místa k uskladnění tohoto množství materiálu. O této skutečnosti byl hráč upozorněn.`, '#e1423e');
+
+                                                        if(targetData.socket){
+                                                            targetData.socket.emit('chat', null, `Hráč ${userData.username} chtěl s tebou uzavřít obchod, nemáš však místo k uskladnění materiálu! Bylo by potřeba uskladnit ${sendAmount}x [RES:${sell.toUpperCase()}]`, '#e1423e', true);
+                                                        }
                                                     }
                                                 }else{
-                                                    userData.socket.emit('chat', null, `Druhá strana bohužel nemá dostatek místa k uskladnění tohoto množství materiálu. O této skutečnosti byl hráč upozorněn.`, '#e1423e');
-
-                                                    if(targetData.socket){
-                                                        targetData.socket.emit('chat', null, `Hráč ${userData.username} chtěl s tebou uzavřít obchod, nemáš však místo k uskladnění materiálu! Bylo by potřeba uskladnit ${sendAmount}x [RES:${sell.toUpperCase()}]`, '#e1423e', true);
-                                                    }
+                                                    userData.socket.emit('chat', null, `Nemáš dostatek místa pro uskladnění tohoto množství materiálu!`, '#e1423e');
                                                 }
                                             }else{
-                                                userData.socket.emit('chat', null, `Nemáš dostatek místa pro uskladnění tohoto množství materiálu!`, '#e1423e');
+                                                userData.socket.emit('chat', null, `Druhá strana bohužel nemá dostatek materiálu k uzavření tohoto obchodu. O této skutečnosti byl hráč upozorněn.`, '#e1423e');
+
+                                                if(targetData.socket){
+                                                    targetData.socket.emit('chat', null, `Hráč ${userData.username} chtěl s tebou uzavřít obchod, nemáš však dostatek materiálu! Tento obchod by tě stál ${amount}x [RES:${buy.toUpperCase()}]`, '#e1423e', true);
+                                                }
                                             }
                                         }else{
-                                            userData.socket.emit('chat', null, `Druhá strana bohužel nemá dostatek materiálu k uzavření tohoto obchodu. O této skutečnosti byl hráč upozorněn.`, '#e1423e');
-
-                                            if(targetData.socket){
-                                                targetData.socket.emit('chat', null, `Hráč ${userData.username} chtěl s tebou uzavřít obchod, nemáš však dostatek materiálu! Tento obchod by tě stál ${amount}x [RES:${buy.toUpperCase()}]`, '#e1423e', true);
-                                            }
+                                            userData.socket.emit('chat', null, `Nemáš dostatek materiálu k uzavření tohoto obchodu!`, '#e1423e');
                                         }
                                     }else{
-                                        userData.socket.emit('chat', null, `Nemáš dostatek materiálu k uzavření tohoto obchodu!`, '#e1423e');
+                                        userData.socket.emit('chat', null, `Nelze nakupovat záporný počet surovin.`, '#e1423e', true);     
                                     }
                                 }else{
                                     userData.socket.emit('chat', null, `Druhá strana bohužel nemá dostatek paliva na uzavření obchodu. O této skutečnosti byl hráč upozorněn.`, '#e1423e', true);
