@@ -23,7 +23,7 @@
     "dotenv": "^8.2.0",
     "express": "^4.17.1",
     "gulp": "^4.0.2",
-    "jquery": "^3.4.1",
+    "jquery": "^3.5.0",
     "jquery-contextmenu": "^2.9.0",
     "micromodal": "^0.4.6",
     "mongodb": "^3.5.5",
