@@ -109,3 +109,5 @@ dist
 # LSG
 security.js
 account.js
+
+*.lnk
