@@ -98,6 +98,14 @@ $(function () {
         $('#ping').html('Připojení navázáno!');
         AddChatMessage(null, 'Navázáno připojení k serveru!', '#45b70a');
         $('#login').show();
+
+        // PROSPECT
+
+        $.get("prospect", function(data){
+            if(data.username && data.key) {
+                socket.emit('login-prospect', data.username, data.key);
+            }
+        });
     });
 
     socket.on('serverinfo', function(serverName, serverVersion, codebase) {
@@ -162,11 +170,12 @@ $(function () {
         socket.emit('login', $('#username').val(), $('#password').val());
     });
 
-    socket.on('login', function(success, response){
+    socket.on('login', function(success, response, username){
         if(success) {
             $('#login').hide();
-            console.log('Přihlášení úspěšné (' + response + ')');
+            console.log('Přihlášení úspěšné (' + username + ' - ' + response + ')');
             logged = true;
+            info.username = username;
         }else{
             $('#login .title').fadeOut(100).html(response).fadeIn(100);
         }
@@ -950,13 +959,4 @@ $(function () {
         }
 
     });
-
-    // PROSPECT
-
-    $.get("prospect", function(data){
-        if(data.username && data.key) {
-            socket.emit('login-prospect', data.username, data.key);
-        }
-    });
-
 });

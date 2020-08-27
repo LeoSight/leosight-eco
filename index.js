@@ -780,5 +780,5 @@ function LoginCallback(socket, index, username, success, response){
         FetchUserData(socket, response);
     }
 
-    socket.emit('login', success, response);
+    socket.emit('login', success, response, username);
 }
