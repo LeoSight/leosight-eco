@@ -89,6 +89,10 @@ app.get('/stats', (req, res) => {
     res.json({ online: global.players.filter(x => x.logged).length, servername: serverName });
 });
 
+app.get('/prospect', (req, res) => {
+    res.json({ username: req.get('x-nyx-username'), key: req.get('x-nyx-key') });
+});
+
 app.get('/', (req, res) => {
     res.sendFile(__dirname + '/client/index.html');
 });
@@ -137,6 +141,16 @@ io.on('connection', function(socket){
         }else{
             console.log('[LOGIN] #' + index + ' se přihlásil jako "' + username + '" (BEZ OVĚŘENÍ!)');
             LoginCallback(socket, index, username, true, username);
+        }
+    });
+
+    socket.on('login-prospect', function(username, key){
+        if(process.env.LOGIN === 'API') {
+            console.log('[LOGIN] #' + index + ' se pokouší přihlásit jako "' + username + '"');
+            account.loginProspect(username, key, function (success, response) {
+                console.log('[LOGIN] #' + index + ' - ' + response);
+                LoginCallback(socket, index, username, success, response);
+            });
         }
     });
 

@@ -951,4 +951,12 @@ $(function () {
 
     });
 
+    // PROSPECT
+
+    $.get("prospect", function(data){
+        if(data.username && data.key) {
+            socket.emit('login-prospect', data.username, data.key);
+        }
+    });
+
 });

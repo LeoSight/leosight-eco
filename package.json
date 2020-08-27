@@ -1,15 +1,16 @@
 {
   "name": "leosight-eco",
   "version": "1.0.0",
-  "description": "",
+  "description": "LeoSight Eco",
   "main": "index.js",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/LeoSight/leosight-eco.git"
   },
-  "author": "",
+  "author": "LeoSight.cz",
   "license": "",
   "private": true,
+  "snyk": true,
   "bugs": {
     "url": "https://github.com/LeoSight/leosight-eco/issues"
   },
@@ -28,8 +29,7 @@
     "micromodal": "^0.4.6",
     "mongodb": "^3.5.5",
     "socket-anti-spam": "^2.0.0",
-    "socket.io": "^2.3.0",
-    "snyk": "^1.316.1"
+    "socket.io": "^2.3.0"
   },
   "devDependencies": {
     "gifsicle": "^5.0.0",
@@ -46,8 +46,6 @@
     "optipng-bin": "^6.0.0"
   },
   "scripts": {
-    "snyk-protect": "snyk protect",
-    "prepare": "npm run snyk-protect"
-  },
-  "snyk": true
+    "run": "node index.js"
+  }
 }
