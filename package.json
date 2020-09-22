@@ -16,8 +16,8 @@
   },
   "homepage": "https://github.com/LeoSight/leosight-eco#readme",
   "dependencies": {
-    "@babel/core": "^7.9.0",
-    "@babel/preset-env": "^7.9.5",
+    "@babel/core": "^7.11.5",
+    "@babel/preset-env": "^7.11.5",
     "bluebird": "^3.7.2",
     "crypto": "^1.0.1",
     "discord.js": "^11.6.4",
