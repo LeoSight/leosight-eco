@@ -756,6 +756,7 @@ function FetchUserData(socket, security){
 
 function LoginCallback(socket, index, username, success, response){
     if (success) {
+        username = utils.sanitizeString(username);
         let existingPlayer = global.players.find(x => x.security === response);
         if(existingPlayer && existingPlayer.logged){
             socket.emit('login', false, 'Tento účet je již ve hře!');

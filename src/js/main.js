@@ -177,7 +177,7 @@ $(function () {
             logged = true;
             info.username = username;
         }else{
-            $('#login .title').fadeOut(100).html(response).fadeIn(100);
+            $('#login .title').fadeOut(100).text(response).fadeIn(100);
         }
     });
 
