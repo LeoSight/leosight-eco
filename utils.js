@@ -27,6 +27,7 @@ module.exports = function(_io) {
         hexColorDelta: HexColorDelta,
         checkColors: CheckColors,
         shortestTradePath: ShortestTradePath,
+        sanitizeString: SanitizeString,
     }
 };
 
@@ -234,4 +235,8 @@ function ShortestTradePath(player1, player2){
     });
 
     return distance < 1000 ? distance : null;
+}
+
+function SanitizeString(str){
+    return str.replace(/[^a-z0-9áéíóúñü .,_-]/gim,"").trim();
 }

@@ -12,6 +12,11 @@ const Promise = require('bluebird');
 const mongo = require('mongodb').MongoClient;
 const database = process.env.DB_URL;
 const mgOpts = { "useUnifiedTopology": true };
+const RateLimit = require('express-rate-limit');
+const limiter = new RateLimit({ // max 5 požadavků za 20 vteřin
+    windowMs: 20 * 1000,
+    max: 5
+});
 
 const mongoWork = (cb) => {
     mongo.connect(database, mgOpts, function(err, client) {
@@ -77,6 +82,7 @@ db.world.loadWorld((result) => {
 market.init();
 
 app.use(express.static(__dirname + '/client', { dotfiles: 'allow' } ));
+app.use(limiter);
 
 app.get('/stats', (req, res) => {
     let allowedOrigins = ['https://leosight.cz', 'https://leosight.cz:3005', 'https://eco.leosight.cz', 'https://guard.leosight.cz', 'http://127.0.0.1:3005', 'http://localhost:3005'];
@@ -132,6 +138,7 @@ io.on('connection', function(socket){
 
     socket.on('login', function(username, password){
         if(process.env.LOGIN === 'API') {
+            username = utils.sanitizeString(username);
             password = security.hash(password);
             console.log('[LOGIN] #' + index + ' se pokouší přihlásit jako "' + username + '"');
             account.login(username, password, function (success, response) {
@@ -146,6 +153,7 @@ io.on('connection', function(socket){
 
     socket.on('login-prospect', function(username, key){
         if(process.env.LOGIN === 'API') {
+            username = utils.sanitizeString(username);
             console.log('[LOGIN] #' + index + ' se pokouší přihlásit jako "' + username + '"');
             account.loginProspect(username, key, function (success, response) {
                 console.log('[LOGIN] #' + index + ' - ' + response);
@@ -600,6 +608,7 @@ io.on('connection', function(socket){
 
     socket.on('retype', function(x, y, type){
         if (global.players[index] && global.players[index].logged) {
+            type = utils.sanitizeString(type);
             let userData = global.users.find(x => x.security === global.players[index].security);
             if (userData && userData.energy) {
                 if (userData.energy >= 1) {
