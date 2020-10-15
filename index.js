@@ -52,9 +52,9 @@ const version = utils.version;
 const codebase = process.env.CODEBASE;
 
 mongoWork(function(db, client) {
-    db.createCollection('users');
-    db.createCollection('world');
-    db.createCollection('market');
+    db.createCollection('users', () => {});
+    db.createCollection('world', () => {});
+    db.createCollection('market', () => {});
 
     let mySort = { username: 1 };
     db.collection("users").find().sort(mySort).toArray(function(err, result) {
