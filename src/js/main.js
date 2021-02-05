@@ -46,6 +46,14 @@ $(function () {
         MARKET: 21,
     };
 
+    const levelableBuilds = {
+        //[ID Budovy]: true,
+        [7]: true,
+        [16]: true,
+        [17]: true,
+        [18]: true
+    }
+
     const builds_info = [
         { title: 'Pozemek' },
         { title: 'Hlavní základna', abbr: 'HQ' },
@@ -798,7 +806,7 @@ $(function () {
         }
 
         if(build){
-            if(level && level > 1 && build !== builds.WAREHOUSE){
+            if(level && level > 1 && build !== builds.WAREHOUSE && levelableBuilds[build] === true){
                 return `url('../images/builds/${build}_${level}.png') center center, ${color}`;
             }else {
                 return `url('../images/builds/${build}.png') center center, ${color}`;
@@ -851,7 +859,7 @@ $(function () {
                 cell.html(`<sub>${level}</sub>`);
             }else if(level && builds_info[build].abbr === '%'){
                 cell.html(`<sub style="font-size:9px;padding-top:8px;">${(level-1)*25}%</sub>`);
-            }else if(level && level > 1){
+            }else if(level && level > 1 && levelableBuilds[build] === true){
                 cell.html(`${builds_info[build].abbr}<sub>${level}</sub>`);
             }else{
                 cell.text(builds_info[build].abbr);
