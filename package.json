@@ -16,11 +16,11 @@
   },
   "homepage": "https://github.com/LeoSight/leosight-eco#readme",
   "dependencies": {
-    "@babel/core": "^7.12.1",
-    "@babel/preset-env": "^7.12.1",
+    "@babel/core": "^7.12.13",
+    "@babel/preset-env": "^7.12.13",
     "bluebird": "^3.7.2",
     "crypto": "^1.0.1",
-    "discord.js": "^12.4.0",
+    "discord.js": "^12.5.1",
     "dotenv": "^8.2.0",
     "express": "^4.17.1",
     "express-rate-limit": "^5.2.3",
@@ -28,9 +28,9 @@
     "jquery": "^3.5.1",
     "jquery-contextmenu": "^2.9.2",
     "micromodal": "^0.4.6",
-    "mongodb": "^3.6.3",
+    "mongodb": "^3.6.4",
     "socket-anti-spam": "^2.0.0",
-    "socket.io": "^2.3.0"
+    "socket.io": "^3.1.1"
   },
   "devDependencies": {
     "gifsicle": "^5.1.0",
