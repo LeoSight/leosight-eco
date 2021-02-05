@@ -54,7 +54,7 @@ $(function () {
         { title: 'Ropný vrt', abbr: 'R' },
         { title: 'Železný důl', abbr: 'Ž' },
         { title: 'Bauxitový důl', abbr: 'B' },
-        { title: 'Pevnost', abbr: '-' },
+        { title: 'Pevnost', abbr: '-', hasLevels: true },
         { title: 'Olověný důl', abbr: 'O' },
         { title: 'Sírový důl', abbr: 'S' },
         { title: 'Ledkový důl', abbr: 'L' },
@@ -63,9 +63,9 @@ $(function () {
         { title: 'Kamenolom', abbr: 'K' },
         { title: 'Exportní sklad', abbr: '' },
         { title: 'Farma', abbr: 'F' },
-        { title: 'Pšeničné pole' },
-        { title: 'Sklad', abbr: ',' },
-        { title: 'Les' },
+        { title: 'Pšeničné pole', hasLevels: true },
+        { title: 'Sklad', abbr: ',', hasLevels: true },
+        { title: 'Les', hasLevels: true },
         { title: 'Mincovna', abbr: '' },
         { title: 'Laboratoř', abbr: '' },
         { title: 'Tržiště', abbr: '' },
@@ -798,7 +798,7 @@ $(function () {
         }
 
         if(build){
-            if(level && level > 1 && build !== builds.WAREHOUSE){
+            if(level && level > 1 && build !== builds.WAREHOUSE && builds_info[build].hasLevels){
                 return `url('../images/builds/${build}_${level}.png') center center, ${color}`;
             }else {
                 return `url('../images/builds/${build}.png') center center, ${color}`;
@@ -851,7 +851,7 @@ $(function () {
                 cell.html(`<sub>${level}</sub>`);
             }else if(level && builds_info[build].abbr === '%'){
                 cell.html(`<sub style="font-size:9px;padding-top:8px;">${(level-1)*25}%</sub>`);
-            }else if(level && level > 1){
+            }else if(level && level > 1 && builds_info[build].hasLevels){
                 cell.html(`${builds_info[build].abbr}<sub>${level}</sub>`);
             }else{
                 cell.text(builds_info[build].abbr);
