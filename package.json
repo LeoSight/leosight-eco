@@ -25,7 +25,7 @@
     "express": "^4.17.1",
     "express-rate-limit": "^5.2.6",
     "gulp": "^4.0.2",
-    "jquery": "^3.5.1",
+    "jquery": "^3.6.0",
     "jquery-contextmenu": "^2.9.2",
     "micromodal": "^0.4.6",
     "mongodb": "^3.6.4",
