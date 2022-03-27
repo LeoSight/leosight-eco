@@ -12,8 +12,8 @@ const Promise = require('bluebird');
 const mongo = require('mongodb').MongoClient;
 const database = process.env.DB_URL;
 const mgOpts = { "useUnifiedTopology": true };
-const RateLimit = require('express-rate-limit');
-const limiter = new RateLimit({ // max 5 požadavků za 20 vteřin
+const rateLimit = require('express-rate-limit');
+const limiter = rateLimit({ // max 5 požadavků za 20 vteřin
     windowMs: 20 * 1000,
     max: 5
 });
