@@ -16,7 +16,7 @@
   },
   "homepage": "https://github.com/LeoSight/leosight-eco#readme",
   "dependencies": {
-    "@babel/core": "^7.14.5",
+    "@babel/core": "^7.14.6",
     "@babel/preset-env": "^7.14.7",
     "bluebird": "^3.7.2",
     "crypto": "^1.0.1",
@@ -30,7 +30,7 @@
     "micromodal": "^0.4.6",
     "mongodb": "^3.6.9",
     "socket-anti-spam": "^2.0.0",
-    "socket.io": "^4.1.2"
+    "socket.io": "^4.2.0"
   },
   "devDependencies": {
     "gifsicle": "^5.2.0",
