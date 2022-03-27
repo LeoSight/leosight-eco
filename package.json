@@ -30,7 +30,7 @@
     "micromodal": "^0.4.6",
     "mongodb": "^3.6.9",
     "socket-anti-spam": "^2.0.0",
-    "socket.io": "^4.1.2"
+    "socket.io": "^4.2.0"
   },
   "devDependencies": {
     "gifsicle": "^5.2.0",
