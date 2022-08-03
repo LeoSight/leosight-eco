@@ -28,7 +28,7 @@
     "jquery": "^3.6.0",
     "jquery-contextmenu": "^2.9.2",
     "micromodal": "^0.4.10",
-    "mongodb": "^4.7.0",
+    "mongodb": "^4.8.0",
     "socket-anti-spam": "^2.0.0",
     "socket.io": "^4.5.1"
   },
