@@ -53,9 +53,17 @@ const version = utils.version;
 const codebase = process.env.CODEBASE;
 
 mongoWork(function(db, client) {
-    db.createCollection('users', () => {});
-    db.createCollection('world', () => {});
-    db.createCollection('market', () => {});
+    if( !db.listCollections({ name: 'users' }).hasNext() ) {
+        db.createCollection('users', () => {});
+    }
+
+    if( !db.listCollections({ name: 'world' }).hasNext() ) {
+        db.createCollection('world', () => {});
+    }
+
+    if( !db.listCollections({ name: 'market' }).hasNext() ) {
+        db.createCollection('market', () => {});
+    }
 
     let mySort = { username: 1 };
     db.collection("users").find().sort(mySort).toArray(function(err, result) {
@@ -74,6 +82,7 @@ console.log('Načítám svět..');
 
 db.world.loadWorld((result) => {
     global.world = result;
+    console.log(`Svět načten! (${result.length})`);
 
     global.users.forEach(userData => {
         utils.updatePlayerMaxResources(userData);
