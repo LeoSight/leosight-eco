@@ -160,7 +160,7 @@ module.exports = function(io, db, discord) {
                         let y = utils.random(-worldHeight + borderOffset, worldHeight - borderOffset);
                         let cell = global.world.find(d => d.x === x && d.y === y);
                         if (!cell) {
-                            cell = { x: x, y: y, build: builds.FOREST }
+                            cell = { x: x, y: y, build: builds.FOREST, level: 1 }
                             db.collection("world").insertOne(cell);
                             global.world.push(cell);
                         }
