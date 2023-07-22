@@ -138,30 +138,33 @@ module.exports = function(io, db, discord) {
                     const worldHeight = 40;
                     const borderOffset = 4;
 
-                    for(let i = 0; i < 250; i++){
-                        db.collection("world").insertOne({
-                            x: utils.random(-worldWidth + borderOffset, worldWidth - borderOffset),
-                            y: utils.random(-worldHeight + borderOffset, worldHeight - borderOffset),
-                            build: builds.FOREST
-                        });
-                    }
-
                     const mines = [builds.GOLD, builds.COAL, builds.OIL, builds.IRON, builds.BAUXITE, builds.LEAD, builds.SULFUR, builds.NITER, builds.STONE];
                     mines.forEach(buildId => {
                         for(let i = 0; i < 10; i++) {
                             let x = utils.random(-worldWidth + borderOffset, worldWidth - borderOffset);
                             let y = utils.random(-worldHeight + borderOffset, worldHeight - borderOffset);
-                            while ( utils.nearestBuilding(x, y, mines, false, 7, true)
-                                 || utils.nearestBuilding(x, y, buildId, false, 20, true) ) {
+                            while ( utils.nearestBuilding(x, y, mines, false, 6, false)
+                                 || utils.nearestBuilding(x, y, buildId, false, 14, false) ) {
                                 x = utils.random(-worldWidth + borderOffset, worldWidth - borderOffset);
                                 y = utils.random(-worldHeight + borderOffset, worldHeight - borderOffset);
                             }
 
-                            const cell = {x: x, y: y, build: buildId}
+                            const cell = { x: x, y: y, build: buildId }
                             db.collection("world").insertOne(cell);
                             global.world.push(cell);
                         }
                     });
+
+                    for(let i = 0; i < 250; i++){
+                        let x = utils.random(-worldWidth + borderOffset, worldWidth - borderOffset);
+                        let y = utils.random(-worldHeight + borderOffset, worldHeight - borderOffset);
+                        let cell = global.world.find(d => d.x === x && d.y === y);
+                        if (!cell) {
+                            cell = { x: x, y: y, build: builds.FOREST }
+                            db.collection("world").insertOne(cell);
+                            global.world.push(cell);
+                        }
+                    }
 
                     console.log('[WIPE] Svět byl úspěšně restartován!');
                     rl.close();
