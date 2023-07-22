@@ -1,5 +1,6 @@
 const global = require(__dirname + '/global.js');
 const builds = require(__dirname + '/builds.js');
+const utils = require(__dirname + '/utils.js')();
 
 module.exports = function(io, db, discord) {
     const readline = require('readline'),
@@ -129,6 +130,43 @@ module.exports = function(io, db, discord) {
                     console.log('[MUTE] Hráč s tímto jménem nebyl nalezen!');
                 }
                 break;
+            case 'wipe':
+                db.mongoWork(function (db) {
+                    db.collection("world").deleteMany();
+
+                    const worldWidth = 50;
+                    const worldHeight = 40;
+                    const borderOffset = 4;
+
+                    for(let i = 0; i < 250; i++){
+                        db.collection("world").insertOne({
+                            x: utils.random(-worldWidth + borderOffset, worldWidth - borderOffset),
+                            y: utils.random(-worldHeight + borderOffset, worldHeight - borderOffset),
+                            build: builds.FOREST
+                        });
+                    }
+
+                    const mines = [builds.GOLD, builds.COAL, builds.OIL, builds.IRON, builds.BAUXITE, builds.LEAD, builds.SULFUR, builds.NITER, builds.STONE];
+                    mines.forEach(buildId => {
+                        for(let i = 0; i < 10; i++) {
+                            let x = utils.random(-worldWidth + borderOffset, worldWidth - borderOffset);
+                            let y = utils.random(-worldHeight + borderOffset, worldHeight - borderOffset);
+                            while ( utils.nearestBuilding(x, y, mines, false, 7, true)
+                                 || utils.nearestBuilding(x, y, buildId, false, 20, true) ) {
+                                x = utils.random(-worldWidth + borderOffset, worldWidth - borderOffset);
+                                y = utils.random(-worldHeight + borderOffset, worldHeight - borderOffset);
+                            }
+
+                            const cell = {x: x, y: y, build: buildId}
+                            db.collection("world").insertOne(cell);
+                            global.world.push(cell);
+                        }
+                    });
+
+                    console.log('[WIPE] Svět byl úspěšně restartován!');
+                    rl.close();
+                });
+                break;
             case 'help':
                 console.log('Seznam příkazů:');
                 console.log('say - Odeslat zprávu do chatu');
@@ -140,6 +178,7 @@ module.exports = function(io, db, discord) {
                 console.log('ban - Zabanování hráče');
                 console.log('unban - Zrušení banu');
                 console.log('mute - Zablokování chatu');
+                console.log('wipe - Restart světa (vymaže vše na mapě)');
                 console.log('exit - Vypnout server');
                 break;
             case 'exit':

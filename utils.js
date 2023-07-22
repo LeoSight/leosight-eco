@@ -28,8 +28,18 @@ module.exports = function(_io) {
         checkColors: CheckColors,
         shortestTradePath: ShortestTradePath,
         sanitizeString: SanitizeString,
+        random: GetRandomInt
     }
 };
+
+/**
+ * @return {number}
+ */
+function GetRandomInt(min, max) {
+    min = Math.ceil(min);
+    max = Math.floor(max);
+    return Math.floor(Math.random() * (max - min + 1)) + min;
+}
 
 /**
  * @return {string}

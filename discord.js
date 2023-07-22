@@ -1,8 +1,8 @@
 console.log('Spouštím Discord integraci..');
 
 const utils = require(__dirname + '/utils.js')();
-const Discord = require('discord.js');
-const discordClient = new Discord.Client({ intents: ["GUILDS", "GUILD_MESSAGES"] });
+const { Client, GatewayIntentBits, Partials } = require('discord.js');
+const discordClient = new Client({ intents: [ GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages ], partials: [Partials.Channel] });
 let loaded = false;
 
 discordClient.on("ready", () => {

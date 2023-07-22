@@ -38,7 +38,8 @@ const resources = require(__dirname + '/resources.js');
 const db = {
     users: require(__dirname + '/db/users.js')(mongoWork),
     world: require(__dirname + '/db/world.js')(mongoWork),
-    market: require(__dirname + '/db/market.js')(mongoWork)
+    market: require(__dirname + '/db/market.js')(mongoWork),
+    mongoWork: mongoWork
 };
 const market = require(__dirname + '/market.js')(db);
 const master = require(__dirname + '/master.js');

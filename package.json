@@ -8,7 +8,7 @@
     "url": "git+https://github.com/LeoSight/leosight-eco.git"
   },
   "author": "LeoSight.cz",
-  "license": "",
+  "license": "MIT",
   "private": true,
   "snyk": true,
   "bugs": {
@@ -16,21 +16,21 @@
   },
   "homepage": "https://github.com/LeoSight/leosight-eco#readme",
   "dependencies": {
-    "@babel/core": "^7.18.2",
-    "@babel/preset-env": "^7.18.2",
+    "@babel/core": "^7.22.9",
+    "@babel/preset-env": "^7.22.9",
     "bluebird": "^3.7.2",
     "crypto": "^1.0.1",
-    "discord.js": "^13.8.0",
-    "dotenv": "^16.0.1",
-    "express": "^4.18.1",
-    "express-rate-limit": "^6.4.0",
+    "discord.js": "^14.11.0",
+    "dotenv": "^16.3.1",
+    "express": "^4.18.2",
+    "express-rate-limit": "^6.8.0",
     "gulp": "^4.0.2",
-    "jquery": "^3.6.0",
+    "jquery": "^3.7.0",
     "jquery-contextmenu": "^2.9.2",
     "micromodal": "^0.4.10",
-    "mongodb": "^4.7.0",
+    "mongodb": "^5.7.0",
     "socket-anti-spam": "^2.0.0",
-    "socket.io": "^4.5.1"
+    "socket.io": "^4.7.1"
   },
   "devDependencies": {
     "gifsicle": "^7.0.1",
@@ -39,7 +39,7 @@
     "gulp-cache": "^1.1.3",
     "gulp-clean-css": "^4.3.0",
     "gulp-concat": "^2.6.1",
-    "gulp-imagemin": "^8.0.0",
+    "gulp-imagemin": "7.1.0",
     "gulp-less": "^5.0.0",
     "gulp-plumber": "^1.2.1",
     "gulp-uglify": "^3.0.2",
