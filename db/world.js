@@ -5,7 +5,7 @@ module.exports = function(mongoWork) {
                 db.collection("world").find().toArray(function(err, result) {
                     if (err) throw err;
                     cb(result);
-                    client.close();
+                    //client.close();
                 });
             });
         },
@@ -18,7 +18,7 @@ module.exports = function(mongoWork) {
                         level: level
                     } }, {upsert: true}, function (err) {
                     if (err) throw err;
-                    client.close();
+                    //client.close();
                 });
             });
         },
@@ -28,7 +28,7 @@ module.exports = function(mongoWork) {
                         [key]: value
                     } }, function (err) {
                     if (err) throw err;
-                    client.close();
+                    //client.close();
                 });
             });
         },

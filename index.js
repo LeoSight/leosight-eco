@@ -9,7 +9,7 @@ const http = (process.env.HTTPS === 'true' ?
     }, app) : require('http').createServer(app));
 const io = require('socket.io')(http, { pingTimeout: 60000, pingInterval: 25000 });
 const Promise = require('bluebird');
-const mongo = require('mongodb').MongoClient;
+const { MongoClient } = require('mongodb');
 const database = process.env.DB_URL;
 const mgOpts = { "useUnifiedTopology": true };
 const rateLimit = require('express-rate-limit');
@@ -18,12 +18,18 @@ const limiter = rateLimit({ // max 5 požadavků za 20 vteřin
     max: 5
 });
 
+const mongo = new MongoClient(database, mgOpts);
+mongo.connect();
+
 const mongoWork = (cb) => {
-    mongo.connect(database, mgOpts, function(err, client) {
+    /*mongo.connect(database, mgOpts, function(err, client) {
         if (err) throw err;
         let db = client.db("leosight-eco");
         cb(db, client);
-    });
+    });*/
+
+    let db = mongo.db("leosight-eco");
+    cb(db, mongo);
 };
 
 console.log('Načítám moduly..');
@@ -69,7 +75,7 @@ mongoWork(function(db, client) {
     db.collection("users").find().sort(mySort).toArray(function(err, result) {
         if (err) throw err;
         global.users = result;
-        client.close();
+        //client.close();
     });
 });
 

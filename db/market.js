@@ -5,7 +5,7 @@ module.exports = function(mongoWork) {
                 db.collection("market").find().toArray(function(err, result) {
                     if (err) throw err;
                     cb(result);
-                    client.close();
+                    //client.close();
                 });
             });
         },
@@ -21,7 +21,7 @@ module.exports = function(mongoWork) {
                     sold: sold
                 } }, {upsert: true}, function (err) {
                     if (err) throw err;
-                    client.close();
+                    //client.close();
                 });
             });
         },
@@ -33,7 +33,7 @@ module.exports = function(mongoWork) {
                     buy: buy
                 }, function (err) {
                     if (err) throw err;
-                    client.close();
+                    //client.close();
                 });
             });
         },

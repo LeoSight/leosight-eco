@@ -7,7 +7,7 @@ module.exports = function(mongoWork) {
                     lastlogin: new Date().valueOf()
                 } }, {upsert: true}, function (err) {
                     if (err) throw err;
-                    client.close();
+                    //client.close();
                 });
             });
         },
@@ -19,7 +19,7 @@ module.exports = function(mongoWork) {
                     money: 0
                 } }, function (err) {
                     if (err) throw err;
-                    client.close();
+                    //client.close();
                 });
             });
         },
@@ -29,7 +29,7 @@ module.exports = function(mongoWork) {
                         [key]: value
                     } }, function (err) {
                     if (err) throw err;
-                    client.close();
+                    //client.close();
                 });
             });
         },
